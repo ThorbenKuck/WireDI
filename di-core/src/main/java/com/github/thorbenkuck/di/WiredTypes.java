@@ -14,7 +14,8 @@ public class WiredTypes implements Repository {
 	private static void process(IdentifiableProvider provider) {
 		for (Object wiredType : provider.wiredTypes()) {
 			if(wiredType == null) {
-				throw new DiLoadingException("The provider " + provider + " returned null as a identifiable type! This is not permitted.");
+				throw new DiLoadingException("The provider " + provider + " returned null as a identifiable type! This is not permitted.\n" +
+						"If you did not create your own instance, please submit your annotated class to github.");
 			}
 			mapping.put((Class<?>) wiredType, provider);
 		}
@@ -32,20 +33,14 @@ public class WiredTypes implements Repository {
 		}
 	}
 
-	static {
-		if(autoLoad) {
-			performLoad();
-		}
-	}
-
-	private static void clearLoadedInstances() {
+	private void clearLoadedInstances() {
 		synchronized (mapping) {
 			mapping.clear();
 			loaded = false;
 		}
 	}
 
-	private static void performLoad() {
+	private void loadFromServiceFile() {
 		synchronized (mapping) {
 			if(loaded) {
 				// Ignore this call. Important
@@ -64,12 +59,24 @@ public class WiredTypes implements Repository {
 		}
 	}
 
+	public WiredTypes() {
+		if(autoLoad) {
+			load();
+		}
+	}
+
 	public void unload() {
 		clearLoadedInstances();
 	}
 
 	public void load() {
-		performLoad();
+		if(loaded) {
+			return;
+		}
+		loadFromServiceFile();
+		synchronized (mapping) {
+			mapping.put(Repository.class, new RepositoryIdentifyingProvider(this));
+		}
 		instantiateNonLazy();
 	}
 
@@ -110,7 +117,7 @@ public class WiredTypes implements Repository {
 	}
 
 	@Override
-	public <T> Provider<T> toProvider(Class<T> type) {
+	public <T> Provider<T> getProvider(Class<T> type) {
 		IdentifiableProvider<T> provider;
 
 		synchronized (mapping) {

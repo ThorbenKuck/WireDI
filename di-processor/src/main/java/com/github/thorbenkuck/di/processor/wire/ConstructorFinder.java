@@ -2,10 +2,10 @@ package com.github.thorbenkuck.di.processor.wire;
 
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.Repository;
-import com.github.thorbenkuck.di.annotations.Nullable;
 import com.github.thorbenkuck.di.processor.ProcessingException;
 import com.squareup.javapoet.*;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.lang.model.element.*;
 import java.util.ArrayList;
@@ -74,9 +74,9 @@ public class ConstructorFinder {
 		for (VariableElement argument : constructor.getParameters()) {
 			String name = "t" + i++;
 			builder.addStatement("$T $L = wiredTypes.getInstance($T.class)", ClassName.get(argument.asType()), name, ClassName.get(argument.asType()));
-			if (!(argument.getAnnotation(Nullable.class) == null)) {
+			if (argument.getAnnotation(Nullable.class) == null) {
 				builder.beginControlFlow("if ($L == null) ", name)
-						.addStatement("throw new $T($S + $T)", DiInstantiationException.class, "Could not find any instance for " + ClassName.get(argument.asType()))
+						.addStatement("throw new $T($S)", DiInstantiationException.class, "Could not find any instance for " + ClassName.get(argument.asType()))
 						.endControlFlow();
 			}
 			names.add(name);

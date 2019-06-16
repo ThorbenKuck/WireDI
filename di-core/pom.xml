@@ -2,7 +2,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>di-annotations</artifactId>
+    <artifactId>di-core</artifactId>
     <version>1.0-SNAPSHOT</version>
 
     <parent>
@@ -19,6 +19,13 @@
         </developer>
     </developers>
 
+    <dependencies>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+        </dependency>
+    </dependencies>
+
     <licenses>
         <license>
             <name>MIT License</name>
@@ -26,17 +33,6 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <dependencies>
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-        </dependency>
-    </dependencies>
 </project>
 
 

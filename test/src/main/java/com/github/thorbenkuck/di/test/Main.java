@@ -7,7 +7,6 @@ public class Main {
 
 	public static void main(String[] args) {
 		WiredTypes wiredTypes = new WiredTypes();
-		wiredTypes.load();
 		SuperDi instance = wiredTypes.getInstance(SuperDi.class);
 		instance.foo();
 	}

@@ -7,5 +7,5 @@ public interface Repository {
 
 	<T> T getInstance(Class<T> type);
 
-	<T> Provider<T> toProvider(Class<T> type);
+	<T> Provider<T> getProvider(Class<T> type);
 }

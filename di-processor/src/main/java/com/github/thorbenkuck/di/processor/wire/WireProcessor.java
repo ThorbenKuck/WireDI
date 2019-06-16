@@ -6,6 +6,7 @@ import com.github.thorbenkuck.di.processor.DiProcessor;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 
+import javax.annotation.Generated;
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -13,6 +14,7 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -42,6 +44,12 @@ public class WireProcessor extends DiProcessor {
 
 		builder.addAnnotation(AnnotationSpec.builder(AutoService.class)
 				.addMember("value", "$T.class", IdentifiableProvider.class)
+				.build());
+
+		builder.addAnnotation(AnnotationSpec.builder(Generated.class)
+				.addMember("value", "$S", WireProcessor.class.getName())
+				.addMember("date", "$S", LocalDateTime.now().toString())
+				.addMember("comments", "$S", "This class is used to identify wired components")
 				.build());
 
 		getAndLazyMethodConstructor.analyze(builder);
