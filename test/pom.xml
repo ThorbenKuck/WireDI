@@ -3,7 +3,7 @@
 
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di-test</artifactId>
-    <version>0.1-SNAPSHOT</version>
+    <version>0.1</version>
 
     <developers>
         <developer>
@@ -17,12 +17,12 @@
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-annotations</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-processor</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.1</version>
         </dependency>
     </dependencies>
 
