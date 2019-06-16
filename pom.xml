@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di</artifactId>
-    <version>0.1</version>
+    <version>0.2-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>SimpleDI</name>
     <description>Easy and simple di using annotation processors</description>
@@ -24,7 +24,7 @@
         <connection>scm:git:git@github.com:ThorbenKuck/powerfx.git</connection>
         <url>scm:git:git@github.com:ThorbenKuck/powerfx.git</url>
         <developerConnection>scm:git:git@github.com:ThorbenKuck/powerfx.git</developerConnection>
-      <tag>di-0.1</tag>
+      <tag>HEAD</tag>
   </scm>
 
     <developers>
