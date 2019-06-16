@@ -2,12 +2,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>di-annotations</artifactId>
-    <version>1.0</version>
+    <version>0.1-SNAPSHOT</version>
 
     <parent>
         <groupId>com.github.thorbenkuck</groupId>
         <artifactId>di</artifactId>
-        <version>0.1</version>
+        <version>0.1-SNAPSHOT</version>
     </parent>
 
     <developers>
@@ -25,6 +25,15 @@
             <distribution>repo</distribution>
         </license>
     </licenses>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

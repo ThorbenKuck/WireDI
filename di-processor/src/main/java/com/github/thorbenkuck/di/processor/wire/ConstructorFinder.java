@@ -59,7 +59,7 @@ public class ConstructorFinder {
 		return using;
 	}
 
-	public MethodSpec.Builder fordefaultConstructor(TypeElement typeElement) {
+	public MethodSpec.Builder forDefaultConstructor(TypeElement typeElement) {
 		return instantiationMethodSpec(typeElement)
 				.addCode(CodeBlock.builder()
 						.addStatement("return new $T()", ClassName.get(typeElement))
@@ -102,13 +102,13 @@ public class ConstructorFinder {
 		}
 
 		if (potentialConstructors.isEmpty()) {
-			builder.addMethod(fordefaultConstructor(typeElement).build());
+			builder.addMethod(forDefaultConstructor(typeElement).build());
 		}
 
 		ExecutableElement executableElement = findBestSuited(potentialConstructors);
 		chosenConstructor = executableElement;
 		if (executableElement.getParameters().isEmpty()) {
-			builder.addMethod(fordefaultConstructor(typeElement).build());
+			builder.addMethod(forDefaultConstructor(typeElement).build());
 		} else {
 			builder.addMethod(withArguments(executableElement, typeElement).build());
 		}

@@ -1,8 +1,9 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di</artifactId>
-    <version>0.1</version>
+    <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>SimpleDI</name>
     <description>Easy and simple di using annotation processors</description>
@@ -24,8 +25,7 @@
         <connection>scm:git:git@github.com:ThorbenKuck/powerfx.git</connection>
         <url>scm:git:git@github.com:ThorbenKuck/powerfx.git</url>
         <developerConnection>scm:git:git@github.com:ThorbenKuck/powerfx.git</developerConnection>
-      <tag>di-0.1</tag>
-  </scm>
+    </scm>
 
     <developers>
         <developer>
@@ -111,6 +111,19 @@
                 <version>3.7.0</version>
             </plugin>
         </plugins>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <configuration>
+                        <source>1.8</source>
+                        <target>1.8</target>
+                    </configuration>
+                    <version>3.7.0</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
     </build>
 </project>
 
