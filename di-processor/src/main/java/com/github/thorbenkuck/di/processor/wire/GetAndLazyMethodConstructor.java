@@ -1,13 +1,14 @@
 package com.github.thorbenkuck.di.processor.wire;
 
-import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.ReflectionsHelper;
 import com.github.thorbenkuck.di.Repository;
 import com.github.thorbenkuck.di.annotations.Wire;
-import com.github.thorbenkuck.di.processor.ProcessingException;
+import com.github.thorbenkuck.di.processor.FetchAnnotated;
+import com.github.thorbenkuck.di.processor.FieldInjector;
+import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
+import com.github.thorbenkuck.di.processor.MethodCreator;
 import com.squareup.javapoet.*;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -18,79 +19,22 @@ import java.util.List;
 public class GetAndLazyMethodConstructor {
 
 	private final TypeElement typeElement;
-	private MethodSpec.Builder lazyMethod;
-	private MethodSpec.Builder getMethod;
-	private boolean lazy;
 
 	public GetAndLazyMethodConstructor(TypeElement typeElement) {
 		this.typeElement = typeElement;
 	}
 
-	private List<VariableElement> getAnnotatedFields() {
-		final List<VariableElement> variableElements = new ArrayList<>();
-		for (Element enclosedElement : typeElement.getEnclosedElements()) {
-			if (enclosedElement.getKind() == ElementKind.FIELD && enclosedElement.getAnnotation(Inject.class) != null) {
-				variableElements.add((VariableElement) enclosedElement);
-			}
-		}
-
-		return variableElements;
-	}
-
-	private void appendFieldInjections(CodeBlock.Builder aReturn) {
-		List<VariableElement> toInjectFields = getAnnotatedFields();
-
-		if (toInjectFields.isEmpty()) {
-			return;
-		}
-
-		int count = 0;
-		for (VariableElement field : toInjectFields) {
-			aReturn.addStatement("$T t$L = wiredTypes.getInstance($T.class)", ClassName.get(field.asType()), count, ClassName.get(field.asType()));
-
-			if (field.getModifiers().contains(Modifier.FINAL)) {
-				throw new ProcessingException(field, "Cannot inject into a final field!");
-			}
-
-			if (field.getAnnotation(Nullable.class) == null) {
-				aReturn.beginControlFlow("if(t$L == null)", count)
-						.addStatement("throw new $T($S)", DiInstantiationException.class, "Could not find a non nullable instance for the type: " + field.asType().toString())
-						.endControlFlow();
-			}
-
-			if (field.getModifiers().contains(Modifier.PRIVATE)) {
-				// TODO Inform that the use of private and Inject is bad
-				aReturn.addStatement("$T.setField($S, instance, t$L)", ReflectionsHelper.class, field.getSimpleName(), count);
-			} else {
-				aReturn.addStatement("instance.$L = t$L", field.getSimpleName(), count);
-			}
-
-			++count;
-		}
-	}
-
-	public void setLazyMethod(boolean to) {
-		lazy = to;
-		lazyMethod = MethodSpec.methodBuilder("lazy")
-				.addAnnotation(Override.class)
-				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-				.returns(TypeName.BOOLEAN)
-				.addCode(CodeBlock.builder().addStatement("return $L", to).build());
-	}
-
 	public void analyze(TypeSpec.Builder typeBuilder) {
-		setLazyMethod(typeElement.getAnnotation(Wire.class).lazy());
+		boolean lazy = typeElement.getAnnotation(Wire.class).lazy();
+		List<VariableElement> annotatedInjectionFields = FetchAnnotated.fields(typeElement, Inject.class);
+
+		MethodSpec lazyMethod = MethodCreator.createSimpleBooleanMethod("lazy", lazy);
 
 		typeBuilder.addField(FieldSpec.builder(TypeName.get(typeElement.asType()), "instance")
 				.addModifiers(Modifier.PRIVATE)
 				.build());
 
-		typeBuilder.addMethod(MethodSpec.methodBuilder("get")
-				.addAnnotation(Override.class)
-				.returns(TypeName.get(typeElement.asType()))
-				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-				.addCode("return instance;\n")
-				.build());
+		typeBuilder.addMethod(MethodCreator.createReturningMethod("get", TypeName.get(typeElement.asType()), "instance"));
 
 		CodeBlock.Builder aReturn = CodeBlock.builder();
 
@@ -101,7 +45,7 @@ public class GetAndLazyMethodConstructor {
 		}
 
 		aReturn.addStatement("instance = $L(wiredTypes)", ConstructorFinder.INSTANTIATION_METHOD_NAME);
-		appendFieldInjections(aReturn);
+		aReturn.add(FieldInjector.createCode(annotatedInjectionFields));
 		applyPostConstructMethods(aReturn);
 
 		typeBuilder.addMethod(MethodSpec.methodBuilder("instantiate")
@@ -112,7 +56,7 @@ public class GetAndLazyMethodConstructor {
 				.build());
 
 
-		typeBuilder.addMethod(lazyMethod.build());
+		typeBuilder.addMethod(lazyMethod);
 	}
 
 	private void applyPostConstructMethods(CodeBlock.Builder codeBlockBuilder) {

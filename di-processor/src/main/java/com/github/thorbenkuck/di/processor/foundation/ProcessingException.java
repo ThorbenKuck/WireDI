@@ -1,4 +1,4 @@
-package com.github.thorbenkuck.di.processor;
+package com.github.thorbenkuck.di.processor.foundation;
 
 import javax.lang.model.element.Element;
 

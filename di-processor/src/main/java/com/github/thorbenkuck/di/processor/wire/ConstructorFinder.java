@@ -2,21 +2,20 @@ package com.github.thorbenkuck.di.processor.wire;
 
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.Repository;
-import com.github.thorbenkuck.di.processor.ProcessingException;
+import com.github.thorbenkuck.di.processor.FetchAnnotated;
+import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.*;
 
 import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.lang.model.element.*;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 public class ConstructorFinder {
 
 	public static final String INSTANTIATION_METHOD_NAME = "createInstance";
 	private final TypeElement typeElement;
-	private ExecutableElement chosenConstructor;
 
 	public ConstructorFinder(TypeElement typeElement) {
 		this.typeElement = typeElement;
@@ -42,31 +41,22 @@ public class ConstructorFinder {
 		if (constructors.size() == 1) {
 			return constructors.get(0);
 		}
-		ExecutableElement using = null;
-		for (ExecutableElement constructor : constructors) {
-			if (!(constructor.getAnnotation(Inject.class) == null)) {
-				if (using != null) {
-					throw new ProcessingException(typeElement, "You have to provide either one Constructor or annotated the constructor to use with javax.inject.Inject");
-				}
-				using = constructor;
-			}
+		List<ExecutableElement> annotatedConstructor = FetchAnnotated.constructors(typeElement, Inject.class);
+		if (annotatedConstructor.size() != 1) {
+			throw new ProcessingException(typeElement, "You have to provide either one Constructor or annotated the constructor to use with javax.inject.@Inject");
 		}
 
-		if (using == null) {
-			throw new ProcessingException(typeElement, "You have to provide either one Constructor or annotated the constructor to use with javax.inject.Inject");
-		}
-
-		return using;
+		return annotatedConstructor.get(0);
 	}
 
-	public MethodSpec.Builder forDefaultConstructor(TypeElement typeElement) {
+	private MethodSpec.Builder forDefaultConstructor(TypeElement typeElement) {
 		return instantiationMethodSpec(typeElement)
 				.addCode(CodeBlock.builder()
 						.addStatement("return new $T()", ClassName.get(typeElement))
 						.build());
 	}
 
-	public MethodSpec.Builder withArguments(ExecutableElement constructor, TypeElement typeElement) {
+	private MethodSpec.Builder withArguments(ExecutableElement constructor, TypeElement typeElement) {
 		CodeBlock.Builder builder = CodeBlock.builder();
 		List<String> names = new ArrayList<>();
 		int i = 0;
@@ -93,7 +83,7 @@ public class ConstructorFinder {
 				.addCode(builder.build());
 	}
 
-	public void analyze(TypeSpec.Builder builder) {
+	public void applyConstruction(TypeSpec.Builder builder) {
 		List<ExecutableElement> potentialConstructors = new ArrayList<>();
 		for (Element element : typeElement.getEnclosedElements()) {
 			if (isConstructor(element)) {
@@ -106,15 +96,10 @@ public class ConstructorFinder {
 		}
 
 		ExecutableElement executableElement = findBestSuited(potentialConstructors);
-		chosenConstructor = executableElement;
 		if (executableElement.getParameters().isEmpty()) {
 			builder.addMethod(forDefaultConstructor(typeElement).build());
 		} else {
 			builder.addMethod(withArguments(executableElement, typeElement).build());
 		}
-	}
-
-	public List<? extends VariableElement> getChosenConstructor() {
-		return chosenConstructor != null ? chosenConstructor.getParameters() : Collections.emptyList();
 	}
 }

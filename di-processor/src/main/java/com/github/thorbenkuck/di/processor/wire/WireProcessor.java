@@ -2,11 +2,10 @@ package com.github.thorbenkuck.di.processor.wire;
 
 import com.github.thorbenkuck.di.IdentifiableProvider;
 import com.github.thorbenkuck.di.annotations.Wire;
-import com.github.thorbenkuck.di.processor.DiProcessor;
+import com.github.thorbenkuck.di.processor.foundation.DiProcessor;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 
-import javax.annotation.Generated;
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
@@ -14,7 +13,6 @@ import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.Collections;
 
@@ -29,7 +27,7 @@ public class WireProcessor extends DiProcessor {
 	@Override
 	protected void handle(Element element) {
 		if (!(element instanceof TypeElement)) {
-			error("The annotated element of Wire has to be a type!", element);
+			logger.error("The annotated element of Wire has to be a type!", element);
 			return;
 		}
 
@@ -46,14 +44,10 @@ public class WireProcessor extends DiProcessor {
 				.addMember("value", "$T.class", IdentifiableProvider.class)
 				.build());
 
-		builder.addAnnotation(AnnotationSpec.builder(Generated.class)
-				.addMember("value", "$S", WireProcessor.class.getName())
-				.addMember("date", "$S", LocalDateTime.now().toString())
-				.addMember("comments", "$S", "This class is used to identify wired components")
-				.build());
+		appendGeneratedAnnotation(builder, "This class is used to identify wired components");
 
 		getAndLazyMethodConstructor.analyze(builder);
-		constructorFinder.analyze(builder);
+		constructorFinder.applyConstruction(builder);
 		typeIdentifierConstructor.analyze(builder);
 
 		PackageElement packageElement = (PackageElement) typeElement.getEnclosingElement();
@@ -65,7 +59,7 @@ public class WireProcessor extends DiProcessor {
 					.build()
 					.writeTo(filer);
 		} catch (IOException e) {
-			error(e.getMessage(), typeElement);
+			logger.error(e.getMessage(), typeElement);
 		}
 	}
 }

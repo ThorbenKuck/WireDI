@@ -1,7 +1,10 @@
 package com.github.thorbenkuck.di.test;
 
+import com.github.thorbenkuck.di.annotations.Resource;
 import com.github.thorbenkuck.di.annotations.Wire;
 
+import javax.annotation.Nullable;
+import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import java.util.UUID;
 
@@ -9,14 +12,26 @@ import java.util.UUID;
 @Singleton
 class Dependency implements IDependency {
 
+	@Resource(key = "test.resource")
+	private String resource;
+	@Resource(key = "not.existing.resource", origin = Resource.Origin.NONE)
+	@Nullable
+	private String notExisting;
 	private final String id = UUID.randomUUID().toString();
 
 	Dependency() {
 		System.out.println("Dependency Instantiated");
 	}
 
+	@PostConstruct
+	public void constructed() {
+		if(notExisting != null) {
+			throw new IllegalStateException("The property NotExisting should be null!");
+		}
+	}
+
 	@Override
 	public String id() {
-		return id;
+		return resource + id;
 	}
 }

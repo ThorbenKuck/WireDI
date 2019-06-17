@@ -1,29 +1,27 @@
 package com.github.thorbenkuck.di;
 
+import com.github.thorbenkuck.di.resources.ResourceRepository;
+import com.github.thorbenkuck.di.resources.Resources;
+
 import javax.inject.Provider;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.ServiceLoader;
 
-public class WiredTypes implements Repository {
+public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements Repository {
 
-	private static final Map<Class<?>, IdentifiableProvider<?>> mapping = new HashMap<>();
-	private static boolean loaded;
-	private static final boolean autoLoad = DiProperties.doAutoLoad();
+	private final Map<Class<?>, IdentifiableProvider<?>> mapping = new HashMap<>();
+	private final ResourceRepository resourceRepository = new ResourceRepository();
 
-	private static void process(IdentifiableProvider provider) {
-		for (Object wiredType : provider.wiredTypes()) {
-			if(wiredType == null) {
-				throw new DiLoadingException("The provider " + provider + " returned null as a identifiable type! This is not permitted.\n" +
-						"If you did not create your own instance, please submit your annotated class to github.");
-			}
-			mapping.put((Class<?>) wiredType, provider);
+	public WiredTypes() {
+		if (Configuration.doDiAutoLoad()) {
+			load();
+			resourceRepository.load();
 		}
 	}
 
 	private void instantiateNonLazy() {
-		for(IdentifiableProvider provider : mapping.values()) {
-			if(!provider.lazy()) {
+		for (IdentifiableProvider provider : mapping.values()) {
+			if (!provider.lazy()) {
 				try {
 					provider.instantiate(this);
 				} catch (Exception e) {
@@ -33,56 +31,42 @@ public class WiredTypes implements Repository {
 		}
 	}
 
-	private void clearLoadedInstances() {
-		synchronized (mapping) {
-			mapping.clear();
-			loaded = false;
-		}
-	}
-
-	private void loadFromServiceFile() {
-		synchronized (mapping) {
-			if(loaded) {
-				// Ignore this call. Important
-				// so that we do not override
-				// the cached instance, which
-				// may already be in use.
-				return;
+	@Override
+	public void add(IdentifiableProvider provider) {
+		for (Object wiredType : provider.wiredTypes()) {
+			if (wiredType == null) {
+				throw new DiLoadingException("The provider " + provider + " returned null as an identifiable type! This is not permitted.\n" +
+						"If you did not create your own instance, please submit your annotated class to github.");
 			}
-			// automatically load the stored
-			// instances and mark this class
-			// as loaded. Done to prevent manual
-			// reloads (should not be done)
-			ServiceLoader<IdentifiableProvider> serviceLoader = ServiceLoader.load(IdentifiableProvider.class);
-			serviceLoader.forEach(WiredTypes::process);
-			loaded = true;
+			mapping.put((Class<?>) wiredType, provider);
 		}
 	}
 
-	public WiredTypes() {
-		if(autoLoad) {
-			load();
-		}
+	public void setResource(String key, String value) {
+		resourceRepository.set(key, value);
+	}
+
+	@Override
+	public Resources getResourceRepository() {
+		return resourceRepository;
 	}
 
 	public void unload() {
-		clearLoadedInstances();
+		mapping.clear();
+		loaded = false;
 	}
 
+	@Override
 	public void load() {
-		if(loaded) {
-			return;
-		}
-		loadFromServiceFile();
-		synchronized (mapping) {
-			mapping.put(Repository.class, new RepositoryIdentifyingProvider(this));
-		}
+		super.load();
+		resourceRepository.load();
+		add(new RepositoryIdentifyingProvider(this));
 		instantiateNonLazy();
 	}
 
 	@Override
-	public boolean isLoaded() {
-		return loaded;
+	public Class<IdentifiableProvider> serviceType() {
+		return IdentifiableProvider.class;
 	}
 
 	@Override
@@ -93,7 +77,7 @@ public class WiredTypes implements Repository {
 			provider = (IdentifiableProvider<T>) mapping.get(type);
 		}
 
-		if(provider == null) {
+		if (provider == null) {
 			return null;
 		}
 
@@ -105,11 +89,11 @@ public class WiredTypes implements Repository {
 			throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
 		}
 
-		if(t == null) {
+		if (t == null) {
 			throw new DiInstantiationException("Provider produced null. This is not allowed by design!");
 		}
 
-		if(!provider.type().isAssignableFrom(t.getClass())) {
+		if (!provider.type().isAssignableFrom(t.getClass())) {
 			throw new DiInstantiationException("The provider for the class " + type + " is not compatible with the produced instance " + t);
 		}
 
@@ -124,7 +108,7 @@ public class WiredTypes implements Repository {
 			provider = (IdentifiableProvider<T>) mapping.get(type);
 		}
 
-		if(provider == null) {
+		if (provider == null) {
 			throw new DiLoadingException("Could not find any provider for the class " + type);
 		}
 

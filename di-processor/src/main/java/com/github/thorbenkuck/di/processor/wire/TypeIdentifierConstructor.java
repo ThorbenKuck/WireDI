@@ -1,7 +1,7 @@
 package com.github.thorbenkuck.di.processor.wire;
 
 import com.github.thorbenkuck.di.annotations.Wire;
-import com.github.thorbenkuck.di.processor.ProcessingException;
+import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
@@ -33,8 +33,8 @@ public class TypeIdentifierConstructor {
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.returns(TypeName.get(Class[].class));
 
-
 		Wire annotation = typeElement.getAnnotation(Wire.class);
+
 		try {
 			annotation.to();
 		} catch (javax.lang.model.type.MirroredTypesException e) {
