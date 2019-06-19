@@ -47,6 +47,14 @@ class DependencyImpl implements Dependency {
 ...
 ```
 
+The second thing is, to also put the annotation onto our Application like this:
+
+```java
+@Wire
+public class Application {
+    //....
+```
+
 This will generate some factory like classes for us. Those classes are written into a service file, which will be read by the `WiredTypes` class. Now, to use our Application class, we only have to instantiate it like this:
 
 ```java
@@ -56,3 +64,5 @@ wiredTypes.load();
 Application application = wiredTypes.getInstance(Application.class);
 application.start();
 ```
+
+By default, the only way of instantiating any class, is by annotating it with @Wired. Otherwise, it will not be found.
