@@ -1,5 +1,6 @@
 package com.github.thorbenkuck.di.test;
 
+import com.github.thorbenkuck.di.annotations.Origin;
 import com.github.thorbenkuck.di.annotations.Resource;
 import com.github.thorbenkuck.di.annotations.Wire;
 
@@ -13,8 +14,9 @@ import java.util.UUID;
 class Dependency implements IDependency {
 
 	@Resource(key = "test.resource")
+	@javax.annotation.Resource
 	private String resource;
-	@Resource(key = "not.existing.resource", origin = Resource.Origin.NONE)
+	@Resource(key = "not.existing.resource", origin = Origin.NONE)
 	@Nullable
 	private String notExisting;
 	private final String id = UUID.randomUUID().toString();

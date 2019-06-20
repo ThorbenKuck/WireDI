@@ -13,6 +13,12 @@ public class Configuration {
 		// copy the value here.
 		String value = string;
 		if(value == null) {
+			// This is needed, because
+			// Boolean#parseBoolean will
+			// return false
+			// if the value is not "true".
+			// We want this to be enabled
+			// by default.
 			value = "true";
 		}
 
@@ -20,7 +26,7 @@ public class Configuration {
 	}
 
 	public static boolean doDiAutoLoad() {
-		String autoLoad = System.getProperty("di.simple.autoload");
+		String autoLoad = System.getProperty("di.simple.wired.autoload");
 
 		return toBoolean(autoLoad);
 	}

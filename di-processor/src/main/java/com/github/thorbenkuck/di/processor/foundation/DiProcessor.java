@@ -12,10 +12,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class DiProcessor extends AbstractProcessor {
@@ -73,12 +70,14 @@ public abstract class DiProcessor extends AbstractProcessor {
 		return true;
 	}
 
-	protected void appendGeneratedAnnotation(TypeSpec.Builder builder, String comment) {
-		builder.addAnnotation(AnnotationSpec.builder(Generated.class)
+	protected void markAsGenerated(TypeSpec.Builder builder, String... comments) {
+		AnnotationSpec.Builder annotationBuilder = AnnotationSpec.builder(Generated.class)
 				.addMember("value", "$S", getClass().getName())
-				.addMember("date", "$S", LocalDateTime.now().toString())
-				.addMember("comment", "$S", comment)
-				.build());
+				.addMember("date", "$S", LocalDateTime.now().toString());
+		if(comments.length > 0) {
+			annotationBuilder.addMember("comments", "$S", String.join("\n", comments));
+		}
+		builder.addAnnotation(annotationBuilder.build());
 	}
 
 	protected abstract void handle(Element element);

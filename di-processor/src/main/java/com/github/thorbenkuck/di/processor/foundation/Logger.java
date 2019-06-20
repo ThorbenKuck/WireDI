@@ -46,7 +46,7 @@ public class Logger {
 	public void log(String msg, Element element) {
 		messager.printMessage(Diagnostic.Kind.NOTE, msg, element);
 		if(rootElement != null && !rootElement.equals(element)) {
-			messager.printMessage(Diagnostic.Kind.ERROR, msg, rootElement);
+			messager.printMessage(Diagnostic.Kind.NOTE, msg, rootElement);
 		}
 		if(useSystemOut()) {
 			System.out.println("[INFO] " + msg + " " + element);

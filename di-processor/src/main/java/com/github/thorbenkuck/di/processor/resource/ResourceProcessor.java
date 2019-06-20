@@ -2,7 +2,6 @@ package com.github.thorbenkuck.di.processor.resource;
 
 import com.github.thorbenkuck.di.annotations.Resource;
 import com.github.thorbenkuck.di.processor.foundation.DiProcessor;
-import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.google.auto.service.AutoService;
 
 import javax.annotation.processing.Processor;
@@ -19,7 +18,7 @@ public class ResourceProcessor extends DiProcessor {
 	}
 
 	@Override
-	protected void handle(Element element, Logger logger) {
+	protected void handle(Element element) {
 		// TODO Fill this class
 	}
 }

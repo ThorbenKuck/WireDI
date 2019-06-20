@@ -44,7 +44,7 @@ public class WireProcessor extends DiProcessor {
 				.addMember("value", "$T.class", IdentifiableProvider.class)
 				.build());
 
-		appendGeneratedAnnotation(builder, "This class is used to identify wired components");
+		markAsGenerated(builder, "This class is used to identify wired components");
 
 		getAndLazyMethodConstructor.analyze(builder);
 		constructorFinder.applyConstruction(builder);
@@ -61,5 +61,7 @@ public class WireProcessor extends DiProcessor {
 		} catch (IOException e) {
 			logger.error(e.getMessage(), typeElement);
 		}
+
+		markAsProcessed(element);
 	}
 }
