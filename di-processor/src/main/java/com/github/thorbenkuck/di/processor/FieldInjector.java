@@ -2,18 +2,21 @@ package com.github.thorbenkuck.di.processor;
 
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.ReflectionsHelper;
+import com.github.thorbenkuck.di.annotations.Nullable;
+import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 
-import javax.annotation.Nullable;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.VariableElement;
 import java.util.List;
 
 public class FieldInjector {
 
-	public static CodeBlock createCode(List<VariableElement> fields) {
+	public static Logger logger;
+
+	public static CodeBlock create(List<VariableElement> fields) {
 		CodeBlock.Builder codeBlockBuilder = CodeBlock.builder();
 		if (fields.isEmpty()) {
 			return codeBlockBuilder.build();
@@ -26,6 +29,7 @@ public class FieldInjector {
 				throw new ProcessingException(field, "Cannot inject into a final field!");
 			}
 
+			logger.log("The variable " + field.getSimpleName() + ": " + field.getAnnotationMirrors());
 			if (field.getAnnotation(Nullable.class) == null) {
 				codeBlockBuilder.beginControlFlow("if(t$L == null)", count)
 						.addStatement("throw new $T($S)", DiInstantiationException.class, "Could not find a non nullable instance for the type: " + field.asType().toString())
@@ -33,7 +37,7 @@ public class FieldInjector {
 			}
 
 			if (field.getModifiers().contains(Modifier.PRIVATE)) {
-				// TODO Inform that the use of private and Inject is bad
+				logger.warn("The use of private field injection is highly discouraged!", field);
 				codeBlockBuilder.addStatement("$T.setField($S, instance, t$L)", ReflectionsHelper.class, field.getSimpleName(), count);
 			} else {
 				codeBlockBuilder.addStatement("instance.$L = t$L", field.getSimpleName(), count);

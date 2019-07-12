@@ -2,7 +2,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.thorbenkuck</groupId>
-    <artifactId>di-test</artifactId>
+    <artifactId>di</artifactId>
     <version>0.3-SNAPSHOT</version>
 
     <developers>
@@ -16,8 +16,33 @@
     <dependencies>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>di</artifactId>
+            <artifactId>di-annotations</artifactId>
             <version>0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.thorbenkuck</groupId>
+            <artifactId>di-core</artifactId>
+            <version>0.3-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.thorbenkuck</groupId>
+            <artifactId>di-processor</artifactId>
+            <version>0.4-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0-rc5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup</groupId>
+            <artifactId>javapoet</artifactId>
+            <version>1.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
         </dependency>
     </dependencies>
 
@@ -30,7 +55,6 @@
                     <source>1.8</source>
                     <target>1.8</target>
                 </configuration>
-                <version>3.7.0</version>
             </plugin>
         </plugins>
     </build>

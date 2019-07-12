@@ -49,7 +49,11 @@ public class Logger {
 			messager.printMessage(Diagnostic.Kind.NOTE, msg, rootElement);
 		}
 		if(useSystemOut()) {
-			System.out.println("[INFO] " + msg + " " + element);
+			String toLog = "[INFO] " + msg;
+			if(element != null) {
+				toLog += " " + element;
+			}
+			System.out.println(toLog);
 		}
 	}
 
@@ -63,6 +67,18 @@ public class Logger {
 
 	public void setUseSystemOut(boolean alsoUseSystemOut) {
 		this.alsoUseSystemOut = alsoUseSystemOut;
+	}
+
+	public void warn(String msg, Element element) {
+		messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, msg, element);
+		messager.printMessage(Diagnostic.Kind.WARNING, msg, element);
+		if(rootElement != null && !rootElement.equals(element)) {
+			messager.printMessage(Diagnostic.Kind.MANDATORY_WARNING, msg, rootElement);
+			messager.printMessage(Diagnostic.Kind.WARNING, msg, rootElement);
+		}
+		if(useSystemOut()) {
+			System.out.println("[WARN] " + msg + " " + element);
+		}
 	}
 
 	void setCurrentAnnotation(Class<? extends Annotation> currentAnnotation) {

@@ -9,6 +9,13 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface Wire {
 
+	/**
+	 * Defines which classes identify this wire type
+	 *
+	 * The annotated class has to be assignable to all classes provided here.
+	 *
+	 * @return all the types, the annotated type should be wired to
+	 */
 	Class<?>[] to() default {};
 
 	boolean lazy() default true;

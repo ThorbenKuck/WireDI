@@ -10,7 +10,6 @@ import java.lang.annotation.Annotation;
 import java.util.Collection;
 import java.util.Collections;
 
-@AutoService(Processor.class)
 public class ResourceProcessor extends DiProcessor {
 	@Override
 	protected Collection<Class<? extends Annotation>> supportedAnnotations() {

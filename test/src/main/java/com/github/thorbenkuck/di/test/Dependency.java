@@ -1,10 +1,10 @@
 package com.github.thorbenkuck.di.test;
 
+import com.github.thorbenkuck.di.annotations.Nullable;
 import com.github.thorbenkuck.di.annotations.Origin;
 import com.github.thorbenkuck.di.annotations.Resource;
 import com.github.thorbenkuck.di.annotations.Wire;
 
-import javax.annotation.Nullable;
 import javax.annotation.PostConstruct;
 import javax.inject.Singleton;
 import java.util.UUID;
@@ -14,11 +14,9 @@ import java.util.UUID;
 class Dependency implements IDependency {
 
 	@Resource(key = "test.resource")
-	@javax.annotation.Resource
 	private String resource;
 	@Resource(key = "not.existing.resource", origin = Origin.NONE)
-	@Nullable
-	private String notExisting;
+	private @Nullable String notExisting;
 	private final String id = UUID.randomUUID().toString();
 
 	Dependency() {
@@ -34,6 +32,6 @@ class Dependency implements IDependency {
 
 	@Override
 	public String id() {
-		return resource + id;
+		return resource + " " + id;
 	}
 }

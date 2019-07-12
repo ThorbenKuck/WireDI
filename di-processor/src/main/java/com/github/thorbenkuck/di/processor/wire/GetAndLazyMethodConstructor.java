@@ -6,14 +6,13 @@ import com.github.thorbenkuck.di.annotations.Wire;
 import com.github.thorbenkuck.di.processor.FetchAnnotated;
 import com.github.thorbenkuck.di.processor.FieldInjector;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
-import com.github.thorbenkuck.di.processor.MethodCreator;
+import com.github.thorbenkuck.di.processor.util.MethodCreator;
 import com.squareup.javapoet.*;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.*;
-import java.util.ArrayList;
 import java.util.List;
 
 public class GetAndLazyMethodConstructor {
@@ -45,7 +44,7 @@ public class GetAndLazyMethodConstructor {
 		}
 
 		aReturn.addStatement("instance = $L(wiredTypes)", ConstructorFinder.INSTANTIATION_METHOD_NAME);
-		aReturn.add(FieldInjector.createCode(annotatedInjectionFields));
+		aReturn.add(FieldInjector.create(annotatedInjectionFields));
 		applyPostConstructMethods(aReturn);
 
 		typeBuilder.addMethod(MethodSpec.methodBuilder("instantiate")

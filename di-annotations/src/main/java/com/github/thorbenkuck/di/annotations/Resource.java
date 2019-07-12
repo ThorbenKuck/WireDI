@@ -8,7 +8,7 @@ import java.lang.annotation.Target;
 /**
  * This annotation is used, to inject resources.
  * <p>
- * The behaviour is similar to {@link javax.inject.Inject}, but only limited to fields.
+ * The behaviour is similar to {@literal @Inject}, but only limited to fields.
  * <p>
  * Example:
  *

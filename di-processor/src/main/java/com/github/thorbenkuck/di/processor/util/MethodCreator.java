@@ -1,4 +1,4 @@
-package com.github.thorbenkuck.di.processor;
+package com.github.thorbenkuck.di.processor.util;
 
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;

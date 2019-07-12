@@ -2,11 +2,11 @@ package com.github.thorbenkuck.di.processor.wire;
 
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.Repository;
+import com.github.thorbenkuck.di.annotations.Nullable;
 import com.github.thorbenkuck.di.processor.FetchAnnotated;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.*;
 
-import javax.annotation.Nullable;
 import javax.inject.Inject;
 import javax.lang.model.element.*;
 import java.util.ArrayList;

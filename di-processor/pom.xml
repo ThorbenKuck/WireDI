@@ -1,14 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di-processor</artifactId>
-    <version>0.3-SNAPSHOT</version>
-
-    <parent>
-        <groupId>com.github.thorbenkuck</groupId>
-        <artifactId>di</artifactId>
-        <version>0.3-SNAPSHOT</version>
-    </parent>
+    <version>0.4-SNAPSHOT</version>
 
     <developers>
         <developer>
@@ -23,22 +18,30 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+                <version>3.7.0</version>
             </plugin>
         </plugins>
     </build>
 
     <dependencies>
         <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
+            <version>1.0-rc5</version>
         </dependency>
         <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
+            <version>1.11.1</version>
+        </dependency>
+        <dependency>
+            <groupId>javax.inject</groupId>
+            <artifactId>javax.inject</artifactId>
+            <version>1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
@@ -48,7 +51,7 @@
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-core</artifactId>
-            <version>0.1-SNAPSHOT</version>
+            <version>0.3-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
