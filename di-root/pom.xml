@@ -3,7 +3,7 @@
 
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.2.1</version>
     <name>SimpleDI</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
@@ -28,7 +28,7 @@
         <connection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</connection>
         <url>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</url>
         <developerConnection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</developerConnection>
-        <tag>di-0.1</tag>
+        <tag>simple-di-bootstrap-0.2.1</tag>
     </scm>
     
     <developers>
@@ -43,17 +43,17 @@
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-annotations</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-core</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-processor</artifactId>
-            <version>0.4-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
