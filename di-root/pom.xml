@@ -3,7 +3,7 @@
 
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <version>0.2.1</version>
 
     <developers>
         <developer>
@@ -17,17 +17,17 @@
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-annotations</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-core</artifactId>
-            <version>0.3-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di-processor</artifactId>
-            <version>0.4-SNAPSHOT</version>
+            <version>0.2.1</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
