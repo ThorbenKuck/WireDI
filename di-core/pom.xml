@@ -3,7 +3,7 @@
 
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di-core</artifactId>
-    <version>0.2.2-SNAPSHOT</version>
+    <version>0.3-SNAPSHOT</version>
 
     <developers>
         <developer>
