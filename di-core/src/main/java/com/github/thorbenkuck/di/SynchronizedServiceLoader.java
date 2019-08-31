@@ -5,7 +5,7 @@ import java.util.ServiceLoader;
 public abstract class SynchronizedServiceLoader<T> {
 
 	private final Object loadLock = new Object();
-	protected boolean loaded;
+	protected volatile boolean loaded;
 
 	public void load() {
 		// pre check to avoid unnecessary synchronization

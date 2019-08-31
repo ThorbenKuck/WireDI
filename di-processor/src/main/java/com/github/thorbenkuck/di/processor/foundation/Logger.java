@@ -77,7 +77,7 @@ public class Logger {
 			messager.printMessage(Diagnostic.Kind.WARNING, msg, rootElement);
 		}
 		if(useSystemOut()) {
-			System.out.println("[WARN] " + msg + " " + element);
+			System.out.println("[WARNING] " + msg + " " + element);
 		}
 	}
 

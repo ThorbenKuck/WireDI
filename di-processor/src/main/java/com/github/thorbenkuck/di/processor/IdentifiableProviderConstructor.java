@@ -2,6 +2,7 @@ package com.github.thorbenkuck.di.processor;
 
 import com.github.thorbenkuck.di.IdentifiableProvider;
 import com.github.thorbenkuck.di.annotations.Wire;
+import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.github.thorbenkuck.di.processor.wire.ConstructorFinder;
 import com.github.thorbenkuck.di.processor.wire.GetAndLazyMethodConstructor;
 import com.github.thorbenkuck.di.processor.wire.TypeIdentifierConstructor;
@@ -31,11 +32,11 @@ public class IdentifiableProviderConstructor {
 		consumers.add(consumer);
 	}
 
-	public IdentifiableProviderConstructor(TypeElement typeElement, Types types) {
+	public IdentifiableProviderConstructor(TypeElement typeElement, Types types, Logger logger) {
 		this.typeElement = typeElement;
 		this.types = types;
 
-		constructorFinder = new ConstructorFinder(typeElement);
+		constructorFinder = new ConstructorFinder(typeElement, logger);
 		getAndLazyMethodConstructor = new GetAndLazyMethodConstructor(typeElement);
 		typeIdentifierConstructor = new TypeIdentifierConstructor(typeElement, this.types);
 	}
@@ -60,8 +61,8 @@ public class IdentifiableProviderConstructor {
 		return builder.build();
 	}
 
-	public static IdentifiableProviderBuilder build(TypeElement typeElement, Types types) {
-		return new IdentifiableProviderBuilder(new IdentifiableProviderConstructor(typeElement, types));
+	public static IdentifiableProviderBuilder build(TypeElement typeElement, Types types, Logger logger) {
+		return new IdentifiableProviderBuilder(new IdentifiableProviderConstructor(typeElement, types, logger));
 	}
 
 	public static class IdentifiableProviderBuilder {

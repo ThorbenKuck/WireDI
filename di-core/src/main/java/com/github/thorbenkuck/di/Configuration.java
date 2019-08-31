@@ -31,10 +31,4 @@ public class Configuration {
 		return toBoolean(autoLoad);
 	}
 
-	public static boolean doResourceAutoLoad() {
-		String autoLoad = System.getProperty("di.simple.resources.autoload");
-
-		return toBoolean(autoLoad);
-	}
-
 }

@@ -9,6 +9,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import javax.annotation.processing.Processor;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
@@ -25,13 +26,18 @@ public class WireProcessor extends DiProcessor {
 
 	@Override
 	protected void handle(Element element) {
-		if (!(element instanceof TypeElement)) {
-			logger.error("The annotated element of Wire has to be a type!", element);
+		if (element.getKind() != ElementKind.CLASS) {
+			logger.error("The annotated element of Wire has to be a class!", element);
+			return;
+		}
+
+		if(element.getAnnotation(Wire.class) == null) {
+			logger.error("Meta annotations are currently not supported!", element);
 			return;
 		}
 
 		TypeElement typeElement = (TypeElement) element;
-		IdentifiableProviderConstructor identifiableProviderConstructor = new IdentifiableProviderConstructor(typeElement, types);
+		IdentifiableProviderConstructor identifiableProviderConstructor = new IdentifiableProviderConstructor(typeElement, types, logger);
 		identifiableProviderConstructor.addConsumer(builder -> markAsGenerated(builder, "This class is used to identify wired components"));
 		TypeSpec construct = identifiableProviderConstructor.construct();
 

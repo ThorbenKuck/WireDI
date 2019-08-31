@@ -3,12 +3,15 @@ package com.github.thorbenkuck.di.processor.wire;
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.Repository;
 import com.github.thorbenkuck.di.annotations.Nullable;
+import com.github.thorbenkuck.di.annotations.Wire;
 import com.github.thorbenkuck.di.processor.FetchAnnotated;
+import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.*;
 
 import javax.inject.Inject;
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,9 +19,11 @@ public class ConstructorFinder {
 
 	public static final String INSTANTIATION_METHOD_NAME = "createInstance";
 	private final TypeElement typeElement;
+	private final Logger logger;
 
-	public ConstructorFinder(TypeElement typeElement) {
+	public ConstructorFinder(TypeElement typeElement, Logger logger) {
 		this.typeElement = typeElement;
+		this.logger = logger;
 	}
 
 	private boolean isConstructor(Element element) {
