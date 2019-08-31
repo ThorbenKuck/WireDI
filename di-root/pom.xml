@@ -4,7 +4,33 @@
     <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di</artifactId>
     <version>0.3-SNAPSHOT</version>
+    <name>SimpleDI</name>
+    <description>Easy and simple di using annotation processors</description>
+    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <properties>
+        <project.build.sourceEncoding>
+            UTF-8
+        </project.build.sourceEncoding>
+    </properties>
 
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</connection>
+        <url>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</url>
+        <developerConnection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</developerConnection>
+        <tag>di-0.1</tag>
+    </scm>
+    
     <developers>
         <developer>
             <id>thorbenkuck</id>
