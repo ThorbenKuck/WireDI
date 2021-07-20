@@ -1,16 +1,23 @@
 package com.github.thorbenkuck.di;
 
-public interface IdentifiableProvider<T> {
+public interface IdentifiableProvider<T> extends Comparable<IdentifiableProvider<?>> {
 
-	Class type();
+	Class<?> type();
 
-	Class[] wiredTypes();
+	Class<?>[] wiredTypes();
 
-	boolean lazy();
+	boolean singleton();
 
-	T get();
+	T get(Repository wiredTypes);
 
-	default void instantiate(Repository wiredTypes) {
+	int DEFAULT_PRIORITY = 0;
+
+	default int priority() {
+		return DEFAULT_PRIORITY;
 	}
 
+	@Override
+	default int compareTo(IdentifiableProvider<?> that) {
+		return Integer.compare(that.priority(), priority());
+	}
 }

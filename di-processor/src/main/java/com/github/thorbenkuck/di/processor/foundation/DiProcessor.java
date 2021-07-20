@@ -117,6 +117,7 @@ public abstract class DiProcessor extends AbstractProcessor {
 						logger.error(e.getMessage(), e.getElement());
 					} catch (Exception e) {
 						logger.error("[" + i + "] Encountered an unexpected Exception " + e);
+						logger.catching(e);
 					}
 				}
 			}

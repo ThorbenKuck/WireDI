@@ -4,6 +4,8 @@ import javax.annotation.processing.Messager;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.tools.Diagnostic;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.lang.annotation.Annotation;
 
 public class Logger {
@@ -32,10 +34,14 @@ public class Logger {
 	}
 
 	public void catching(Throwable throwable) {
-		error("While processing annotation " + currentAnnotation + " on element " + rootElement.getSimpleName() + ": Encountered the Exception " + throwable);
-
 		if(useSystemOut()) {
 			throwable.printStackTrace();
+		} else {
+			StringWriter stringWriter = new StringWriter();
+			PrintWriter printWriter = new PrintWriter(stringWriter);
+			throwable.printStackTrace(printWriter);
+
+			error(stringWriter.toString());
 		}
 	}
 

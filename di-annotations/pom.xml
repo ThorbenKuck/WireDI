@@ -1,35 +1,17 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.thorbenkuck</groupId>
     <artifactId>di-annotations</artifactId>
-    <version>0.3-SNAPSHOT</version>
-    <name>SimpleDI</name>
+    <version>${annotations.version}</version>
+    <name>SimpleDI Annotations</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
-    <properties>
-        <project.build.sourceEncoding>
-            UTF-8
-        </project.build.sourceEncoding>
-    </properties>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>ossrh</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
-    <scm>
-        <connection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</connection>
-        <url>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</url>
-        <developerConnection>scm:git:git@github.com:ThorbenKuck/SimpleDI.git</developerConnection>
-        <tag>di-0.1</tag>
-    </scm>
+    <parent>
+        <groupId>com.github.thorbenkuck</groupId>
+        <artifactId>simple-di-development-root</artifactId>
+        <version>1</version>
+    </parent>
 
     <developers>
         <developer>
@@ -38,32 +20,4 @@
             <email>thorben.kuck@gmail.com</email>
         </developer>
     </developers>
-
-    <licenses>
-        <license>
-            <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
-            <distribution>repo</distribution>
-        </license>
-    </licenses>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                </configuration>
-                <version>3.7.0</version>
-            </plugin>
-        </plugins>
-    </build>
 </project>
-
-
-        <!-- mvn -DperformRelease=true release:clean release:prepare release:perform -->
-        <!-- mvn release:prepare-->
-        <!-- mvn release:perform-->
-        <!-- mvn -DperformRelease=true-->

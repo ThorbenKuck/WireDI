@@ -4,7 +4,7 @@ import java.util.ServiceLoader;
 
 public abstract class SynchronizedServiceLoader<T> {
 
-	private final Object loadLock = new Object();
+	protected final DataAccess dataAccess = new DataAccess();
 	protected volatile boolean loaded;
 
 	public void load() {
@@ -12,7 +12,7 @@ public abstract class SynchronizedServiceLoader<T> {
 		if (loaded) {
 			return;
 		}
-		synchronized (loadLock) {
+		dataAccess.write(() -> {
 			// Check again, to combat race conditions,
 			// where both threads pass the pre checks
 			// and then, one after another enter this
@@ -27,7 +27,7 @@ public abstract class SynchronizedServiceLoader<T> {
 			ServiceLoader.load(serviceType())
 					.forEach(this::add);
 			loaded = true;
-		}
+		});
 	}
 
 	public abstract Class<T> serviceType();
@@ -37,5 +37,4 @@ public abstract class SynchronizedServiceLoader<T> {
 	public final boolean isLoaded() {
 		return loaded;
 	}
-
 }
