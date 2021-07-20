@@ -12,15 +12,14 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public abstract class DiProcessor extends AbstractProcessor {
@@ -78,23 +77,47 @@ public abstract class DiProcessor extends AbstractProcessor {
 		FieldInjector.logger = logger;
 	}
 
+	private Set<? extends Element> findAllAnnotatedClasses(TypeElement annotation, RoundEnvironment roundEnvironment) {
+		return roundEnvironment.getElementsAnnotatedWith(annotation);
+	}
+
+	private Set<? extends Element> analyzeInclusive(Set<? extends Element> foundElements, RoundEnvironment roundEnvironment) {
+		Set<Element> result = new HashSet<>();
+		for(Element element : foundElements) {
+			if(element.getKind() == ElementKind.ANNOTATION_TYPE) {
+				logger.log("Found a meta annotation!");
+				Set<? extends Element> meta = findAllAnnotatedClasses((TypeElement) element, roundEnvironment);
+				Collection<? extends Element> elements = analyzeInclusive(meta, roundEnvironment);
+				result.addAll(elements);
+			} else {
+				result.add(element);
+			}
+		}
+
+		return result;
+	}
+
 	@Override
 	public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 		int i = 0;
 		logger.setUseSystemOut(true);
 		for (Class<? extends Annotation> type : supportedAnnotations()) {
-			for (Element element : roundEnv.getElementsAnnotatedWith(type)) {
+			Set<? extends Element> root = roundEnv.getElementsAnnotatedWith(type);
+			Set<? extends Element> toProcess = analyzeInclusive(root, roundEnv);
+
+			for (Element element : toProcess) {
 				logger.setRootElement(element);
 				logger.setCurrentAnnotation(type);
 				if (!hasBeenProcessed(element)) {
 					try {
-						logger.log("[" + i++ + "] Attempting to process for annotation " + type.getName());
+						logger.log("[" + i++ + "] Attempting to process the annotation " + type.getName());
 						handle(element);
 						logger.log("[" + i + "] Finished Successfully");
 					} catch (ProcessingException e) {
 						logger.error(e.getMessage(), e.getElement());
 					} catch (Exception e) {
 						logger.error("[" + i + "] Encountered an unexpected Exception " + e);
+						logger.catching(e);
 					}
 				}
 			}

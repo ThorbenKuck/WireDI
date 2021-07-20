@@ -1,26 +1,153 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>com.github.thorbenkuck</groupId>
-    <artifactId>simple-di-bootstrap</artifactId>
-    <version>0.3-SNAPSHOT</version>
+    <artifactId>simple-di-development-root</artifactId>
+    <version>1</version>
     <packaging>pom</packaging>
-    <name>SimpleDI</name>
+    <name>SimpleDI Development Root</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+
     <properties>
-        <project.build.sourceEncoding>
-            UTF-8
-        </project.build.sourceEncoding>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <root.version>1</root.version>
+        <processor.version>0.5.2</processor.version>
+        <core.verison>0.5.2</core.verison>
+        <annotations.version>0.5.2</annotations.version>
+        <simple-di.version>0.5.2</simple-di.version>
+        <bootstrap.version>0.5.2</bootstrap.version>
+
+        <google-auto-service.version>1.0</google-auto-service.version>
+        <java-poet.version>1.13.0</java-poet.version>
+        <javax-inject.version>1</javax-inject.version>
     </properties>
 
     <modules>
+        <module>bootstrap</module>
         <module>di-annotations</module>
         <module>di-core</module>
         <module>di-processor</module>
         <module>di-root</module>
-        <module>test</module>
     </modules>
+
+    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+
+    <build>
+        <plugins>
+            <!--            Generate the source jar-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+                <executions>
+                    <execution>
+                        <id>attach-sources</id>
+                        <goals>
+                            <goal>jar-no-fork</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <!--            Generate the javadoc jar-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.3.0</version>
+                <executions>
+                    <execution>
+                        <id>attach-javadocs</id>
+                        <goals>
+                            <goal>jar</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.22.2</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-gpg-plugin</artifactId>
+                <version>3.0.1</version>
+                <executions>
+                    <execution>
+                        <id>sign-artifacts</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>sign</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
+            </plugin>
+            <plugin>
+                <groupId>org.sonatype.plugins</groupId>
+                <artifactId>nexus-staging-maven-plugin</artifactId>
+                <version>1.6.8</version>
+                <extensions>true</extensions>
+                <configuration>
+                    <serverId>ossrh</serverId>
+                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
+                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.5.3</version>
+                <configuration>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <useReleaseProfile>false</useReleaseProfile>
+                    <releaseProfiles>release</releaseProfiles>
+                    <goals>deploy</goals>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>1.8</source>
+                    <target>1.8</target>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+                <!--                <executions>-->
+                <!--                    <execution>-->
+                <!--                        <id>default-deploy</id>-->
+                <!--                        <phase>deploy</phase>-->
+                <!--                        <goals>-->
+                <!--                            <goal>deploy</goal>-->
+                <!--                        </goals>-->
+                <!--                    </execution>-->
+                <!--                </executions>-->
+            </plugin>
+        </plugins>
+    </build>
+
+    <developers>
+        <developer>
+            <id>thorbenkuck</id>
+            <name>Thorben Kuck</name>
+            <email>thorben.kuck@gmail.com</email>
+        </developer>
+    </developers>
 
     <distributionManagement>
         <snapshotRepository>
@@ -40,175 +167,11 @@
         <tag>di-0.1</tag>
     </scm>
 
-    <developers>
-        <developer>
-            <id>thorbenkuck</id>
-            <name>Thorben Kuck</name>
-            <email>thorben.kuck@gmail.com</email>
-        </developer>
-    </developers>
-
     <licenses>
         <license>
             <name>MIT License</name>
-            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <url>https://www.opensource.org/licenses/mit-license.php</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.google.auto.service</groupId>
-                <artifactId>auto-service</artifactId>
-                <version>1.0-rc4</version>
-                <optional>true</optional>
-            </dependency>
-            <dependency>
-                <groupId>com.squareup</groupId>
-                <artifactId>javapoet</artifactId>
-                <version>1.11.1</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>di-annotations</artifactId>
-                <version>0.3-SNAPSHOT</version>
-                <scope>compile</scope>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>di-processor</artifactId>
-                <version>0.3-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>di-core</artifactId>
-                <version>0.3-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>di</artifactId>
-                <version>0.3-SNAPSHOT</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-gpg-plugin</artifactId>
-                <version>1.5</version>
-                <executions>
-                    <execution>
-                        <id>sign-artifacts</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>sign</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>2.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-                <version>2.9.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-javadocs</id>
-                        <goals>
-                            <goal>jar</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.0.2</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
-                    <!--<annotationProcessorPaths>-->
-                        <!--<path>-->
-                            <!--<groupId>com.github.thorbenkuck</groupId>-->
-                            <!--<artifactId>di-processor</artifactId>-->
-                            <!--<version>0.3-SNAPSHOT</version>-->
-                        <!--</path>-->
-                    <!--</annotationProcessorPaths>-->
-                </configuration>
-                <version>3.7.0</version>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
-                <configuration>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <releaseProfiles>release</releaseProfiles>
-                    <goals>deploy</goals>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-site-plugin</artifactId>
-                <version>3.3</version>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <version>2.7</version>
-            </plugin>
-            <plugin>
-                <groupId>org.sonatype.plugins</groupId>
-                <artifactId>nexus-staging-maven-plugin</artifactId>
-                <version>1.6.7</version>
-                <extensions>true</extensions>
-                <configuration>
-                    <serverId>ossrh</serverId>
-                    <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                    <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                </configuration>
-            </plugin>
-        </plugins>
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <configuration>
-                        <source>1.8</source>
-                        <target>1.8</target>
-                    </configuration>
-                    <version>3.7.0</version>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
-
 </project>
-
-
-        <!-- mvn -DperformRelease=true release:clean release:prepare release:perform -->
-        <!-- mvn release:prepare-->
-        <!-- mvn release:perform-->
-        <!-- mvn -DperformRelease=true-->

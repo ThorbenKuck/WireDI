@@ -22,12 +22,12 @@ class RepositoryIdentifyingProvider implements IdentifiableProvider<Repository> 
 	}
 
 	@Override
-	public boolean lazy() {
-		return false;
+	public boolean singleton() {
+		return true;
 	}
 
 	@Override
-	public Repository get() {
-		return wiredTypes;
+	public Repository get(Repository wiredTypes) {
+		return this.wiredTypes;
 	}
 }

@@ -28,13 +28,12 @@ public class MethodCreator {
 				.build();
 	}
 
-	public static MethodSpec createReturningMethod(String methodName, TypeName returnType, String returnName) {
+	public static MethodSpec.Builder createReturningMethod(String methodName, TypeName returnType, String returnName) {
 		return MethodSpec.methodBuilder(methodName)
 				.addAnnotation(Override.class)
 				.returns(returnType)
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-				.addStatement("return $L", returnName)
-				.build();
+				.addStatement("return $L", returnName);
 	}
 
 }

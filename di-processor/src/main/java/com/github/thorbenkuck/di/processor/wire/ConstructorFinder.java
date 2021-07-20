@@ -3,22 +3,47 @@ package com.github.thorbenkuck.di.processor.wire;
 import com.github.thorbenkuck.di.DiInstantiationException;
 import com.github.thorbenkuck.di.Repository;
 import com.github.thorbenkuck.di.annotations.Nullable;
+import com.github.thorbenkuck.di.annotations.Wire;
 import com.github.thorbenkuck.di.processor.FetchAnnotated;
+import com.github.thorbenkuck.di.processor.constructors.MethodConstructor;
+import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.squareup.javapoet.*;
 
 import javax.inject.Inject;
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ConstructorFinder {
+public class ConstructorFinder implements MethodConstructor {
 
 	public static final String INSTANTIATION_METHOD_NAME = "createInstance";
-	private final TypeElement typeElement;
+	private final Logger logger;
 
-	public ConstructorFinder(TypeElement typeElement) {
-		this.typeElement = typeElement;
+	public ConstructorFinder(Logger logger) {
+		this.logger = logger;
+	}
+
+	@Override
+	public void construct(TypeElement typeElement, TypeSpec.Builder builder) {
+		List<ExecutableElement> potentialConstructors = new ArrayList<>();
+		for (Element element : typeElement.getEnclosedElements()) {
+			if (isConstructor(element)) {
+				potentialConstructors.add((ExecutableElement) element);
+			}
+		}
+
+		if (potentialConstructors.isEmpty()) {
+			builder.addMethod(forDefaultConstructor(typeElement).build());
+		}
+
+		ExecutableElement executableElement = findBestSuited(typeElement, potentialConstructors);
+		if (executableElement.getParameters().isEmpty()) {
+			builder.addMethod(forDefaultConstructor(typeElement).build());
+		} else {
+			builder.addMethod(withArguments(executableElement, typeElement).build());
+		}
 	}
 
 	private boolean isConstructor(Element element) {
@@ -37,7 +62,7 @@ public class ConstructorFinder {
 				.returns(TypeName.get(typeElement.asType()));
 	}
 
-	private ExecutableElement findBestSuited(List<ExecutableElement> constructors) {
+	private ExecutableElement findBestSuited(TypeElement typeElement, List<ExecutableElement> constructors) {
 		if (constructors.size() == 1) {
 			return constructors.get(0);
 		}
@@ -81,25 +106,5 @@ public class ConstructorFinder {
 
 		return instantiationMethodSpec(typeElement)
 				.addCode(builder.build());
-	}
-
-	public void applyConstruction(TypeSpec.Builder builder) {
-		List<ExecutableElement> potentialConstructors = new ArrayList<>();
-		for (Element element : typeElement.getEnclosedElements()) {
-			if (isConstructor(element)) {
-				potentialConstructors.add((ExecutableElement) element);
-			}
-		}
-
-		if (potentialConstructors.isEmpty()) {
-			builder.addMethod(forDefaultConstructor(typeElement).build());
-		}
-
-		ExecutableElement executableElement = findBestSuited(potentialConstructors);
-		if (executableElement.getParameters().isEmpty()) {
-			builder.addMethod(forDefaultConstructor(typeElement).build());
-		} else {
-			builder.addMethod(withArguments(executableElement, typeElement).build());
-		}
 	}
 }

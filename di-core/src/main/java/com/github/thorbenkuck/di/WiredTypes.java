@@ -1,131 +1,175 @@
 package com.github.thorbenkuck.di;
 
-import com.github.thorbenkuck.di.resources.ResourceRepository;
-import com.github.thorbenkuck.di.resources.Resources;
-
 import javax.inject.Provider;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements Repository {
 
-	private final Map<Class<?>, IdentifiableProvider<?>> mapping = new HashMap<>();
-	private final ResourceRepository resourceRepository = new ResourceRepository();
+    private final WiredTypesConfiguration configuration = new WiredTypesConfiguration();
 
-	public WiredTypes() {
-		if (Configuration.doDiAutoLoad()) {
-			load();
-			resourceRepository.load();
-		}
-	}
+    private final Map<Class<?>, List<IdentifiableProvider<?>>> mapping = new HashMap<>();
 
-	private void instantiateNonLazy() {
-		for (IdentifiableProvider provider : mapping.values()) {
-			if (!provider.lazy()) {
-				try {
-					provider.instantiate(this);
-				} catch (Exception e) {
-					throw new DiLoadingException("Error while instantiating " + provider, e);
-				}
-			}
-		}
-	}
+    public WiredTypes() {
+        if (configuration.doDiAutoLoad()) {
+            load();
+        }
+    }
 
-	@Override
-	public void add(IdentifiableProvider provider) {
-		for (Object wiredType : provider.wiredTypes()) {
-			if (wiredType == null) {
-				throw new DiLoadingException("The provider " + provider + " returned null as an identifiable type! This is not permitted.\n" +
-						"If you did not create your own instance, please submit your annotated class to github.");
-			}
-			mapping.put((Class<?>) wiredType, provider);
-		}
-	}
+    public WiredTypesConfiguration configuration() {
+        return configuration;
+    }
 
-	public void setResource(String key, String value) {
-		resourceRepository.set(key, value);
-	}
+    @Override
+    public void add(IdentifiableProvider provider) {
+        dataAccess.write(() -> {
+            for (Object wiredType : provider.wiredTypes()) {
+                if (wiredType == null) {
+                    throw new DiLoadingException("The provider " + provider + " returned null as an identifiable type! This is not permitted.\n" +
+                            "If you did not create your own instance, please submit your annotated class to github.");
+                }
+                unsafeAdd((Class<?>) wiredType, provider);
+            }
+        });
+    }
 
-	@Override
-	public Resources getResourceRepository() {
-		return resourceRepository;
-	}
+    public void unload() {
+        mapping.clear();
+        loaded = false;
+    }
 
-	public void unload() {
-		mapping.clear();
-		loaded = false;
-	}
+    @Override
+    public void load() {
+        add(new RepositoryIdentifyingProvider(this));
+        super.load();
+    }
 
-	@Override
-	public void load() {
-		super.load();
-		resourceRepository.load();
-		add(new RepositoryIdentifyingProvider(this));
-		instantiateNonLazy();
-	}
+    @Override
+    public Class<IdentifiableProvider> serviceType() {
+        return IdentifiableProvider.class;
+    }
 
-	@Override
-	public Class<IdentifiableProvider> serviceType() {
-		return IdentifiableProvider.class;
-	}
+    @Override
+    public <T> T getInstance(Class<T> type) {
+        List<IdentifiableProvider<T>> providers = getAllProviders(type);
+        if (providers.isEmpty()) {
+            return null;
+        }
+        IdentifiableProvider<T> provider = findPrimaryProvider(providers, type);
 
-	@Override
-	public <T> T getInstance(Class<T> type) {
-		IdentifiableProvider<T> provider;
+        try {
+            T t = provider.get(this);
 
-		synchronized (mapping) {
-			provider = (IdentifiableProvider<T>) mapping.get(type);
-		}
+            sanityCheckInstanceWithProduced(provider, t, type);
+            return t;
+        } catch (Exception e) {
+            throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
+        }
+    }
 
-		if (provider == null) {
-			return null;
-		}
+    @Override
+    public <T> T requireInstance(Class<T> type) {
+        IdentifiableProvider<T> provider = getSingleProvider(type);
 
-		Object t;
-		try {
-			provider.instantiate(this);
-			t = provider.get();
-		} catch (Exception e) {
-			throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
-		}
+        try {
+            T t = provider.get(this);
 
-		if (t == null) {
-			throw new DiInstantiationException("Provider produced null. This is not allowed by design!");
-		}
+            sanityCheckInstanceWithProduced(provider, t, type);
+            return t;
+        } catch (Exception e) {
+            throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
+        }
+    }
 
-		if (!provider.type().isAssignableFrom(t.getClass())) {
-			throw new DiInstantiationException("The provider for the class " + type + " is not compatible with the produced instance " + t);
-		}
+    @Override
+    public <T> List<T> getAll(Class<T> type) {
+        return getAllProviders(type)
+                .stream()
+                .sorted()
+                .map(provider -> {
+                    try {
+                        return provider.get(this);
+                    } catch (Exception e) {
+                        return null;
+                    }
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-		return (T) t;
-	}
 
-	@Override
-	public <T> Provider<T> getProvider(Class<T> type) {
-		IdentifiableProvider<T> provider;
+    }
 
-		synchronized (mapping) {
-			provider = (IdentifiableProvider<T>) mapping.get(type);
-		}
+    @Override
+    public <T> Provider<T> getProvider(Class<T> type) {
+        IdentifiableProvider<T> provider = getSingleProvider(type);
 
-		if (provider == null) {
-			throw new DiLoadingException("Could not find any provider for the class " + type);
-		}
+        return new ProviderMapper<>(provider, this);
+    }
 
-		return new ProviderMapper<>(provider);
-	}
+    @Override
+    public String toString() {
+        return "WiredTypes{" +
+                "mapping=" + mapping +
+                ", loaded=" + loaded +
+                '}';
+    }
 
-	private final class ProviderMapper<T> implements Provider<T> {
+    private <T> IdentifiableProvider<T> findPrimaryProvider(List<IdentifiableProvider<T>> providers, Class<T> type) {
+        if(providers.size() == 1) {
+            return providers.get(0);
+        }
+        WireConflictStrategy wireConflictStrategy = configuration.conflictStrategy();
+        return wireConflictStrategy.find(providers, type);
+    }
 
-		private final IdentifiableProvider<T> provider;
+    private <T> void sanityCheckInstanceWithProduced(IdentifiableProvider<T> provider, T t, Class<T> type) {
+        if (t == null) {
+            throw new DiInstantiationException("Provider produced null. This is not allowed by design!");
+        }
 
-		private ProviderMapper(IdentifiableProvider<T> provider) {
-			this.provider = provider;
-		}
+        if (!provider.type().isAssignableFrom(t.getClass())) {
+            throw new DiInstantiationException("The provider for the class " + type + " is not compatible with the produced instance " + t);
+        }
+    }
 
-		@Override
-		public T get() {
-			return provider.get();
-		}
-	}
+    private <T> IdentifiableProvider<T> getSingleProvider(Class<T> type) {
+        List<IdentifiableProvider<T>> allProviders = getAllProviders(type);
+        if (allProviders.isEmpty()) {
+            throw new DiInstantiationException("No providers registered for the type " + type);
+        }
+
+        if (allProviders.size() > 1) {
+            return findPrimaryProvider(allProviders, type);
+        }
+
+        return allProviders.get(0);
+    }
+
+    private <T> List<IdentifiableProvider<T>> getAllProviders(Class<T> type) {
+        return dataAccess.read(() -> mapping.getOrDefault(type, Collections.emptyList())
+                .stream()
+                .map(it -> (IdentifiableProvider<T>) it)
+                .collect(Collectors.toCollection(ArrayList::new)));
+    }
+
+    private void unsafeAdd(Class<?> type, IdentifiableProvider<?> provider) {
+        List<IdentifiableProvider<?>> providers = mapping.computeIfAbsent(type, (t) -> new ArrayList<>());
+        providers.add(provider);
+    }
+
+    private static final class ProviderMapper<T> implements Provider<T> {
+
+        private final IdentifiableProvider<T> provider;
+        private final WiredTypes wiredTypes;
+
+        private ProviderMapper(IdentifiableProvider<T> provider, WiredTypes wiredTypes) {
+            this.provider = provider;
+            this.wiredTypes = wiredTypes;
+        }
+
+        @Override
+        public T get() {
+            return provider.get(wiredTypes);
+        }
+    }
 }

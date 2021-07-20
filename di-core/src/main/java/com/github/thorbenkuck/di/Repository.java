@@ -1,15 +1,16 @@
 package com.github.thorbenkuck.di;
 
-import com.github.thorbenkuck.di.resources.Resources;
-
 import javax.inject.Provider;
+import java.util.List;
 
 public interface Repository {
-	boolean isLoaded();
+    boolean isLoaded();
 
-	Resources getResourceRepository();
+    <T> T getInstance(Class<T> type);
 
-	<T> T getInstance(Class<T> type);
+    <T> T requireInstance(Class<T> type);
 
-	<T> Provider<T> getProvider(Class<T> type);
+    <T> List<T> getAll(Class<T> type);
+
+    <T> Provider<T> getProvider(Class<T> type);
 }
