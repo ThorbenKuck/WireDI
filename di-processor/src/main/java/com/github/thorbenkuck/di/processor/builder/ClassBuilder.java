@@ -17,18 +17,18 @@ import java.util.stream.Collectors;
 public abstract class ClassBuilder {
 
     private final PackageElement packageElement;
+    private final WireInformation wireInformation;
     private TypeSpec.Builder rootBuilder;
 
-    protected ClassBuilder(PackageElement packageElement) {
-        this.packageElement = packageElement;
-    }
-
     protected ClassBuilder(WireInformation wireInformation) {
-        this(wireInformation.getTargetPackage());
+        this.packageElement = wireInformation.getTargetPackage();
+        this.wireInformation = wireInformation;
     }
 
     protected void setup() {
         this.rootBuilder = initialize();
+        this.rootBuilder.addOriginatingElement(wireInformation.getPrimaryWireType())
+                .addOriginatingElement(wireInformation.getWireCandidate());
     }
 
     protected TypeSpec.Builder classBuilder() {
