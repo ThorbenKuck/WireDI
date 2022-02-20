@@ -1,8 +1,15 @@
 package com.github.thorbenkuck.di;
 
-class RepositoryIdentifyingProvider implements IdentifiableProvider<Repository> {
+import com.github.thorbenkuck.di.domain.IdentifiableProvider;
+import com.github.thorbenkuck.di.domain.WireRepository;
+
+class RepositoryIdentifyingProvider implements IdentifiableProvider<WireRepository> {
 
 	private final WiredTypes wiredTypes;
+	private static final Class[] types = new Class[] {
+			WireRepository.class,
+			WiredTypes.class
+	};
 
 	RepositoryIdentifyingProvider(WiredTypes wiredTypes) {
 		this.wiredTypes = wiredTypes;
@@ -10,24 +17,21 @@ class RepositoryIdentifyingProvider implements IdentifiableProvider<Repository> 
 
 	@Override
 	public Class type() {
-		return Repository.class;
+		return WireRepository.class;
 	}
 
 	@Override
 	public Class[] wiredTypes() {
-		return new Class[] {
-				Repository.class,
-				WiredTypes.class
-		};
+		return types;
 	}
 
 	@Override
-	public boolean singleton() {
+	public boolean isSingleton() {
 		return true;
 	}
 
 	@Override
-	public Repository get(Repository wiredTypes) {
+	public WireRepository get(WireRepository wiredTypes) {
 		return this.wiredTypes;
 	}
 }

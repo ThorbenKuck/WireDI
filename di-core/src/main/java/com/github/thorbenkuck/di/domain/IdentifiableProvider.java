@@ -1,14 +1,12 @@
-package com.github.thorbenkuck.di;
+package com.github.thorbenkuck.di.domain;
 
-public interface IdentifiableProvider<T> extends Comparable<IdentifiableProvider<?>> {
+public interface IdentifiableProvider<T> extends Comparable<IdentifiableProvider<?>>, WireCapable {
 
 	Class<?> type();
 
-	Class<?>[] wiredTypes();
+	boolean isSingleton();
 
-	boolean singleton();
-
-	T get(Repository wiredTypes);
+	T get(WireRepository wiredTypes);
 
 	int DEFAULT_PRIORITY = 0;
 

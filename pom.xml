@@ -14,12 +14,6 @@
 
         <root.version>1</root.version>
 
-        <processor.version>0.5.3</processor.version>
-        <core.verison>0.5.3</core.verison>
-        <annotations.version>0.5.3</annotations.version>
-        <simple-di.version>0.5.3</simple-di.version>
-        <bootstrap.version>0.5.3</bootstrap.version>
-
         <google-auto-service.version>1.0</google-auto-service.version>
         <java-poet.version>1.13.0</java-poet.version>
         <javax-inject.version>1</javax-inject.version>
@@ -34,6 +28,15 @@
     </modules>
 
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.8.2</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
 
     <build>
         <plugins>

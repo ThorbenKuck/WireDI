@@ -1,5 +1,7 @@
 package com.github.thorbenkuck.di;
 
+import com.github.thorbenkuck.di.domain.IdentifiableProvider;
+
 import java.util.List;
 import java.util.stream.Collectors;
 

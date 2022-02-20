@@ -23,5 +23,11 @@ public @interface Wire {
 
 	boolean singleton() default true;
 
+	/**
+	 * TODO
+	 * @return
+	 */
+	boolean proxy() default true;
+
 }
 

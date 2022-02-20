@@ -1,5 +1,8 @@
 package com.github.thorbenkuck.di;
 
+import com.github.thorbenkuck.di.domain.IdentifiableProvider;
+import com.github.thorbenkuck.di.domain.WireRepository;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,12 +56,12 @@ public final class SingletonInstanceProvider<T> implements IdentifiableProvider<
     }
 
     @Override
-    public final boolean singleton() {
+    public final boolean isSingleton() {
         return true;
     }
 
     @Override
-    public final T get(Repository wiredTypes) {
+    public final T get(WireRepository wiredTypes) {
         return instance;
     }
 

@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>simple-di-bootstrap</artifactId>
-    <version>${bootstrap.version}</version>
+    <version>1.0.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>SimpleDI Bootstrap</name>
     <description>Easy and simple di using annotation processors</description>
@@ -27,7 +27,7 @@
                             <annotationProcessorPath>
                                 <groupId>com.github.thorbenkuck</groupId>
                                 <artifactId>di-processor</artifactId>
-                                <version>${processor.version}</version>
+                                <version>1.0.0-SNAPSHOT</version>
                             </annotationProcessorPath>
                         </annotationProcessorPaths>
                     </configuration>
@@ -40,6 +40,7 @@
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
             <artifactId>di</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 
@@ -59,24 +60,35 @@
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>di-annotations</artifactId>
-                <version>${annotations.version}</version>
+                <version>1.0.0-SNAPSHOT</version>
                 <scope>compile</scope>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>di-processor</artifactId>
-                <version>${processor.version}</version>
+                <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>di-core</artifactId>
-                <version>${core.verison}</version>
+                <version>1.0.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>di</artifactId>
-                <version>${simple-di.version}</version>
+                <version>1.0.0-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
 </project>

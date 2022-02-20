@@ -18,6 +18,7 @@ public class Main {
 	public static void main(String[] args) {
 		WiredTypes wiredTypes = new WiredTypes();
 		SuperDi instance = wiredTypes.getInstance(SuperDi.class);
+		instance.print("Bla");
 		instance.foo();
 
 		List<Command> commandList = wiredTypes.getAll(Command.class);

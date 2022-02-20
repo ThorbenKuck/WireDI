@@ -1,14 +1,22 @@
 package com.github.thorbenkuck.di;
 
+import com.github.thorbenkuck.di.domain.GenericIdentifyingProvider;
+import com.github.thorbenkuck.di.domain.IdentifiableProvider;
+import com.github.thorbenkuck.di.domain.WireRepository;
+import com.github.thorbenkuck.di.properties.TypedProperties;
+import com.github.thorbenkuck.di.aspects.AspectRepository;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import javax.inject.Provider;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements Repository {
+public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements WireRepository {
 
     private final WiredTypesConfiguration configuration = new WiredTypesConfiguration();
-
-    private final Map<Class<?>, List<IdentifiableProvider<?>>> mapping = new HashMap<>();
+    private final TypedProperties propertyContainer = new TypedProperties();
+    private final AspectRepository aspectRepository = new AspectRepository();
 
     public WiredTypes() {
         if (configuration.doDiAutoLoad()) {
@@ -16,32 +24,32 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
         }
     }
 
+    @Override
+    public TypedProperties properties() {
+        return this.propertyContainer;
+    }
+
+    @Override
+    public AspectRepository aspectRepository() {
+        return aspectRepository;
+    }
+
+    @Override
     public WiredTypesConfiguration configuration() {
         return configuration;
     }
 
     @Override
-    public void add(IdentifiableProvider provider) {
-        dataAccess.write(() -> {
-            for (Object wiredType : provider.wiredTypes()) {
-                if (wiredType == null) {
-                    throw new DiLoadingException("The provider " + provider + " returned null as an identifiable type! This is not permitted.\n" +
-                            "If you did not create your own instance, please submit your annotated class to github.");
-                }
-                unsafeAdd((Class<?>) wiredType, provider);
-            }
-        });
-    }
-
-    public void unload() {
-        mapping.clear();
-        loaded = false;
+    public <T> void announce(T o) {
+        register(new GenericIdentifyingProvider<>(o));
     }
 
     @Override
     public void load() {
-        add(new RepositoryIdentifyingProvider(this));
+        register(new RepositoryIdentifyingProvider(this));
+        register(new AspectRepositoryIdentifyingProvider(aspectRepository));
         super.load();
+        aspectRepository.load(this);
     }
 
     @Override
@@ -50,6 +58,17 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
     }
 
     @Override
+    @Nullable
+    public <T> T tryGetInstance(Class<T> type) {
+        try {
+            return getInstance(type);
+        } catch (DiInstantiationException e) {
+            return null;
+        }
+    }
+
+    @Override
+    @Nullable
     public <T> T getInstance(Class<T> type) {
         List<IdentifiableProvider<T>> providers = getAllProviders(type);
         if (providers.isEmpty()) {
@@ -58,27 +77,36 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
         IdentifiableProvider<T> provider = findPrimaryProvider(providers, type);
 
         try {
-            T t = provider.get(this);
+            T t = instantiate(provider, type);
 
             sanityCheckInstanceWithProduced(provider, t, type);
             return t;
         } catch (Exception e) {
-            throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
+            throw wireCreationError(e, provider);
         }
     }
 
     @Override
+    @NotNull
     public <T> T requireInstance(Class<T> type) {
-        IdentifiableProvider<T> provider = getSingleProvider(type);
+        IdentifiableProvider<T> provider = requireSingleProvider(type);
 
         try {
-            T t = provider.get(this);
+            T t = instantiate(provider, type);
 
             sanityCheckInstanceWithProduced(provider, t, type);
             return t;
         } catch (Exception e) {
-            throw new DiInstantiationException("Error while letting the provider " + provider + " produce the correlating instance", e);
+            throw wireCreationError(e, provider);
         }
+    }
+
+    private <T> T instantiate(IdentifiableProvider<T> provider, Class<T> type) {
+        return provider.get(this);
+    }
+
+    private DiInstantiationException wireCreationError(Exception e, IdentifiableProvider<?> provider) {
+        return new DiInstantiationException("Error while wiring " + provider.type(), e);
     }
 
     @Override
@@ -90,7 +118,7 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
                     try {
                         return provider.get(this);
                     } catch (Exception e) {
-                        return null;
+                        throw new DiInstantiationException("Error instantiating the class " + provider.type().getSimpleName() + ".", e);
                     }
                 })
                 .filter(Objects::nonNull)
@@ -101,7 +129,7 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
 
     @Override
     public <T> Provider<T> getProvider(Class<T> type) {
-        IdentifiableProvider<T> provider = getSingleProvider(type);
+        IdentifiableProvider<T> provider = requireSingleProvider(type);
 
         return new ProviderMapper<>(provider, this);
     }
@@ -109,7 +137,6 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
     @Override
     public String toString() {
         return "WiredTypes{" +
-                "mapping=" + mapping +
                 ", loaded=" + loaded +
                 '}';
     }
@@ -132,10 +159,10 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
         }
     }
 
-    private <T> IdentifiableProvider<T> getSingleProvider(Class<T> type) {
+    private <T> IdentifiableProvider<T> requireSingleProvider(Class<T> type) {
         List<IdentifiableProvider<T>> allProviders = getAllProviders(type);
         if (allProviders.isEmpty()) {
-            throw new DiInstantiationException("No providers registered for the type " + type);
+            throw new DiInstantiationException("Could not find any instance for " + type);
         }
 
         if (allProviders.size() > 1) {
@@ -146,15 +173,10 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
     }
 
     private <T> List<IdentifiableProvider<T>> getAllProviders(Class<T> type) {
-        return dataAccess.read(() -> mapping.getOrDefault(type, Collections.emptyList())
+        return dataAccess.read(() -> unsafeGet(type)
                 .stream()
                 .map(it -> (IdentifiableProvider<T>) it)
                 .collect(Collectors.toCollection(ArrayList::new)));
-    }
-
-    private void unsafeAdd(Class<?> type, IdentifiableProvider<?> provider) {
-        List<IdentifiableProvider<?>> providers = mapping.computeIfAbsent(type, (t) -> new ArrayList<>());
-        providers.add(provider);
     }
 
     private static final class ProviderMapper<T> implements Provider<T> {
