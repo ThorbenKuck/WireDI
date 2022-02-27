@@ -54,7 +54,7 @@ public abstract class DiProcessor extends AbstractProcessor {
         Set<Element> result = new HashSet<>();
         for (Element element : foundElements) {
             if (element.getKind() == ElementKind.ANNOTATION_TYPE) {
-                Logger.log("Found a meta annotation!");
+                Logger.info("Found a meta annotation!");
                 Set<? extends Element> meta = findAllAnnotatedClasses((TypeElement) element, roundEnvironment);
                 Collection<? extends Element> elements = analyzeInclusive(meta, roundEnvironment);
                 result.addAll(elements);
@@ -68,31 +68,33 @@ public abstract class DiProcessor extends AbstractProcessor {
 
     @Override
     public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
-        int i = 0;
         Logger.setUseSystemOut(true);
         for (Class<? extends Annotation> type : supportedAnnotations()) {
             Set<? extends Element> root = roundEnv.getElementsAnnotatedWith(type);
             Set<? extends Element> toProcess = analyzeInclusive(root, roundEnv);
 
-            for (Element element : toProcess) {
-                Logger.setRootElement(element);
-                Logger.setCurrentAnnotation(type);
-                if (!hasBeenProcessed(element)) {
-                    try {
-                        Logger.log("[" + i++ + "] Attempting to process the annotation " + type.getName());
-                        handle(element);
-                        Logger.log("[" + i + "] Finished Successfully");
-                        markAsProcessed(element);
-                    } catch (ProcessingException e) {
-                        Logger.error(e.getMessage(), e.getElement());
-                    } catch (Exception e) {
-                        Logger.error("[" + i + "] Encountered an unexpected Exception " + e);
-                        Logger.catching(e);
-                    }
-                }
-            }
+            toProcess.forEach(element -> {
+                        processElement(element, type);
+                    });
         }
 
         return true;
+    }
+
+    private void processElement(Element element, Class<? extends Annotation> annotationType) {
+        Logger.setRootElement(element);
+        Logger.setCurrentAnnotation(annotationType);
+        if (!hasBeenProcessed(element)) {
+            try {
+                handle(element);
+                Logger.info("[" + annotationType.getSimpleName() + "] [" + element.getSimpleName() + "] DONE");
+                markAsProcessed(element);
+            } catch (ProcessingException e) {
+                Logger.error(e.getMessage(), e.getElement());
+            } catch (Exception e) {
+                Logger.error("[" + annotationType.getSimpleName() + "]  [" + element.getSimpleName() + "] Encountered unexpected Exception: " + e.getMessage(), element);
+                Logger.catching(e);
+            }
+        }
     }
 }

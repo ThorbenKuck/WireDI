@@ -4,14 +4,13 @@ import com.github.thorbenkuck.di.ReflectionsHelper;
 import com.github.thorbenkuck.di.annotations.aspects.Pure;
 import com.github.thorbenkuck.di.aspects.AspectExecutionContext;
 import com.github.thorbenkuck.di.processor.WireInformation;
+import com.github.thorbenkuck.di.processor.foundation.ProcessorContext;
 import com.github.thorbenkuck.di.processor.util.TypeSpecs;
 import com.squareup.javapoet.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.*;
-import javax.lang.model.type.NoType;
 import javax.lang.model.type.TypeKind;
-import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +25,7 @@ public class AspectAwareProxyMethodOverwrite {
         this.wireInformation = wireInformation;
     }
 
-    public List<ExecutableElement> findEligibleMethods() {
+    public static List<ExecutableElement> findEligibleMethods(WireInformation wireInformation) {
         return wireInformation.getWireCandidate().getEnclosedElements()
                 .stream()
                 .filter(it -> it.getKind() == ElementKind.METHOD)
@@ -39,8 +38,7 @@ public class AspectAwareProxyMethodOverwrite {
     }
 
     public void overwriteAllFor(TypeSpec.Builder proxyClassBuilder) {
-        List<ExecutableElement> allPublicMethods = findEligibleMethods();
-        CodeBlock.Builder result = CodeBlock.builder();
+        List<ExecutableElement> allPublicMethods = findEligibleMethods(wireInformation);
         if (allPublicMethods.isEmpty()) {
             // There is nothing to proxy.
             return;
@@ -58,14 +56,18 @@ public class AspectAwareProxyMethodOverwrite {
     }
 
     private Optional<MethodProxyInformation> tryProxyMethod(ExecutableElement current, int methodCounter) {
-        List<? extends AnnotationMirror> annotationMirrors = current.getAnnotationMirrors();
+        List<? extends AnnotationMirror> annotationMirrors = current.getAnnotationMirrors()
+                .stream()
+                .filter(ProcessorContext::isUsedForAop)
+                .collect(Collectors.toList());
         if (annotationMirrors.isEmpty()) {
             return Optional.empty();
         }
 
         TypeName returnType = ClassName.get(current.getReturnType());
         MethodSpec.Builder methodBuilder = MethodSpec.overriding(current)
-                .addStatement("$T aspectContext = aspectRepository.startBuilder($L)", AspectExecutionContext.class, invokeSuperLambda(current))
+                .addModifiers(Modifier.FINAL)
+                .addStatement("final $T aspectContext = aspectRepository.startBuilder($L)", AspectExecutionContext.class, invokeSuperLambda(current))
                 .returns(returnType);
 
         current.getParameters().forEach(parameter -> {

@@ -1,12 +1,17 @@
 package com.github.thorbenkuck.di.properties;
 
+import org.jetbrains.annotations.NotNull;
+
 public class PropertyNotFoundException extends RuntimeException {
 
-    public PropertyNotFoundException(String property)  {
+    public PropertyNotFoundException(@NotNull final String property)  {
         super("Could not found the property \"" + property + "\"");
     }
 
-    public PropertyNotFoundException(String property, String source)  {
+    public PropertyNotFoundException(
+            @NotNull final String property,
+            @NotNull final String source
+    )  {
         super("Could not found the property \"" + property + "\" in \"" + source + "\"");
     }
 }

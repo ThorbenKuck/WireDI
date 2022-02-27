@@ -1,10 +1,17 @@
 package com.github.thorbenkuck.di.processor;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import java.util.List;
 import java.util.function.Supplier;
 
 public class AnnotationTypeFieldExtractor {
+
+    public static boolean hasAnnotationByName(Element element, String name) {
+        return element.getAnnotationMirrors()
+                .stream()
+                .anyMatch(it -> it.getAnnotationType().asElement().getSimpleName().toString().equals(name));
+    }
 
     public static <T> TypeMirror extractFromClassField(Supplier<Class<T>> supplier) {
         return extractFirstFromException(supplier);

@@ -3,12 +3,15 @@ package com.github.thorbenkuck.di.processor.builder;
 import com.github.thorbenkuck.di.annotations.PrimaryWireType;
 import com.github.thorbenkuck.di.annotations.Wire;
 import com.github.thorbenkuck.di.aspects.AspectRepository;
+import com.github.thorbenkuck.di.domain.AspectAwareProxy;
 import com.github.thorbenkuck.di.processor.WireInformation;
+import com.github.thorbenkuck.di.processor.foundation.ProcessorContext;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class AspectAwareProxyBuilder extends ClassBuilder {
@@ -21,10 +24,22 @@ public class AspectAwareProxyBuilder extends ClassBuilder {
         setup();
     }
 
+    public static boolean willProxyAnything(WireInformation wireInformation) {
+        Optional<? extends AnnotationMirror> detectedAnnotations = AspectAwareProxyMethodOverwrite.findEligibleMethods(wireInformation)
+                .stream()
+                .flatMap(current -> current.getAnnotationMirrors()
+                            .stream()
+                            .filter(ProcessorContext::isUsedForAop)
+                ).findAny();
+
+        return detectedAnnotations.isPresent();
+    }
+
     @Override
     protected TypeSpec.Builder initialize() {
         return TypeSpec.classBuilder(wireInformation.getWireCandidate().getSimpleName() + "$$AspectAwareProxy")
                 .superclass(ClassName.get(wireInformation.getWireCandidate()))
+                .addSuperinterface(ClassName.get(AspectAwareProxy.class))
                 .addModifiers(Modifier.FINAL);
     }
 
@@ -32,10 +47,12 @@ public class AspectAwareProxyBuilder extends ClassBuilder {
         addField(
                 FieldSpec.builder(ClassName.get(AspectRepository.class), "aspectRepository")
                         .addModifiers(Modifier.PRIVATE)
+                        .addModifiers(Modifier.FINAL)
         );
         MethodSpec.Builder proxyConstructor = constructor();
         List<ParameterSpec> proxyConstructorParameters = new ArrayList<>();
-        proxyConstructorParameters.add(ParameterSpec.builder(AspectRepository.class, "aspectRepository").build());
+        proxyConstructorParameters.add(ParameterSpec.builder(AspectRepository.class, "aspectRepository")
+                .build());
         List<VariableElement> originalParameters = new ArrayList<>();
 
         if(wireInformation.getPrimaryConstructor().isPresent()) {

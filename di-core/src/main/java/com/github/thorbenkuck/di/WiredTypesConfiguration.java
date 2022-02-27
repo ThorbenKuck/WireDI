@@ -1,7 +1,12 @@
 package com.github.thorbenkuck.di;
 
-public class WiredTypesConfiguration {
+import com.github.thorbenkuck.di.annotations.ManualWireCandidate;
+import org.jetbrains.annotations.NotNull;
 
+@ManualWireCandidate
+public final class WiredTypesConfiguration {
+
+	@NotNull
 	private WireConflictStrategy wireConflictStrategy = WireConflictStrategy.valueOf(
 			System.getProperty("simple.di.wired.concurrent-definition-strategy", WireConflictStrategy.DEFAULT.toString())
 	);
@@ -10,11 +15,11 @@ public class WiredTypesConfiguration {
 		return toBoolean("simple.di.wired.autoload", true);
 	}
 
-	public void setWireConflictStrategy(WireConflictStrategy strategy) {
+	public void setWireConflictStrategy(@NotNull final WireConflictStrategy strategy) {
 		wireConflictStrategy = strategy;
 	}
 
-	public static void globallySetWireConflictStrategy(WireConflictStrategy strategy) {
+	public static void globallySetWireConflictStrategy(@NotNull final WireConflictStrategy strategy) {
 		System.setProperty("simple.di.wired.concurrent-definition-strategy", strategy.name());
 	}
 
@@ -22,8 +27,11 @@ public class WiredTypesConfiguration {
 		return wireConflictStrategy;
 	}
 
-	private static boolean toBoolean(String string, boolean defaultValue) {
-		String property = System.getProperty(string);
+	private static boolean toBoolean(
+			@NotNull final String string,
+			final boolean defaultValue
+	) {
+		final String property = System.getProperty(string);
 		if(property == null) {
 			return defaultValue;
 		}

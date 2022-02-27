@@ -1,72 +1,125 @@
 package com.github.thorbenkuck.di.aspects;
 
-import com.sun.org.apache.bcel.internal.generic.DCONST;
 import org.junit.jupiter.api.Test;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AspectInstanceWireRepositoryTest {
 
+    private final TestClass testClass = new TestClass();
+    private final TestAnnotation testAnnotation = testClass.getClass().getAnnotation(TestAnnotation.class);
+    private final SecondTestAnnotation secondTestAnnotation = testClass.getClass().getAnnotation(SecondTestAnnotation.class);
+
     @Test
-    public void test() {
+    public void verifyThatTheAspectRepositoryWorksWithTwoAnnotationAndNoArguments() {
         // Arrange
         AspectRepository aspectRepository = new AspectRepository();
+        AtomicInteger result = new AtomicInteger(0);
         aspectRepository.registerFor(TestAnnotation.class, context -> {
-            System.out.println("3");
+            result.addAndGet(1);
             return context.proceed();
         });
         aspectRepository.registerFor(TestAnnotation.class, context -> {
-            System.out.println("2");
+            result.addAndGet(2);
             return context.proceed();
         });
         aspectRepository.registerFor(TestAnnotation.class, context -> {
-            System.out.println("1");
+            result.addAndGet(3);
             return context.proceed();
         });
         aspectRepository.registerFor(SecondTestAnnotation.class, context -> {
-            String foo = context.requireArgumentAs("foo", String.class);
-            System.out.println("SOMETHING SPECIAL!");
+            result.addAndGet(4);
             return context.proceed();
         });
-        TestClass testClass = new TestClass();
-        TestAnnotation annotation = testClass.getClass().getAnnotation(TestAnnotation.class);
-        SecondTestAnnotation annotation2 = testClass.getClass().getAnnotation(SecondTestAnnotation.class);
 
-        // Act
+
         Optional<AspectWrapper<TestAnnotation>> access = aspectRepository.access(TestAnnotation.class);
         Optional<AspectWrapper<SecondTestAnnotation>> access2 = aspectRepository.access(SecondTestAnnotation.class);
         assertTrue(access.isPresent());
         assertTrue(access2.isPresent());
 
-        AspectWrapper<TestAnnotation> testAnnotationAspectWrapper = access.get();
-        AspectWrapper<SecondTestAnnotation> secondTestAnnotationAspectWrapper = access2.get();
-
-        ExecutionContext<TestAnnotation> context = new ExecutionContext<>(testAnnotationAspectWrapper, annotation, c -> {
-            System.out.println("4");
+        ExecutionContext<TestAnnotation> tempContext = new ExecutionContext<>(access.get(), testAnnotation, c -> {
+            result.addAndGet(5);
             return null;
         });
 
-        ExecutionContext<TestAnnotation> tempContext = new ExecutionContext<>(testAnnotationAspectWrapper, annotation, c -> {
-            System.out.println("4");
-            return null;
-        });
+        ExecutionContext<SecondTestAnnotation> context2 = new ExecutionContext<>(access2.get(), secondTestAnnotation, tempContext);
 
-        ExecutionContext<SecondTestAnnotation> context2 = new ExecutionContext<>(secondTestAnnotationAspectWrapper, annotation2, tempContext);
-
-        System.out.println("## First ##");
-        context.run();
-
-        System.out.println("\n## Second ##");
-        context2.setArgument("foo", "foo");
+        // Act
         context2.run();
 
         // Assert
-        context.clear();
-        context2.clear();
+        assertThat(result.get()).isEqualTo(1 + 2 + 3 + 4 + 5);
+    }
+
+    @Test
+    public void verifyThatTheAspectRepositoryWorksWithOneAnnotationAndNoArguments() {
+        // Arrange
+        AspectRepository aspectRepository = new AspectRepository();
+        AtomicInteger result = new AtomicInteger(0);
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(1);
+            return context.proceed();
+        });
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(2);
+            return context.proceed();
+        });
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(3);
+            return context.proceed();
+        });
+        Optional<AspectWrapper<TestAnnotation>> access = aspectRepository.access(TestAnnotation.class);
+        assertTrue(access.isPresent());
+
+        // Act
+        ExecutionContext<TestAnnotation> context = new ExecutionContext<>(access.get(), testAnnotation, c -> {
+            result.addAndGet(4);
+            return null;
+        });
+
+        // Assert
+        context.run();
+        assertThat(result.get()).isEqualTo(1 + 2 + 3 + 4);
+    }
+
+    @Test
+    public void verifyThatTheAspectRepositoryWorksWithOneAnnotationAndOneArgument() {
+        // Arrange
+        AspectRepository aspectRepository = new AspectRepository();
+        AtomicInteger result = new AtomicInteger(0);
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(1);
+            return context.proceed();
+        });
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(2);
+            return context.proceed();
+        });
+        aspectRepository.registerFor(TestAnnotation.class, context -> {
+            result.addAndGet(3);
+            return context.proceed();
+        });
+        Optional<AspectWrapper<TestAnnotation>> access = aspectRepository.access(TestAnnotation.class);
+        assertTrue(access.isPresent());
+
+        // Act
+        ExecutionContext<TestAnnotation> context = new ExecutionContext<>(access.get(), testAnnotation, c -> {
+            int toAdd = assertDoesNotThrow(() -> c.requireArgumentAs("value", Integer.class));
+            result.addAndGet(toAdd);
+            return null;
+        });
+
+        // Assert
+        context.setArgument("value", 10);
+        context.run();
+        assertThat(result.get()).isEqualTo(1 + 2 + 3 + 10);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -77,5 +130,5 @@ class AspectInstanceWireRepositoryTest {
 
     @TestAnnotation
     @SecondTestAnnotation
-    static class TestClass { }
+    static class TestClass {}
 }

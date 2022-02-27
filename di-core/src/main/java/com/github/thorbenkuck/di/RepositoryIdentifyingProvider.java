@@ -2,26 +2,32 @@ package com.github.thorbenkuck.di;
 
 import com.github.thorbenkuck.di.domain.IdentifiableProvider;
 import com.github.thorbenkuck.di.domain.WireRepository;
+import org.jetbrains.annotations.NotNull;
 
-class RepositoryIdentifyingProvider implements IdentifiableProvider<WireRepository> {
+final class RepositoryIdentifyingProvider implements IdentifiableProvider<WireRepository> {
 
+	@NotNull
 	private final WiredTypes wiredTypes;
-	private static final Class[] types = new Class[] {
+
+	@NotNull
+	private static final Class<?>[] types = new Class[] {
 			WireRepository.class,
 			WiredTypes.class
 	};
 
-	RepositoryIdentifyingProvider(WiredTypes wiredTypes) {
+	RepositoryIdentifyingProvider(@NotNull final WiredTypes wiredTypes) {
 		this.wiredTypes = wiredTypes;
 	}
 
 	@Override
-	public Class type() {
+	@NotNull
+	public Class<?> type() {
 		return WireRepository.class;
 	}
 
 	@Override
-	public Class[] wiredTypes() {
+	@NotNull
+	public Class<?>[] wiredTypes() {
 		return types;
 	}
 
@@ -31,7 +37,8 @@ class RepositoryIdentifyingProvider implements IdentifiableProvider<WireReposito
 	}
 
 	@Override
-	public WireRepository get(WireRepository wiredTypes) {
+	@NotNull
+	public WireRepository get(@NotNull final WireRepository wiredTypes) {
 		return this.wiredTypes;
 	}
 }

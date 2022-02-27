@@ -11,7 +11,7 @@ public @interface PropertySource {
 
     String prefix() default "";
 
-    String file() default ""; // TODO Not yet implemented
+    String file() default "";
 
     Lifecycle lifecycle() default Lifecycle.RUNTIME;
 

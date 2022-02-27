@@ -1,12 +1,24 @@
 package com.github.thorbenkuck.di.properties;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class InvalidPropertyTypeException extends RuntimeException {
 
-    public InvalidPropertyTypeException(String key, String value, Class<?> type) {
+    public InvalidPropertyTypeException(
+            @NotNull final String key,
+            @NotNull final String value,
+            @NotNull final Class<?> type
+    ) {
         this(key, value, type, null);
     }
 
-    public InvalidPropertyTypeException(String key, String value, Class<?> type, Throwable cause) {
+    public InvalidPropertyTypeException(
+            @NotNull final String key,
+            @NotNull final String value,
+            @NotNull final Class<?> type,
+            @Nullable final Throwable cause
+    ) {
         super("The property " + key + " with value " + value + " could not be parsed as " + type.getSimpleName(), cause);
     }
 

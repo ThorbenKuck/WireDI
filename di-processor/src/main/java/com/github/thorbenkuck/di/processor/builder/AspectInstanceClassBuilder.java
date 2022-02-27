@@ -4,6 +4,7 @@ import com.github.thorbenkuck.di.aspects.AspectInstance;
 import com.github.thorbenkuck.di.aspects.ExecutionContext;
 import com.github.thorbenkuck.di.processor.foundation.ProcessorContext;
 import com.squareup.javapoet.*;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
@@ -72,6 +73,7 @@ public class AspectInstanceClassBuilder {
                                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                                 .addParameter(
                                         ParameterSpec.builder(aspectContextType(), "context")
+                                                .addAnnotation(NotNull.class)
                                                 .addModifiers(Modifier.FINAL)
                                                 .build())
                                 .returns(ClassName.OBJECT)

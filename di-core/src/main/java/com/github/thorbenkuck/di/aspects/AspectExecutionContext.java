@@ -11,23 +11,31 @@ import java.util.function.Function;
 
 public class AspectExecutionContext {
 
-    private final AtomicReference<ExecutionContext> executionContextAtomicReference = new AtomicReference();
+    @NotNull
+    private final AtomicReference<ExecutionContext<?>> executionContextAtomicReference = new AtomicReference();
+    @NotNull
     private final Map<String, Object> arguments = new HashMap<>();
+    @NotNull
     private final AspectRepository aspectRepository;
-    private final Function<ExecutionContext, Object> realMethod;
+    @NotNull
+    private final Function<ExecutionContext<?>, Object> realMethod;
 
-    public AspectExecutionContext(AspectRepository aspectRepository, Function<ExecutionContext, Object> realMethod) {
+    public AspectExecutionContext(
+            @NotNull final AspectRepository aspectRepository,
+            @NotNull final Function<ExecutionContext<?>, Object> realMethod
+    ) {
         this.aspectRepository = aspectRepository;
         this.realMethod = realMethod;
     }
 
+    @NotNull
     public <T extends Annotation> AspectExecutionContext announceInterestForAspect(
-            @NotNull Class<T> annotationType,
-            @Nullable T annotation
+            @NotNull final Class<T> annotationType,
+            @Nullable final T annotation
     ) {
         aspectRepository.access(annotationType).ifPresent(aspect -> {
-            ExecutionContext methodContext = executionContextAtomicReference.get();
-            ExecutionContext<Override> currentContext;
+            final ExecutionContext<?> methodContext = executionContextAtomicReference.get();
+            final ExecutionContext<?> currentContext;
             if (methodContext == null) {
                 currentContext = new ExecutionContext(aspect, annotation, realMethod);
             } else {
@@ -39,7 +47,7 @@ public class AspectExecutionContext {
         return this;
     }
 
-    public <T> void declareArgument(@NotNull String name, @Nullable T t) {
+    public <T> void declareArgument(@NotNull final String name, @Nullable final T t) {
         arguments.put(name, t);
     }
 
@@ -48,12 +56,16 @@ public class AspectExecutionContext {
     }
 
     @Nullable
-    public Object run(boolean mayBeNull) {
-        ExecutionContext executionContext = executionContextAtomicReference.get();
+    public Object run(final boolean mayBeNull) {
+        final ExecutionContext<?> executionContext = executionContextAtomicReference.get();
+        if(executionContext == null) {
+            throw new IllegalStateException("No ExecutionContext set");
+        }
         executionContext.setArguments(arguments);
+
         try {
-            Object result = executionContext.run();
-            if(!mayBeNull) {
+            final Object result = executionContext.run();
+            if (!mayBeNull && result == null) {
                 throw new NullPointerException("Expect the result not to be null, but yet it is");
             }
 

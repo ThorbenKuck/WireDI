@@ -41,7 +41,7 @@ public class WireDiProcessor extends DiProcessor {
 		final TypeElement typeElement = (TypeElement) element;
 		final WireInformation wireInformation = WireInformation.extractOf(typeElement);
 
-		if(wireInformation.isProxyExpected()) {
+		if(wireInformation.isProxyExpected() && AspectAwareProxyBuilder.willProxyAnything(wireInformation)) {
 			if(!AspectAwareProxyBuilder.eligibleForProxy(typeElement)) {
 				throw new ProcessingException(typeElement, "This is not eligible for auto proxy.");
 			}

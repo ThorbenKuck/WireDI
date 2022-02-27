@@ -2,7 +2,9 @@ package com.github.thorbenkuck.di.processor.constructors.factory;
 
 import com.github.thorbenkuck.di.annotations.properties.Named;
 import com.github.thorbenkuck.di.annotations.properties.PropertySource;
+import com.github.thorbenkuck.di.processor.FetchAnnotated;
 import com.github.thorbenkuck.di.processor.WireInformation;
+import com.github.thorbenkuck.di.processor.foundation.Logger;
 import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
 import com.github.thorbenkuck.di.processor.foundation.ProcessorContext;
 import com.github.thorbenkuck.di.properties.TypedProperties;
@@ -10,8 +12,11 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeName;
 
+import javax.inject.Inject;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.FileObject;
 import javax.tools.StandardLocation;
@@ -25,6 +30,7 @@ public class CreateInstanceForPropertySourceMethodConstructor extends CreateInst
     private final Types types;
     private final TypeElement listTypeElement;
     private boolean hasOpenControlFlow = false;
+    private PropertySource annotation;
 
     public CreateInstanceForPropertySourceMethodConstructor() {
         this.types = ProcessorContext.getTypes();
@@ -32,32 +38,85 @@ public class CreateInstanceForPropertySourceMethodConstructor extends CreateInst
     }
 
     @Override
-    protected List<String> findAndApplyConstructorParameters(
-            CodeBlock.Builder builder,
-            List<? extends VariableElement> parameters,
-            WireInformation wireInformation
-    ) {
-        PropertySource annotation = wireInformation.findAnnotation(PropertySource.class)
+    protected VariableName fetchConstructorVariable(InjectionContext.ConstructorParameter constructorParameter, CodeBlock.Builder builder) {
+        String variableName = "property" + constructorParameter.getIndex();
+        String propertyKey = getPropertyName(annotation, constructorParameter.getVariableElement());
+        TypeMirror variableTypeMirror = constructorParameter.getVariableElement().asType();
+
+        if (types.isAssignable(types.asElement(variableTypeMirror).asType(), listTypeElement.asType())) {
+            propertyListToVariable(builder, variableName, propertyKey, ClassName.get(variableTypeMirror));
+        } else {
+            singlePropertyToVariable(builder, variableName, propertyKey, ClassName.get(variableTypeMirror));
+        }
+        return new VariableName(variableName);
+    }
+
+    @Override
+    protected void initialize(InjectionContext injectionContext, WireInformation wireInformation, CodeBlock.Builder methodBodyBuilder) {
+        annotation = wireInformation.findAnnotation(PropertySource.class)
                 .orElseThrow(() ->  new ProcessingException(wireInformation.getPrimaryWireType(), "This class should have a @PropertySource annotation"));
 
-        List<String> names = new ArrayList<>();
-        int i = 0;
-
-        hasOpenControlFlow = appendPropertiesConstruction(annotation, builder, wireInformation);
-        for (VariableElement argument : parameters) {
-            String variableName = "t" + i++;
-            String key = getPropertyName(annotation, argument);
-
-            if (types.isAssignable(types.asElement(argument.asType()).asType(), listTypeElement.asType())) {
-                appendFetchingPropertyList(builder, variableName, key, ClassName.get(argument.asType()));
+        String file = annotation.file();
+        ClassName typedPropertiesClassName = ClassName.get(TypedProperties.class);
+        if (file.isEmpty()) {
+            methodBodyBuilder.addStatement("$T properties = wiredTypes.properties()", typedPropertiesClassName);
+        } else {
+            PropertySource.Lifecycle lifecycle = annotation.lifecycle();
+            if (lifecycle == PropertySource.Lifecycle.RUNTIME) {
+                methodBodyBuilder.beginControlFlow("try ($T properties = $T.fromClassPath($S))", typedPropertiesClassName, typedPropertiesClassName, file);
+                hasOpenControlFlow = true;
             } else {
-                appendFetchingProperty(builder, variableName, key, ClassName.get(argument.asType()));
+                try {
+                    FileObject resource = ProcessorContext.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", file);
+                    String content = dumpFileToStringContent(resource);
+                    methodBodyBuilder.addStatement("$T rawPropertyContent = $S", String.class, content);
+                    methodBodyBuilder.beginControlFlow("try ($T properties = $T.fromString($L))", typedPropertiesClassName, typedPropertiesClassName, "rawPropertyContent");
+                    hasOpenControlFlow = true;
+                } catch (IOException e) {
+                    throw new ProcessingException(wireInformation.getPrimaryWireType(), "Could not find the properties: \"" + file + "\" in the classpath at compile time");
+                }
             }
-
-            names.add(variableName);
         }
+    }
 
-        return names;
+    @Override
+    protected CodeBlock fetchVariableForInjection(TypeElement typeElement, boolean nullable) {
+        return null;
+    }
+
+    @Override
+    protected void findFieldInjections(WireInformation wireInformation, InjectionContext injectionContext) {
+        List<VariableElement> annotatedFields = FetchAnnotated.fields(wireInformation.getPrimaryWireType(), Inject.class);
+        annotatedFields.forEach(injectionContext::announceFieldInjection);
+    }
+
+    @Override
+    protected void findSetterInjections(WireInformation wireInformation, InjectionContext injectionContext) {
+        List<ExecutableElement> methods = FetchAnnotated.methods(wireInformation.getPrimaryWireType(), Inject.class);
+
+        for (ExecutableElement method : methods) {
+            if(method.getParameters().size() != 1) {
+                Logger.error("Injections in only enabled for methods with one parameters, this method contains " + method.getParameters().size());
+            } else {
+                injectionContext.announceSetterInjection(method);
+            }
+        }
+    }
+
+    @Override
+    protected void findConstructorInjections(WireInformation wireInformation, InjectionContext injectionContext) {
+        wireInformation.getPrimaryConstructor().ifPresent(constructor -> {
+            for (VariableElement parameter : constructor.getParameters()) {
+                injectionContext.announceConstructorParameter(parameter);
+            }
+        });
+    }
+
+    @Override
+    protected void appendPostReturn(CodeBlock.Builder builder) {
+        if(hasOpenControlFlow) {
+            builder.endControlFlow();
+        }
     }
 
     private String getPropertyName(PropertySource propertySourceAnnotation, VariableElement element) {
@@ -84,38 +143,7 @@ public class CreateInstanceForPropertySourceMethodConstructor extends CreateInst
         return prefix + suffix;
     }
 
-    private boolean appendPropertiesConstruction(
-            PropertySource propertyAnnotation,
-            CodeBlock.Builder builder,
-            WireInformation wireInformation
-    ) {
-        String file = propertyAnnotation.file();
-        ClassName typedPropertiesClassName = ClassName.get(TypedProperties.class);
-        if (file.isEmpty()) {
-            builder.addStatement("$T properties = wiredTypes.properties()", typedPropertiesClassName);
-            return false;
-        } else {
-            PropertySource.Lifecycle lifecycle = propertyAnnotation.lifecycle();
-            if (lifecycle == PropertySource.Lifecycle.RUNTIME) {
-                builder.beginControlFlow("try ($T properties = $T.fromClassPath($S))", typedPropertiesClassName, typedPropertiesClassName, file);
-                return true;
-            } else {
-                try {
-                    FileObject resource = ProcessorContext.getFiler().getResource(StandardLocation.CLASS_OUTPUT, "", file);
-                    String content = dump(resource);
-                    builder.addStatement("$T rawPropertyContent = $S", String.class, content);
-                    builder.beginControlFlow("try ($T properties = $T.fromString($L))", typedPropertiesClassName, typedPropertiesClassName, "rawPropertyContent");
-                    return true;
-                } catch (IOException e) {
-                    throw new ProcessingException(wireInformation.getPrimaryWireType(), "Could not find the properties: \"" + file + "\" in the classpath at compile time");
-                }
-            }
-        }
-    }
-
-    private String dump(
-            FileObject fileObject
-    ) throws IOException {
+    private String dumpFileToStringContent(FileObject fileObject) throws IOException {
         try (InputStream properties = fileObject.openInputStream();
              StringWriter stringWriter = new StringWriter();
              StringWriter resultWriter = new StringWriter()) {
@@ -138,7 +166,7 @@ public class CreateInstanceForPropertySourceMethodConstructor extends CreateInst
         }
     }
 
-    private void appendFetchingProperty(
+    private void singlePropertyToVariable(
             CodeBlock.Builder builder,
             String variableName,
             String propertyKey,
@@ -147,23 +175,12 @@ public class CreateInstanceForPropertySourceMethodConstructor extends CreateInst
         builder.addStatement("$T $L = properties.getTyped($S, $T.class)", propertyType, variableName, propertyKey, propertyType);
     }
 
-    private void appendFetchingPropertyList(
+    private void propertyListToVariable(
             CodeBlock.Builder builder,
             String variableName,
             String propertyKey,
             TypeName propertyType
     ) {
         builder.addStatement("List<$T> $L = properties.getAll($S, $T.class)", propertyType, variableName, propertyKey, propertyType);
-    }
-
-    @Override
-    protected void appendPostReturn(CodeBlock.Builder builder) {
-        if(hasOpenControlFlow) {
-            builder.endControlFlow();
-        }
-    }
-
-    @Override
-    protected void findFieldInjections(TypeElement typeElement, InjectionContext injectionContext) {
     }
 }

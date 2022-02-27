@@ -19,7 +19,7 @@ and then you can extract the class with all wired classes like this:
 
 ```java
 WiredTypes wiredTypes = new WiredTypes();
-YourClass instance = wiredTypes.getInstance(YourClass.class);
+YourClass instance = wiredTypes.get(YourClass.class);
 ```
 
 All classes which you want to connect in this fashion have to be annotated with @Wire.
@@ -32,7 +32,9 @@ This framework does not work as other frameworks. It does work at compile time. 
 
 Yes and no. It does a lot of work at compile time, but not completely. Instead, it extracts the reflection heavy operations and does them at compile time. After compile time, it neatly snuggles into a more traditional framework. You can add custom instances, custom Aspects and other relevant informations all at runtime.
 
-It is not recommended, but you can certainly do that. This allows us, to fit it into other frameworks.
+It is not recommended, but you can certainly do that. And this allows us to enter a whole new dimension. We can fit this framework with relative ease into other, already existing frameworks, combining the power of annotation processors and the already existing ecosystem of runtime DI and IOC.
+
+We can go even as far as declaring aspects at runtime, even though the proxies are build at compile time. But let us start from the beginning:
 
 ## Installation
 
@@ -63,11 +65,13 @@ this introduces the annotation processor and dependency management. Afterwards, 
 </dependencies>
 ```
 
-the `di` artifact contains everything you need to get done. You may only add the `di-annotations` artifact, but this would greatly limit you in functionality (especially since you now would have no access to the `WiredTypes` class :P).
+the `di` artifact contains everything you need to get done. You may only add the `di-annotations` artifact, but this would greatly limit you in functionality (especially since you now would have no access to the central `WiredTypes` class :P).
 
 ## Basic usage
 
-As you normally would do with any other DI framework, you can use it like this:
+The central annotation to mark classes as "I want to be able to be handled for di" is called `Wire`. This annotation marks a class as "Injection enabled", allowing the framework to inject it into other classes and other classes into it.
+
+A very simple example would look like this:
 
 ```java
 @Wire
@@ -85,12 +89,23 @@ class B {}
 public class Main {
     public static void main(String[] args)  {
         WiredTypes wiredTypes = new WiredTypes();
-        B b = wiredTypes.getInstance(B.class);
+        A a = wiredTypes.get(A.class);
+        // Do fancy stuff
     }
 }
 ```
 
-As you run this code, a lot happens behind the curtains. The annotation processor generates instance of `IdentifiableProvider` classes.
+In this example right here, we have two classes, A and B and A has a dependency to B. Since both classes are marked with `@Wire`, the framework can identify these classes and inject them safely into each other.
+
+As you run this code, a lot happens behind the curtains. The annotation processor generates instance of `IdentifiableProvider` classes, which you can even see in the compiled sources. These providers hold a sum of static information about this class, that are then used at runtime; Including the template as to how this class is created.
+
+#### And why does everything need the @Wire annotation
+
+You are right. Up to a certain point, it would be very easy to remove it. We could just say "the root class needs to have this annotation" and the rest might just be instantiated.
+
+By adding the annotation requirement, we explicitly allow intersection of created instance and to control the lifecycle of those, even though it would be faster when we were doing it correctly.
+
+Far in the future, in an utopia (or dystopia?) where everything would happen at compile time, we could think about dropping this requirement, but for now we won't. This requirement allows us the interoperability with all the existing frameworks
 
 ### Setter injection
 

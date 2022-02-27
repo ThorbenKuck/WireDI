@@ -16,13 +16,15 @@ public class ExecutionContext<T extends Annotation> {
 
     @NotNull
     private final AspectWrapper<T> rootAspect;
-    private AspectWrapper<T> currentAspect;
+    @Nullable
+    private AspectWrapper<T> currentAspectPointer;
     @Nullable
     private final T annotation;
+    @NotNull
+    private final Map<String, Object> arguments = new HashMap<>();
     @Nullable
     private final Function<ExecutionContext<T>, Object> rootMethod;
     @Nullable
-    private final Map<String, Object> arguments = new HashMap<>();
     private final ExecutionContext<?> then;
 
     public ExecutionContext(
@@ -37,9 +39,9 @@ public class ExecutionContext<T extends Annotation> {
     }
 
     public ExecutionContext(
-            @NotNull AspectWrapper<T> aspect,
-            @Nullable T annotation,
-            @NotNull ExecutionContext<?> then
+            @NotNull final AspectWrapper<T> aspect,
+            @Nullable final T annotation,
+            @NotNull final ExecutionContext<?> then
     ) {
         this.rootAspect = aspect;
         this.annotation = annotation;
@@ -54,15 +56,20 @@ public class ExecutionContext<T extends Annotation> {
         }
     }
 
+    @Nullable
     Object run() {
-        this.currentAspect = rootAspect;
+        this.currentAspectPointer = rootAspect;
         return invokeCurrentAspect();
     }
 
+    @Nullable
     public Object proceed() {
-        AspectWrapper<T> pre = currentAspect.getNext();
-        if(pre != null) {
-            currentAspect = pre;
+        if(currentAspectPointer == null) {
+            throw new IllegalStateException("No aspect pointer registered");
+        }
+        final AspectWrapper<T> followup = currentAspectPointer.getNext();
+        if(followup != null) {
+            currentAspectPointer = followup;
             return invokeCurrentAspect();
         } else {
             if(then != null) {
@@ -76,20 +83,30 @@ public class ExecutionContext<T extends Annotation> {
         }
     }
 
+    @Nullable
     private Object invokeCurrentAspect() {
-        return currentAspect.getRootAspect().process(this);
+        if(currentAspectPointer == null) {
+            throw new IllegalStateException("No aspect pointer registered");
+        }
+        return currentAspectPointer.getRootAspect().process(this);
     }
 
-    public Optional<Object> getArgument(String name) {
+    @NotNull
+    public Optional<Object> getArgument(@NotNull final String name) {
         return Optional.ofNullable(arguments.get(name));
     }
 
-    public Object requireArgument(String name) {
+    @NotNull
+    public Object requireArgument(@NotNull final String name) {
         return getArgument(name).orElseThrow(() -> new IllegalArgumentException("Unknown parameter with name " + name));
     }
 
-    public <S> S requireArgumentAs(String name, Class<S> type) {
-        Object argument = requireArgument(name);
+    @NotNull
+    public <S> S requireArgumentAs(
+            @NotNull final String name,
+            @NotNull final Class<S> type
+    ) {
+        final Object argument = requireArgument(name);
         if(!type.isInstance(argument)) {
             throw new IllegalArgumentException("The argument " + name + " was expected to be a " + type.getName() + " but actually is " + argument.getClass().getName() + ". Actual instance: " + argument);
         }
@@ -97,10 +114,14 @@ public class ExecutionContext<T extends Annotation> {
         return type.cast(argument);
     }
 
-    public void setArgument(String name, Object value) {
+    public void setArgument(
+            @NotNull final String name,
+            @NotNull final Object value
+    ) {
         this.arguments.put(name, value);
     }
 
+    @NotNull
     public List<Argument> listArguments() {
         return arguments.keySet()
                 .stream()
@@ -108,29 +129,37 @@ public class ExecutionContext<T extends Annotation> {
                 .collect(Collectors.toList());
     }
 
+    @NotNull
     public Optional<T> getAnnotation() {
         return Optional.ofNullable(annotation);
     }
 
-    public void setArguments(Map<String, Object> arguments) {
+    public void setArguments(@NotNull Map<String, Object> arguments) {
         this.arguments.clear();
         this.arguments.putAll(arguments);
     }
 
     public static class Argument {
 
+        @NotNull
         private final String name;
+        @Nullable
         private final Object instance;
 
-        public Argument(String name, Object instance) {
+        public Argument(
+                @NotNull final String name,
+                @Nullable final Object instance
+        ) {
             this.name = name;
             this.instance = instance;
         }
 
+        @NotNull
         public String getName() {
             return name;
         }
 
+        @Nullable
         public Object getInstance() {
             return instance;
         }

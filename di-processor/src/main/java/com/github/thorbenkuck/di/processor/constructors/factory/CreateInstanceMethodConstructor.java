@@ -2,244 +2,220 @@ package com.github.thorbenkuck.di.processor.constructors.factory;
 
 import com.github.thorbenkuck.di.ReflectionsHelper;
 import com.github.thorbenkuck.di.domain.WireRepository;
-import com.github.thorbenkuck.di.annotations.Nullable;
-import com.github.thorbenkuck.di.processor.FetchAnnotated;
 import com.github.thorbenkuck.di.processor.WireInformation;
 import com.github.thorbenkuck.di.processor.constructors.MethodConstructor;
 import com.github.thorbenkuck.di.processor.foundation.Logger;
-import com.github.thorbenkuck.di.processor.foundation.ProcessingException;
-import com.github.thorbenkuck.di.processor.foundation.ProcessorContext;
 import com.squareup.javapoet.*;
 
 import javax.annotation.PostConstruct;
-import javax.inject.Inject;
 import javax.lang.model.element.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public abstract class CreateInstanceMethodConstructor implements MethodConstructor {
 
     public static final String METHOD_NAME = "createInstance";
-    private static final String INTERMITTENT_VARIABLE_NAME = "instance";
+    private static final String instanceName = "instance";
 
     @Override
     public final String methodName() {
         return METHOD_NAME;
     }
 
-    @Override
-    public final void construct(WireInformation wireInformation, TypeSpec.Builder typeBuilder) {
-        TypeElement typeElement = wireInformation.getPrimaryWireType();
-        MethodSpec.Builder method = privateMethod()
-                .addParameter(WireRepository.class, "wiredTypes")
-                .returns(TypeName.get(typeElement.asType()));
+    protected abstract VariableName fetchConstructorVariable(InjectionContext.ConstructorParameter constructorParameter, CodeBlock.Builder builder);
 
-        CodeBlock.Builder codeBodyBuilder = CodeBlock.builder();
-        buildConstructorBlock(wireInformation, codeBodyBuilder);
+    protected abstract CodeBlock fetchVariableForInjection(TypeElement typeElement, boolean nullable);
 
-        InjectionContext injectionContext = new InjectionContext();
-        findFieldInjections(typeElement, injectionContext);
-        applyInjectionContext(typeElement, injectionContext, codeBodyBuilder);
-        tryApplyPostConstructMethods(typeElement, codeBodyBuilder);
+    private void addConstructorInvocations(InjectionContext injectionContext, CodeBlock.Builder methodBodyBuilder, WireInformation wireInformation) {
+        methodBodyBuilder.add("// Get all the required constructor parameters\n");
+        List<VariableName> variableNames = new ArrayList<>();
+        injectionContext.drainConstructorParameters()
+                .forEach(constructorParameter -> {
+                    VariableName variableName = fetchConstructorVariable(constructorParameter, methodBodyBuilder);
+                    Objects.requireNonNull(variableName, "The parameter " + constructorParameter.getName() + " must not be null");
+                    variableNames.add(variableName);
+                });
 
-        appendPreReturn(codeBodyBuilder);
-        codeBodyBuilder.add("\n// And we are done! A fresh and newly created instance, ready for you! \n")
-                .addStatement("return $L", INTERMITTENT_VARIABLE_NAME);
-        appendPostReturn(codeBodyBuilder);
+        Logger.info("Constructor of " + wireInformation.getPrimaryWireType().getSimpleName() + " has " + variableNames.size() + " arguments: " + variableNames);
+        String arguments = variableNames.stream()
+                .map(it -> it.value)
+                .collect(Collectors.joining(", "));
 
-        method.addCode(codeBodyBuilder.build());
-        typeBuilder.addMethod(method.build());
-    }
-
-    protected abstract List<String> findAndApplyConstructorParameters(
-            CodeBlock.Builder codeBlockBuilder,
-            List<? extends VariableElement> typeElement,
-            WireInformation wireInformation
-    );
-
-    protected abstract void findFieldInjections(TypeElement typeElement, InjectionContext injectionContext);
-
-    protected void appendPreReturn(CodeBlock.Builder builder) {
-        // Default: Do nothing
-    }
-
-    protected void appendPostReturn(CodeBlock.Builder builder) {
-
-    }
-
-    private void applyInjectionContext(TypeElement typeElement, InjectionContext context, CodeBlock.Builder builder) {
-        applyFieldInjections(typeElement, context.fieldInjections, builder);
-        applySetterInjections(context.setterInjections, builder);
-    }
-
-    private List<ExecutableElement> findPostConstructMethods(TypeElement typeElement) {
-        List<ExecutableElement> postConstructs = new ArrayList<>();
-        for (Element element : typeElement.getEnclosedElements()) {
-            if (element.getKind() == ElementKind.METHOD && element.getAnnotation(PostConstruct.class) != null) {
-                postConstructs.add((ExecutableElement) element);
-            }
+        methodBodyBuilder.add("\n// Now, lets create the  actual instance\n");
+        if (injectionContext.hasNoFurtherInjectionQualities()) {
+            injectionContext.markAsReturned();
+            methodBodyBuilder.addStatement("return new $T($L)", wireInformation.realClassName(), arguments);
+        } else {
+            methodBodyBuilder.addStatement("$T $L = new $T($L)", wireInformation.primaryClassName(), instanceName, wireInformation.realClassName(), arguments);
         }
-
-        return postConstructs;
     }
 
-    private void tryApplyPostConstructMethods(TypeElement typeElement, CodeBlock.Builder codeBlockBuilder) {
-        List<ExecutableElement> postConstructMethods = findPostConstructMethods(typeElement);
-
-        if (postConstructMethods.isEmpty()) {
+    private void addSetterInjections(InjectionContext injectionContext, CodeBlock.Builder methodBodyBuilder, WireInformation wireInformation) {
+        if (injectionContext.hasNoSetterInjections()) {
             return;
         }
 
-        codeBlockBuilder.add("\n// Now post construct invocations\n");
+        List<InjectionContext.Setter> setters = injectionContext.drainSetterInjections();
+        methodBodyBuilder.add("\n// Some wild setter injections appeared!\n")
+                .add("// If you are reading this, consider using something else. Protected or package private method signatures maybe? Or injecting it into the constructor?\n");
+
+        for (InjectionContext.Setter setter : setters) {
+            CodeBlock fetchVariable = fetchVariableForInjection(setter.getType(), setter.mayBeNull());
+            if (setter.requiresReflection()) {
+                Logger.reflectionWarning(setter.getExecutableElement());
+                ClassName invokeUpon = ClassName.get(ReflectionsHelper.class);
+                ClassName invokeOn = wireInformation.primaryClassName();
+                Name name = setter.getMethodName();
+
+                methodBodyBuilder.addStatement("$T.invokeMethod(instance, $T.class, $S, $T.class, $L)",
+                        invokeUpon,
+                        invokeOn,
+                        name,
+                        ClassName.get(setter.getExecutableElement().getReturnType()),
+                        fetchVariable
+                );
+            } else {
+                methodBodyBuilder.addStatement("$L.$L($L)", instanceName, setter.getMethodName(), fetchVariable);
+            }
+        }
+    }
+
+    private void addFieldsInjections(InjectionContext injectionContext, CodeBlock.Builder methodBodyBuilder, WireInformation wireInformation) {
+        if (injectionContext.hasNoFieldInjections()) {
+            return;
+        }
+
+        List<InjectionContext.Field> fields = injectionContext.drainFieldInjections();
+        methodBodyBuilder.add("\n// This just in: Field injections!\n")
+                .add("// Buuut, if you are reading this, consider using something else. Constructor injections maybe?\n");
+
+        for (InjectionContext.Field field : fields) {
+            CodeBlock fetchVariable = fetchVariableForInjection(field.getType(), field.mayBeNull());
+            if (field.requiresReflection()) {
+                Name fieldName = field.getName();
+                Logger.reflectionWarning(field.getVariableElement());
+                ClassName invokeUpon = ClassName.get(ReflectionsHelper.class);
+                methodBodyBuilder.addStatement("$T.setField($S, $L, $T.class, $L)", invokeUpon, fieldName, instanceName, wireInformation.primaryClassName(), fetchVariable);
+            } else {
+                methodBodyBuilder.addStatement("$L.$L = $L", instanceName, field.getName(), fetchVariable);
+            }
+        }
+    }
+
+    private void addPostConstructMethods(InjectionContext injectionContext, CodeBlock.Builder methodBodyBuilder, WireInformation wireInformation) {
+        if (injectionContext.hasNoPostConstructMethod()) {
+            return;
+        }
+
+        List<InjectionContext.PostConstructMethod> postConstructMethods = injectionContext.drainPostConstructMethod();
+
+        methodBodyBuilder.add("\n// Now post construct invocations\n");
         postConstructMethods.forEach(postConstruct -> {
-            if (!postConstruct.getParameters().isEmpty()) {
-                throw new ProcessingException(typeElement, "No Arguments allowed on methods annotated with @PostConstruction");
-            }
+            if (postConstruct.requiresReflection()) {
+                Logger.reflectionWarning(postConstruct.getExecutableElement());
+                ClassName invoker = ClassName.get(ReflectionsHelper.class);
+                ClassName invokeOn = wireInformation.primaryClassName();
+                Name name = postConstruct.getMethodName();
+                TypeName returnType = postConstruct.returnType();
 
-            if (postConstruct.getModifiers().contains(Modifier.PRIVATE)) {
-                Logger.warn("It is highly discouraged to try and invoke private method. Maybe make it protected?", postConstruct);
-                codeBlockBuilder.addStatement("$T.invokeMethod(instance, $T.class, $S, $T.class)", ReflectionsHelper.class, ClassName.get(typeElement), postConstruct.getSimpleName(), ClassName.get(postConstruct.getReturnType()));
+                methodBodyBuilder.addStatement("$T.invokeMethod(instance, $T.class, $S, $T.class)", invoker, invokeOn, name, returnType);
             } else {
-                codeBlockBuilder.addStatement("instance.$L()", postConstruct.getSimpleName());
+                methodBodyBuilder.addStatement("instance.$L()", postConstruct.getMethodName());
             }
         });
     }
 
-    private void applyFieldInjections(TypeElement typeElement, List<InjectionContext.Field> fields, CodeBlock.Builder builder) {
-        if(!fields.isEmpty()) {
-            builder.add("\n// Do all the field injections \n");
-            Logger.warn("It is highly discouraged to rely on field injection. Prefer constructor injection if possible", typeElement);
-        }
-        fields.forEach(field -> {
-            ClassName className = ClassName.get(field.type);
-            CodeBlock.Builder fetchValueBlock = CodeBlock.builder();
-            if (field.isProperty) {
-                if(field.propertyDefaultValue == null) {
-                    fetchValueBlock.add("wiredTypes.properties().getTyped($S, $T.class)", field.name, field.type);
-                } else {
-                    fetchValueBlock.add("wiredTypes.properties().getTyped($S, $T.class, $S)", field.name, field.type, field.propertyDefaultValue);
-                }
-            } else {
-                if (field.variableElement.getAnnotation(Nullable.class) == null) {
-                    fetchValueBlock.add("wiredTypes.requireInstance($T.class)", className);
-                } else {
-                    fetchValueBlock.add("wiredTypes.tryGetInstance($T.class)", className);
-                }
-            }
+    protected void initialize(InjectionContext injectionContext, WireInformation wireInformation, CodeBlock.Builder methodBodyBuilder) {
 
-            builder.addStatement("$T.setField($S, $L, $T.class, $L)", ClassName.get(ReflectionsHelper.class), field.name, INTERMITTENT_VARIABLE_NAME, ClassName.get(typeElement), fetchValueBlock.build());
-        });
     }
 
-    private void applySetterInjections(List<InjectionContext.Setter> setters, CodeBlock.Builder builder) {
-        if(!setters.isEmpty()) {
-            builder.add("\n// Do all the setter injections \n");
-        }
-        setters.forEach(field -> {
-            ClassName className = ClassName.get(field.type);
-            if (field.type.getAnnotation(Nullable.class) != null) {
-                builder.add("$L.$L(wiredTypes.getInstance($T))", INTERMITTENT_VARIABLE_NAME, field.methodName, className);
-            } else {
-                builder.add("$T.setField(wiredTypes.requireInstance($T))", INTERMITTENT_VARIABLE_NAME, field.methodName, className);
-            }
-        });
-    }
+    @Override
+    public final void construct(WireInformation wireInformation, TypeSpec.Builder typeBuilder) {
+        InjectionContext injectionContext = setupInjectionContext(wireInformation);
+        TypeElement typeElement = wireInformation.getPrimaryWireType();
+        MethodSpec.Builder method = privateMethod()
+                .addParameter(WireRepository.class, "wiredTypes", Modifier.FINAL)
+                .returns(TypeName.get(typeElement.asType()));
+        CodeBlock.Builder methodBodyBuilder = CodeBlock.builder();
 
-    private void buildConstructorBlock(WireInformation wireInformation, CodeBlock.Builder codeBodyBuilder) {
-        ClassName className = wireInformation.realClassName();
-        Optional<ExecutableElement> potentialPrimaryConstructor = wireInformation.getPrimaryConstructor();
-        if (!potentialPrimaryConstructor.isPresent()) {
-            codeBodyBuilder
-                    .add("// No Parameters, just create a new instance \n")
-                    .addStatement("$T $L = new $T()", className, INTERMITTENT_VARIABLE_NAME, className);
+        initialize(injectionContext, wireInformation, methodBodyBuilder);
+        if (injectionContext.hasNoFurtherInjectionQualities()) {
+            methodBodyBuilder.addStatement("return new $T()", wireInformation.realClassName());
         } else {
-            ExecutableElement constructor = potentialPrimaryConstructor.get();
-            if (constructor.getParameters().isEmpty()) {
-                codeBodyBuilder
-                        .add("// No Parameters, just create a new instance \n")
-                        .addStatement("$T $L = new $T()", className, INTERMITTENT_VARIABLE_NAME, className);
+            if (injectionContext.hasNoConstructorInjections()) {
+                methodBodyBuilder.add("// No Parameters, just create a new instance \n")
+                        .addStatement("$T $L = new $T()", wireInformation.primaryClassName(), instanceName, wireInformation.realClassName());
             } else {
-                codeBodyBuilder.add("// Get all the required parameters for constructor Injection\n");
-                List<String> names = findAndApplyConstructorParameters(codeBodyBuilder, constructor.getParameters(), wireInformation);
+                addConstructorInvocations(injectionContext, methodBodyBuilder, wireInformation);
+            }
 
-                StringBuilder argumentList = new StringBuilder(names.get(0));
-                for (int count = 1; count < names.size(); count++) {
-                    argumentList.append(", ").append(names.get(count));
-                }
+            if (injectionContext.hasFurtherInjectionQualities()) {
+                addSetterInjections(injectionContext, methodBodyBuilder, wireInformation);
+            }
 
-                codeBodyBuilder
-                        .add("\n// Now, create the  actual instance\n")
-                        .addStatement("$T $L = new $T($L)", className, INTERMITTENT_VARIABLE_NAME, className, argumentList.toString());
+            if (injectionContext.hasFurtherInjectionQualities()) {
+                addFieldsInjections(injectionContext, methodBodyBuilder, wireInformation);
+            }
+
+            if (injectionContext.hasFurtherInjectionQualities()) {
+                addPostConstructMethods(injectionContext, methodBodyBuilder, wireInformation);
+            }
+
+            if (!injectionContext.alreadyReturned()) {
+                methodBodyBuilder.add("\n// And we are done! A fresh and newly created instance, ready for you! \n")
+                        .addStatement("return $L", instanceName);
             }
         }
+
+        appendPostReturn(methodBodyBuilder);
+        method.addCode(methodBodyBuilder.build());
+        typeBuilder.addMethod(method.build());
     }
 
-    static class InjectionContext {
+    protected abstract void findFieldInjections(
+            WireInformation wireInformation,
+            InjectionContext injectionContext
+    );
 
-        private final List<Field> fieldInjections = new ArrayList<>();
-        private final List<Setter> setterInjections = new ArrayList<>();
+    protected abstract void findSetterInjections(
+            WireInformation wireInformation,
+            InjectionContext injectionContext
+    );
 
-        public void announceFieldInjection(VariableElement variableElement, boolean isProperty, String propertyDefaultValue) {
-            fieldInjections.add(new Field(variableElement.getSimpleName().toString(), variableElement, isProperty, propertyDefaultValue));
-        }
+    protected abstract void findConstructorInjections(
+            WireInformation wireInformation,
+            InjectionContext injectionContext
+    );
 
-        public void announceFieldInjection(VariableElement variableElement) {
-            announceFieldInjection(variableElement, false, null);
-        }
+    protected void appendPostReturn(CodeBlock.Builder builder) {
+    }
 
-        public void announceSetterInjection(String name, TypeElement type, boolean isProperty, String propertyDefaultValue) {
-            setterInjections.add(new Setter(name, type, isProperty, propertyDefaultValue));
-        }
+    private InjectionContext setupInjectionContext(WireInformation wireInformation) {
+        InjectionContext injectionContext = new InjectionContext();
 
-        public void announceSetterInjection(String name, TypeElement type) {
-            announceSetterInjection(name, type, false, null);
-        }
+        findConstructorInjections(wireInformation, injectionContext);
+        findFieldInjections(wireInformation, injectionContext);
+        findSetterInjections(wireInformation, injectionContext);
 
-        private static String convertedDefault(String input) {
-            if(input == null) {
-                return null;
-            }
+        wireInformation.getPrimaryWireType()
+                .getEnclosedElements()
+                .stream()
+                .filter(it -> it.getAnnotation(PostConstruct.class) != null)
+                .filter(it -> it instanceof ExecutableElement)
+                .map(it -> (ExecutableElement) it)
+                .forEach(injectionContext::announcePostConstructMethod);
 
-            if(input.isEmpty()) {
-                return null;
-            }
+        return injectionContext;
+    }
 
-            return input;
-        }
+    protected static class VariableName {
 
-        public class Field {
-            private final String name;
-            private final VariableElement variableElement;
-            private final TypeElement type;
-            private final boolean isProperty;
-            private final String propertyDefaultValue;
+        private final String value;
 
-            public Field(String name, VariableElement variableElement, boolean isProperty, String propertyDefaultValue) {
-                this.name = name;
-                this.variableElement = variableElement;
-                this.type = (TypeElement) ProcessorContext.getTypes().asElement(variableElement.asType());
-                this.isProperty = isProperty;
-                this.propertyDefaultValue = convertedDefault(propertyDefaultValue);
-            }
-
-            public VariableElement getVariableElement() {
-                return variableElement;
-            }
-        }
-
-        public class Setter {
-            private final String methodName;
-            private final TypeElement type;
-            private final boolean isProperty;
-            private final String propertyDefaultValue;
-
-            public Setter(String methodName, TypeElement type, boolean isProperty, String propertyDefaultValue) {
-                this.methodName = methodName;
-                this.type = type;
-                this.isProperty = isProperty;
-                this.propertyDefaultValue = convertedDefault(propertyDefaultValue);
-            }
+        VariableName(String value) {
+            this.value = Objects.requireNonNull(value, "The variable name may not be null");
         }
     }
 }

@@ -1,6 +1,9 @@
 package com.github.thorbenkuck.di.properties;
 
 import com.github.thorbenkuck.di.DataAccess;
+import com.github.thorbenkuck.di.annotations.ManualWireCandidate;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
@@ -11,10 +14,16 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@ManualWireCandidate
 public class TypedProperties implements AutoCloseable {
 
+    @NotNull
     private final Map<String, String> properties = new HashMap<>();
+
+    @NotNull
     private final DataAccess dataAccess = new DataAccess();
+
+    @NotNull
     private static final Map<Class<?>, PropertyConverter<?>> typeMappings = new HashMap<>();
 
     static {
@@ -34,22 +43,24 @@ public class TypedProperties implements AutoCloseable {
     public TypedProperties() {
     }
 
-    public static TypedProperties fromClassPath(String path) {
-        TypedProperties typedProperties = new TypedProperties();
+    @NotNull
+    public static TypedProperties fromClassPath(@NotNull final String path) {
+        final TypedProperties typedProperties = new TypedProperties();
         try {
             typedProperties.loadProperties(path);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new PropertiesNotFoundException(path, e);
         }
         return typedProperties;
     }
 
-    public static TypedProperties fromString(String content) {
-        TypedProperties typedProperties = new TypedProperties();
+    @NotNull
+    public static TypedProperties fromString(@NotNull final String content) {
+        final TypedProperties typedProperties = new TypedProperties();
         try {
-            Properties properties = parse(content);
+            final Properties properties = parse(content);
             typedProperties.setAll(properties);
-        } catch (IOException e) {
+        } catch (final IOException e) {
             throw new InvalidPropertySyntaxException(content, e);
         }
 
@@ -58,29 +69,41 @@ public class TypedProperties implements AutoCloseable {
 
     /* Modifying options */
 
-    public void set(String key, String value) {
+    public void set(
+            @NotNull final String key,
+            @NotNull final String value
+    ) {
         dataAccess.write(() -> {
             this.properties.put(key, value);
         });
     }
 
-    public void set(String key, boolean value) {
+    public void set(
+            @NotNull final String key,
+            final boolean value
+    ) {
         set(key, Boolean.toString(value));
     }
-
-    public void set(String key, int value) {
+    public void set(
+            @NotNull final String key,
+            final int value
+    ) {
         set(key, Integer.toString(value));
     }
-
-    public void set(String key, float value) {
+    public void set(
+            @NotNull final String key,
+            final float value
+    ) {
         set(key, Float.toString(value));
     }
-
-    public void set(String key, double value) {
+    public void set(
+            @NotNull final String key,
+            final double value
+    ) {
         set(key, Double.toString(value));
     }
 
-    public void setAll(Properties newProperties) {
+    public void setAll(@NotNull final Properties newProperties) {
         dataAccess.write(() -> {
             newProperties.stringPropertyNames().forEach(key -> {
                 this.properties.put(key, newProperties.getProperty(key));
@@ -88,30 +111,33 @@ public class TypedProperties implements AutoCloseable {
         });
     }
 
-    public void setAll(TypedProperties typedProperties) {
+    public void setAll(@NotNull final TypedProperties typedProperties) {
         dataAccess.write(() -> {
             properties.putAll(typedProperties.properties);
         });
     }
 
-    public void loadProperties(String file) throws IOException {
+    public void loadProperties(@NotNull final String file) throws IOException {
         loadProperties(TypedProperties.class.getClassLoader().getResourceAsStream(file));
     }
 
-    public void loadProperties(File file) throws IOException {
+    public void loadProperties(@NotNull final File file) throws IOException {
         loadProperties(file.toPath());
     }
 
-    public void loadProperties(Path path) throws IOException {
+    public void loadProperties(@NotNull final Path path) throws IOException {
         if (!Files.isRegularFile(path)) {
             throw new IllegalArgumentException("The provided file " + path + " is not a file, but it should be one.");
         }
         loadProperties(Files.newInputStream(path));
     }
 
-    public void loadProperties(InputStream inputStream) throws IOException {
+    public void loadProperties(final InputStream inputStream) throws IOException {
+        if(inputStream == null) {
+            throw new IOException("InputStream could not be loaded");
+        }
         try {
-            Properties properties = new Properties();
+            final Properties properties = new Properties();
             properties.load(inputStream);
             setAll(properties);
             properties.clear(); // Help GC and loos value references
@@ -126,12 +152,21 @@ public class TypedProperties implements AutoCloseable {
 
     /* Reading options */
 
-    public <T> T getTyped(String key, Class<T> type) {
+    @NotNull
+    public <T> T getTyped(
+            @NotNull final String key,
+            @NotNull final Class<T> type
+    ) {
         return getTyped(key, type, null);
     }
 
-    public <T> T getTyped(String key, Class<T> type, String defaultValue) {
-        PropertyConverter<?> typedProvider = typeMappings.get(type);
+    @NotNull
+    public <T> T getTyped(
+            @NotNull final String key,
+            @NotNull final Class<T> type,
+            @Nullable final String defaultValue
+    ) {
+        final PropertyConverter<?> typedProvider = typeMappings.get(type);
         if (typedProvider == null) {
             throw new IllegalArgumentException("Unknown type " + type + " for the TypedProperties!");
         }
@@ -143,66 +178,107 @@ public class TypedProperties implements AutoCloseable {
         return result;
     }
 
-    public Integer getInt(String key) {
+    @NotNull
+    public Integer getInt(@NotNull final String key) {
         String value = get(key);
         return asInt(key, value);
     }
 
-    public Integer getInt(String key, String defaultValue) {
+    @NotNull
+    public Integer getInt(
+            @NotNull final String key,
+            @Nullable final String defaultValue
+    ) {
         String value = get(key, defaultValue);
         return asInt(key, value);
     }
 
-    public Integer getInt(String key, int defaultValue) {
+    @NotNull
+    public Integer getInt(
+            @NotNull final String key,
+            final int defaultValue
+    ) {
         return getInt(key, Integer.toString(defaultValue));
     }
 
-    public Float getFloat(String key) {
+    @NotNull
+    public Float getFloat(@NotNull final String key) {
         String value = get(key);
         return asFloat(key, value);
     }
 
-    public Float getFloat(String key, String defaultValue) {
+    @NotNull
+    public Float getFloat(
+            @NotNull final String key,
+            @Nullable final String defaultValue
+    ) {
         String value = get(key, defaultValue);
         return asFloat(key, value);
     }
 
-    public Float getFloat(String key, float defaultValue) {
+    @NotNull
+    public Float getFloat(
+            @NotNull final String key,
+            final float defaultValue
+    ) {
         return getFloat(key, Float.toString(defaultValue));
     }
 
-    public Double getDouble(String key) {
+    @NotNull
+    public Double getDouble(@NotNull final String key) {
         String value = get(key);
         return asDouble(key, value);
     }
 
-    public Double getDouble(String key, String defaultValue) {
+    @NotNull
+    public Double getDouble(
+            @NotNull final String key,
+            @Nullable final String defaultValue
+    ) {
         String value = get(key, defaultValue);
         return asDouble(key, value);
     }
 
-    public Double getDouble(String key, double defaultValue) {
+    @NotNull
+    public Double getDouble(
+            @NotNull final String key,
+            final double defaultValue
+    ) {
         return getDouble(key, Double.toString(defaultValue));
     }
 
-    public Boolean getBoolean(String key) {
+    @NotNull
+    public Boolean getBoolean(@NotNull final String key) {
         String value = get(key);
         return Boolean.parseBoolean(value);
     }
 
-    public Boolean getBoolean(String key, boolean defaultValue) {
+    @NotNull
+    public Boolean getBoolean(
+            @NotNull final String key,
+            final boolean defaultValue
+    ) {
         return getBoolean(key, Boolean.toString(defaultValue));
     }
 
-    public Boolean getBoolean(String key, String defaultValue) {
+    @NotNull
+    public Boolean getBoolean(
+            @NotNull final String key,
+            @Nullable final String defaultValue
+    ) {
         return Boolean.parseBoolean(get(key, defaultValue));
     }
 
-    public String get(String key, String defaultValue) {
+    @NotNull
+    public String get(
+            @NotNull final String key,
+            @Nullable final String defaultValue
+    ) {
         return dataAccess.read(() -> this.properties.getOrDefault(key, defaultValue));
     }
 
-    public String get(String key) {
+    @NotNull
+    public String get(@NotNull final String key) {
         return dataAccess.read(() -> {
             String property = this.properties.get(key);
 
@@ -214,30 +290,35 @@ public class TypedProperties implements AutoCloseable {
         });
     }
 
-    public Collection<String> getAndSplit(String key) {
+    @NotNull
+    public Collection<String> getAndSplit(@NotNull final String key) {
         String property = get(key, "");
         return Arrays.asList(property.split(","));
     }
 
-    public Collection<Boolean> getAndSplitBoolean(String key) {
+    @NotNull
+    public Collection<Boolean> getAndSplitBoolean(@NotNull final String key) {
         return getAndSplit(key).stream()
                 .map(Boolean::parseBoolean)
                 .collect(Collectors.toList());
     }
 
-    public Collection<Integer> getAndSplitInt(String key) {
+    @NotNull
+    public Collection<Integer> getAndSplitInt(@NotNull final String key) {
         return getAndSplit(key).stream()
                 .map(it -> asInt(key, it))
                 .collect(Collectors.toList());
     }
 
-    public Collection<Float> getAndSplitFloat(String key) {
+    @NotNull
+    public Collection<Float> getAndSplitFloat(@NotNull final String key) {
         return getAndSplit(key).stream()
                 .map(it -> asFloat(key, it))
                 .collect(Collectors.toList());
     }
 
-    public Collection<Double> getAndSplitDouble(String key) {
+    @NotNull
+    public Collection<Double> getAndSplitDouble(@NotNull final String key) {
         return getAndSplit(key).stream()
                 .map(it -> asDouble(key, it))
                 .collect(Collectors.toList());
@@ -245,33 +326,43 @@ public class TypedProperties implements AutoCloseable {
 
     /* Parsing functions */
 
-    private static int asInt(String key, String value) {
+    private static int asInt(
+            @NotNull final String key,
+            @NotNull final String value
+    ) {
         try {
             return Integer.parseInt(value);
-        } catch (NumberFormatException numberFormatException) {
+        } catch (final NumberFormatException numberFormatException) {
             throw new InvalidPropertyTypeException(key, value, Integer.class);
         }
     }
 
-    private static float asFloat(String key, String value) {
+    private static float asFloat(
+            @NotNull final String key,
+            @NotNull final String value
+    ) {
         try {
             return Float.parseFloat(value);
-        } catch (NumberFormatException numberFormatException) {
+        } catch (final NumberFormatException numberFormatException) {
             throw new InvalidPropertyTypeException(key, value, Integer.class);
         }
     }
 
-    private static double asDouble(String key, String value) {
+    private static double asDouble(
+            @NotNull final String key,
+            @NotNull final String value
+    ) {
         try {
             return Double.parseDouble(value);
-        } catch (NumberFormatException numberFormatException) {
+        } catch (final NumberFormatException numberFormatException) {
             throw new InvalidPropertyTypeException(key, value, Integer.class);
         }
     }
 
-    private static Properties parse(String s) throws IOException {
+    @NotNull
+    private static Properties parse(@NotNull final String s) throws IOException {
         Properties properties = new Properties();
-        try (StringReader stringReader = new StringReader(s)) {
+        try (@NotNull final StringReader stringReader = new StringReader(s)) {
             properties.load(stringReader);
         }
 

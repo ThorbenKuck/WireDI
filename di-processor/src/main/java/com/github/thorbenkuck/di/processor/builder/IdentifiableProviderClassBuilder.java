@@ -37,7 +37,7 @@ public class IdentifiableProviderClassBuilder extends ClassBuilder {
     }
 
     public IdentifiableProviderClassBuilder overwriteAllRequiredMethods() {
-                return addPriorityMethod()
+        return addPriorityMethod()
                 .addSingletonMethod()
                 .addTypeMethod()
                 .addWiredTypesMethod()
@@ -108,8 +108,8 @@ public class IdentifiableProviderClassBuilder extends ClassBuilder {
 
         addMethod(
                 overwriteMethod("wiredTypes")
-                .addStatement("return $L", fieldName)
-                .returns(TypeName.get(Class[].class))
+                        .addStatement("return $L", fieldName)
+                        .returns(TypeName.get(Class[].class))
         );
 
         return this;
@@ -122,18 +122,19 @@ public class IdentifiableProviderClassBuilder extends ClassBuilder {
                 .returns(TypeName.get(wireInformation.getPrimaryWireType().asType()));
 
         if (wireInformation.isSingleton()) {
-            getMethodBuilder.addStatement("return createInstance(wiredTypes)");
-        } else {
             addField(
                     FieldSpec.builder(TypeName.get(wireInformation.getPrimaryWireType().asType()), fieldName)
                             .addModifiers(Modifier.VOLATILE)
                             .addModifiers(Modifier.PRIVATE)
             );
 
-            getMethodBuilder.beginControlFlow("if(this.instance == null)")
+            getMethodBuilder.addModifiers(Modifier.SYNCHRONIZED)
+                    .beginControlFlow("if(this.instance == null)")
                     .addStatement("this.instance = createInstance(wiredTypes)")
                     .endControlFlow()
                     .addStatement("return instance");
+        } else {
+            getMethodBuilder.addStatement("return createInstance(wiredTypes)");
         }
 
         addMethod(getMethodBuilder);

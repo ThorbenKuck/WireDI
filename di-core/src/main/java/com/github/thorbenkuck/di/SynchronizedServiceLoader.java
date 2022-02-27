@@ -1,13 +1,19 @@
 package com.github.thorbenkuck.di;
 
 import com.github.thorbenkuck.di.domain.WireCapable;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 public abstract class SynchronizedServiceLoader<T extends WireCapable> {
 
+	@NotNull
 	protected final DataAccess dataAccess = new DataAccess();
-	protected volatile boolean loaded;
+
+	protected volatile boolean loaded = false;
+
+	@NotNull
 	private final Map<Class<?>, List<T>> mapping = new HashMap<>();
 
 	public void unload() {
@@ -38,11 +44,12 @@ public abstract class SynchronizedServiceLoader<T extends WireCapable> {
 		});
 	}
 
+	@NotNull
 	public abstract Class<T> serviceType();
 
-	public final void register(T t) {
+	public final void register(@NotNull final T t) {
 		dataAccess.write(() -> {
-			for (Class<?> wiredType : t.wiredTypes()) {
+			for (final Class<?> wiredType : t.wiredTypes()) {
 				if (wiredType == null) {
 					throw new DiLoadingException("The WireCables " + t + " returned null as an identifiable type! This is not permitted.\n" +
 							"If you did not create your own instance, please submit your annotated class to github.");
@@ -56,12 +63,27 @@ public abstract class SynchronizedServiceLoader<T extends WireCapable> {
 		return loaded;
 	}
 
-	protected void unsafeRegister(Class<?> type, T instance) {
-		List<T> providers = mapping.computeIfAbsent(type, (t) -> new ArrayList<>());
+	protected void unsafeRegister(@NotNull final Class<?> type, @NotNull final T instance) {
+		final List<T> providers = mapping.computeIfAbsent(type, (t) -> new ArrayList<>());
 		providers.add(instance);
 	}
 
-	protected List<T> unsafeGet(Class<?> type) {
+	@NotNull
+	protected Map<Class<?>, List<T>> getAll() {
+		return mapping;
+	}
+
+	@NotNull
+	protected List<T> unsafeGet(@NotNull final Class<?> type) {
 		return mapping.getOrDefault(type, Collections.emptyList());
+	}
+
+	@Override
+	@NotNull
+	public final String toString() {
+		return getClass().getSimpleName() + "{" +
+				"registrations=" + getAll() +
+				", loaded=" + loaded +
+				'}';
 	}
 }

@@ -19,46 +19,55 @@ import java.util.stream.Stream;
 
 public class ReflectionsHelper {
 
-    private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
-
-    public static void setField(String fieldName, Object object, Class<?> type, Object value) {
+    public static void setField(
+            @NotNull final String fieldName,
+            @NotNull final Object object,
+            @NotNull final Class<?> type,
+            @Nullable final Object value
+    ) {
         try {
-            Field field = type.getDeclaredField(fieldName);
-            boolean access = field.isAccessible();
+            final Field field = type.getDeclaredField(fieldName);
+            final boolean access = field.isAccessible();
             try {
                 field.setAccessible(true);
                 field.set(object, value);
-            } catch (IllegalAccessException e) {
+            } catch (final IllegalAccessException e) {
                 throw new IllegalStateException(e);
             } finally {
                 field.setAccessible(access);
             }
-        } catch (NoSuchFieldException e) {
+        } catch (final NoSuchFieldException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    public static void invokeMethod(Object instance, Class<?> type, String name, Class<?> returnValue, Object... rawParameters) {
-        for (Object o : rawParameters) {
+    public static void invokeMethod(
+            @NotNull final Object instance,
+            @NotNull final Class<?> type,
+            @NotNull final String name,
+            @NotNull final Class<?> returnValue,
+            final Object... rawParameters
+    ) {
+        for (final Object o : rawParameters) {
             Objects.requireNonNull(o, "Reflection based method invocation may only be used with non null instances");
         }
-        Class[] parameters = Stream.of(rawParameters)
+        final Class<?>[] parameters = Stream.of(rawParameters)
                 .map(Object::getClass)
                 .toArray(Class[]::new);
 
-        Method method = findMethod(type, name, parameters, returnValue);
+        final Method method = findMethod(type, name, parameters, returnValue);
 
         if (method == null) {
             throw new IllegalStateException("Could not find the method " + returnValue.getSimpleName() + " " + name + "(" + Arrays.toString(parameters) + ") on " + instance);
         }
 
-		boolean accessible = method.isAccessible();
+		final boolean accessible = method.isAccessible();
         try {
 			method.setAccessible(true);
 			method.invoke(instance, rawParameters);
-        } catch (IllegalAccessException | InvocationTargetException e) {
+        } catch (final IllegalAccessException | InvocationTargetException e) {
             throw new IllegalStateException(e);
-        } catch (Throwable e) {
+        } catch (final Throwable e) {
             throw new UndeclaredThrowableException(e);
         } finally {
 			method.setAccessible(accessible);
@@ -70,10 +79,10 @@ public class ReflectionsHelper {
             @NotNull Class<?> type,
             @NotNull Class<A> annotationType,
             @NotNull String name,
-            @NotNull Class[] parameterNames,
+            @NotNull Class<?>[] parameterNames,
             @NotNull Class<?> returnValue
     ) {
-        Method declaredMethod = findMethod(type, name, parameterNames, returnValue);
+        final Method declaredMethod = findMethod(type, name, parameterNames, returnValue);
 		if(declaredMethod == null) {
 			return null;
 		} else {
@@ -81,8 +90,14 @@ public class ReflectionsHelper {
 		}
     }
 
-    public static Method findMethod(Class<?> type, String name, Class[] parameters, Class<?> returnType) {
-        List<Method> collect = Arrays.stream(type.getDeclaredMethods())
+    @Nullable
+    public static Method findMethod(
+            @NotNull final Class<?> type,
+            @NotNull final String name,
+            @NotNull final Class<?>[] parameters,
+            @NotNull final Class<?> returnType
+    ) {
+        final List<Method> collect = Arrays.stream(type.getDeclaredMethods())
                 .filter(it -> it.getName().equals(name))
                 .filter(it -> Arrays.equals(it.getParameterTypes(), parameters))
                 .filter(it -> it.getReturnType().equals(returnType))

@@ -1,23 +1,30 @@
 package com.github.thorbenkuck.di.domain;
 
+import org.jetbrains.annotations.NotNull;
+
 public class GenericIdentifyingProvider<T> implements IdentifiableProvider<T> {
 
+    @NotNull
     private final T instance;
+    @NotNull
     private final Class[] types;
+    @NotNull
     private final Class<?> type;
 
-    public GenericIdentifyingProvider(T instance) {
+    public GenericIdentifyingProvider(@NotNull final T instance) {
         this.instance = instance;
         this.type = instance.getClass();
         this.types = new Class[]{ instance.getClass() };
     }
 
     @Override
+    @NotNull
     public Class<?> type() {
         return type;
     }
 
     @Override
+    @NotNull
     public Class<?>[] wiredTypes() {
         return types;
     }
@@ -28,7 +35,8 @@ public class GenericIdentifyingProvider<T> implements IdentifiableProvider<T> {
     }
 
     @Override
-    public T get(WireRepository wiredTypes) {
+    @NotNull
+    public T get(@NotNull final WireRepository wiredTypes) {
         return instance;
     }
 }

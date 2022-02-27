@@ -42,6 +42,7 @@ public class PropertySourceDiProcessor extends DiProcessor {
         wireInformation.forceSingleton();
 
         new IdentifiableProviderClassBuilder(wireInformation)
+                .overwriteAllRequiredMethods()
                 .applyMethodBuilder(MethodConstructor.createInstanceForPropertySource())
                 .buildAndWrite("This class is used to identify wire capable properties");
     }

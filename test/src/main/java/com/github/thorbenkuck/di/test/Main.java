@@ -17,18 +17,22 @@ public class Main {
 
 	public static void main(String[] args) {
 		WiredTypes wiredTypes = new WiredTypes();
-		SuperDi instance = wiredTypes.getInstance(SuperDi.class);
+		wiredTypes.announce(new Dependency());
+
+		SuperDi instance = wiredTypes.get(SuperDi.class);
+
 		instance.print("Bla");
+		instance.printAndReturn("Blub");
 		instance.foo();
 
 		List<Command> commandList = wiredTypes.getAll(Command.class);
 		commandList.forEach(Command::execute);
 
 		wiredTypes.configuration().setWireConflictStrategy(WireConflictStrategy.BEST_MATCH);
-		Command command = wiredTypes.getInstance(Command.class);
+		Command command = wiredTypes.get(Command.class);
 		command.execute();
 
-		CommandNote instance1 = wiredTypes.getInstance(CommandNote.class);
+		CommandNote instance1 = wiredTypes.get(CommandNote.class);
 		System.out.println(instance1);
 	}
 }

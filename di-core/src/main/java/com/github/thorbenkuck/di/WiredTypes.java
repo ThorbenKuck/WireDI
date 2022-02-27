@@ -1,5 +1,6 @@
 package com.github.thorbenkuck.di;
 
+import com.github.thorbenkuck.di.annotations.ManualWireCandidate;
 import com.github.thorbenkuck.di.domain.GenericIdentifyingProvider;
 import com.github.thorbenkuck.di.domain.IdentifiableProvider;
 import com.github.thorbenkuck.di.domain.WireRepository;
@@ -12,10 +13,16 @@ import javax.inject.Provider;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements WireRepository {
+@ManualWireCandidate
+public final class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> implements WireRepository {
 
+    @NotNull
     private final WiredTypesConfiguration configuration = new WiredTypesConfiguration();
+
+    @NotNull
     private final TypedProperties propertyContainer = new TypedProperties();
+
+    @NotNull
     private final AspectRepository aspectRepository = new AspectRepository();
 
     public WiredTypes() {
@@ -25,22 +32,25 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
     }
 
     @Override
+    @NotNull
     public TypedProperties properties() {
         return this.propertyContainer;
     }
 
     @Override
+    @NotNull
     public AspectRepository aspectRepository() {
         return aspectRepository;
     }
 
     @Override
+    @NotNull
     public WiredTypesConfiguration configuration() {
         return configuration;
     }
 
     @Override
-    public <T> void announce(T o) {
+    public <T> void announce(@NotNull final T o) {
         register(new GenericIdentifyingProvider<>(o));
     }
 
@@ -53,113 +63,96 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
     }
 
     @Override
+    @NotNull
     public Class<IdentifiableProvider> serviceType() {
         return IdentifiableProvider.class;
     }
 
     @Override
     @Nullable
-    public <T> T tryGetInstance(Class<T> type) {
+    public <T> T tryGet(@NotNull final Class<T> type) {
+        final List<IdentifiableProvider<T>> providers = getAllProviders(type);
+        if (providers.isEmpty()) {
+            return null;
+        }
+
         try {
-            return getInstance(type);
+            return get(type);
         } catch (DiInstantiationException e) {
             return null;
         }
     }
 
     @Override
-    @Nullable
-    public <T> T getInstance(Class<T> type) {
-        List<IdentifiableProvider<T>> providers = getAllProviders(type);
-        if (providers.isEmpty()) {
-            return null;
-        }
-        IdentifiableProvider<T> provider = findPrimaryProvider(providers, type);
-
-        try {
-            T t = instantiate(provider, type);
-
-            sanityCheckInstanceWithProduced(provider, t, type);
-            return t;
-        } catch (Exception e) {
-            throw wireCreationError(e, provider);
-        }
-    }
-
-    @Override
     @NotNull
-    public <T> T requireInstance(Class<T> type) {
-        IdentifiableProvider<T> provider = requireSingleProvider(type);
+    public <T> T get(@NotNull final Class<T> type) {
+        final IdentifiableProvider<T> provider = requireSingleProvider(type);
 
         try {
-            T t = instantiate(provider, type);
+            T t = instantiate(provider);
 
             sanityCheckInstanceWithProduced(provider, t, type);
             return t;
-        } catch (Exception e) {
+        } catch (final Exception e) {
             throw wireCreationError(e, provider);
         }
     }
 
-    private <T> T instantiate(IdentifiableProvider<T> provider, Class<T> type) {
+    @Nullable
+    private <T> T instantiate(@NotNull final IdentifiableProvider<T> provider) {
         return provider.get(this);
     }
 
-    private DiInstantiationException wireCreationError(Exception e, IdentifiableProvider<?> provider) {
+    @NotNull
+    private DiInstantiationException wireCreationError(
+            @NotNull final Exception e,
+            @NotNull final IdentifiableProvider<?> provider
+    ) {
         return new DiInstantiationException("Error while wiring " + provider.type(), e);
     }
 
     @Override
-    public <T> List<T> getAll(Class<T> type) {
+    @NotNull
+    public <T> List<T> getAll(@NotNull final Class<T> type) {
         return getAllProviders(type)
                 .stream()
                 .sorted()
                 .map(provider -> {
                     try {
                         return provider.get(this);
-                    } catch (Exception e) {
-                        throw new DiInstantiationException("Error instantiating the class " + provider.type().getSimpleName() + ".", e);
+                    } catch (final Exception e) {
+                        throw wireCreationError(e, provider);
                     }
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-
-
     }
 
     @Override
-    public <T> Provider<T> getProvider(Class<T> type) {
-        IdentifiableProvider<T> provider = requireSingleProvider(type);
+    @NotNull
+    public <T> Provider<T> getProvider(@NotNull final Class<T> type) {
+        final IdentifiableProvider<T> provider = requireSingleProvider(type);
 
         return new ProviderMapper<>(provider, this);
     }
 
-    @Override
-    public String toString() {
-        return "WiredTypes{" +
-                ", loaded=" + loaded +
-                '}';
-    }
-
-    private <T> IdentifiableProvider<T> findPrimaryProvider(List<IdentifiableProvider<T>> providers, Class<T> type) {
+    @NotNull
+    private <T> IdentifiableProvider<T> findPrimaryProvider(
+            @NotNull final List<IdentifiableProvider<T>> providers,
+            @NotNull final Class<T> type
+    ) {
+        if(providers.isEmpty()) {
+            throw new DiInstantiationException("No provider registered for type " + type);
+        }
         if(providers.size() == 1) {
             return providers.get(0);
         }
-        WireConflictStrategy wireConflictStrategy = configuration.conflictStrategy();
+        final WireConflictStrategy wireConflictStrategy = configuration.conflictStrategy();
         return wireConflictStrategy.find(providers, type);
     }
 
-    private <T> void sanityCheckInstanceWithProduced(IdentifiableProvider<T> provider, T t, Class<T> type) {
-        if (t == null) {
-            throw new DiInstantiationException("Provider produced null. This is not allowed by design!");
-        }
-
-        if (!provider.type().isAssignableFrom(t.getClass())) {
-            throw new DiInstantiationException("The provider for the class " + type + " is not compatible with the produced instance " + t);
-        }
-    }
-
-    private <T> IdentifiableProvider<T> requireSingleProvider(Class<T> type) {
+    @NotNull
+    private <T> IdentifiableProvider<T> requireSingleProvider(@NotNull final Class<T> type) {
         List<IdentifiableProvider<T>> allProviders = getAllProviders(type);
         if (allProviders.isEmpty()) {
             throw new DiInstantiationException("Could not find any instance for " + type);
@@ -172,24 +165,45 @@ public class WiredTypes extends SynchronizedServiceLoader<IdentifiableProvider> 
         return allProviders.get(0);
     }
 
-    private <T> List<IdentifiableProvider<T>> getAllProviders(Class<T> type) {
+    @NotNull
+    private <T> List<IdentifiableProvider<T>> getAllProviders(@NotNull final Class<T> type) {
         return dataAccess.read(() -> unsafeGet(type)
                 .stream()
                 .map(it -> (IdentifiableProvider<T>) it)
-                .collect(Collectors.toCollection(ArrayList::new)));
+                .collect(Collectors.toList()));
+    }
+
+    private <T> void sanityCheckInstanceWithProduced(
+            @NotNull final IdentifiableProvider<T> provider,
+            @Nullable final T t,
+            @NotNull final Class<T> type
+    ) {
+        if (t == null) {
+            throw new DiInstantiationException("Provider produced null for type " + type.getName() + ". This is not allowed by design!");
+        }
+
+        if (!provider.type().isAssignableFrom(t.getClass())) {
+            throw new DiInstantiationException("The provider for the class " + type + " is not compatible with the produced instance " + t);
+        }
     }
 
     private static final class ProviderMapper<T> implements Provider<T> {
 
+        @NotNull
         private final IdentifiableProvider<T> provider;
+        @NotNull
         private final WiredTypes wiredTypes;
 
-        private ProviderMapper(IdentifiableProvider<T> provider, WiredTypes wiredTypes) {
+        private ProviderMapper(
+                @NotNull IdentifiableProvider<T> provider,
+                @NotNull WiredTypes wiredTypes
+        ) {
             this.provider = provider;
             this.wiredTypes = wiredTypes;
         }
 
         @Override
+        @Nullable
         public T get() {
             return provider.get(wiredTypes);
         }

@@ -55,7 +55,7 @@ public class AspectFactoryClassBuilder {
                                         .build()
                         )
                         .addCode(CodeBlock.builder()
-                                .addStatement("$T dependency = wireRepository.requireInstance($T.class)", ClassName.get(wrappedClass), ClassName.get(wrappedClass))
+                                .addStatement("$T dependency = wireRepository.get($T.class)", ClassName.get(wrappedClass), ClassName.get(wrappedClass))
                                 .addStatement("return new $L(dependency)", aspectInstanceClassName)
                                 .build())
                         .build()
