@@ -10,6 +10,7 @@ import java.util.stream.Collectors;
 public class TestFacet {
 
     @Aspect(around = PrintParameter.class)
+    // TODO: Allow anything assignable to the actual method
     public Object printParametersAspect(ExecutionContext<PrintParameter> context) {
         String parameters = context.listArguments()
                 .stream()

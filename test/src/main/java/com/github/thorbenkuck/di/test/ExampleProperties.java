@@ -1,15 +1,15 @@
 package com.github.thorbenkuck.di.test;
 
-import com.github.thorbenkuck.di.annotations.properties.PropertySource;
+import com.github.thorbenkuck.di.annotations.properties.Properties;
 
-@PropertySource(
-        file = "test.properties"
-)
+@Properties
 public class ExampleProperties {
 
     private final String foo;
+    private final double pi;
 
-    public ExampleProperties(String foo) {
+    public ExampleProperties(String foo, double pi) {
         this.foo = foo;
+        this.pi = pi;
     }
 }

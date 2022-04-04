@@ -1,12 +1,10 @@
 package com.github.thorbenkuck.di.test;
 
 import com.github.thorbenkuck.di.annotations.Wire;
-import com.github.thorbenkuck.di.test.commands.Command;
 import com.github.thorbenkuck.di.test.commands.CommandA;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
-import javax.inject.Singleton;
 import java.util.UUID;
 
 @Wire(to = IDependency.class)

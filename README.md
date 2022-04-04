@@ -60,7 +60,7 @@ this introduces the annotation processor and dependency management. Afterwards, 
 <dependencies>
     <dependency>
         <groupId>com.github.thorbenkuck</groupId>
-        <artifactId>di</artifactId>
+        <artifactId>wire-di</artifactId>
     </dependency>
 </dependencies>
 ```

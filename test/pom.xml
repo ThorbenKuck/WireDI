@@ -1,9 +1,9 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.github.thorbenkuck</groupId>
-    <artifactId>di-test</artifactId>
-    <version>0.4</version>
+    <groupId>de.thorbenkuck</groupId>
+    <artifactId>test</artifactId>
+    <version>1</version>
 
     <developers>
         <developer>
@@ -13,37 +13,50 @@
         </developer>
     </developers>
 
+    <properties>
+        <java.version>1.8</java.version>
+        <wire-di.version>1.0.0-alpha1</wire-di.version>
+    </properties>
+
     <dependencyManagement>
         <dependencies>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>simple-di-bootstrap</artifactId>
-                <version>1.0.0-SNAPSHOT</version>
+                <artifactId>wire-di-bootstrap</artifactId>
+                <version>${wire-di.version}</version>
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
 
-    <dependencies>
-        <dependency>
-            <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>di</artifactId>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <annotationProcessorPath>
+                            <groupId>com.github.thorbenkuck</groupId>
+                            <artifactId>wire-di-processor</artifactId>
+                            <version>${wire-di.version}</version>
+                        </annotationProcessorPath>
+                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.github.thorbenkuck</groupId>
+            <artifactId>wire-di</artifactId>
+        </dependency>
+    </dependencies>
 
     <licenses>
         <license>

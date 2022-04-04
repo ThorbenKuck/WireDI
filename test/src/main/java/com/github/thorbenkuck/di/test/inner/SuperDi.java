@@ -1,6 +1,6 @@
 package com.github.thorbenkuck.di.test.inner;
 
-import com.github.thorbenkuck.di.domain.WireRepository;
+import com.github.thorbenkuck.di.WireRepository;
 import com.github.thorbenkuck.di.annotations.Wire;
 import com.github.thorbenkuck.di.test.IDependency;
 import com.github.thorbenkuck.di.test.NonExisting;
