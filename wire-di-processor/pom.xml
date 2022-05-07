@@ -38,11 +38,11 @@
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>wire-di-processor-extensions</artifactId>
+            <artifactId>wire-di-processor-development-kit</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>wire-di-core</artifactId>
+            <artifactId>wire-di-runtime-environment</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.testing.compile</groupId>

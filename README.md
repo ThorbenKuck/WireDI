@@ -1,6 +1,13 @@
 # WireDI
 
-What started as a proof of concept (originally named SimpleDI) to show, that dependency injection could be done at compile time, with not features left behind, grew up to become a very powerful framework, providing a lot of functionality (including aspect oriented proxies), all at runtime.
+![header](img/header.png)
+
+## Links:
+
+- [Documentation](https://docs.thorbenkuck.de/wiredi)
+- [Maven-Central](https://repo1.maven.org/maven2/com/github/thorbenkuck/wire-di-bootstrap/)
+
+What started as a proof of concept (originally named SimpleDI) to show, that dependency injection could be done at compile time, while keeping the features of reflections, grew up to become a very powerful framework, providing a lot of functionality (including aspect oriented proxies), all at compile time.
 
 But let's start at the important questions:
 
@@ -18,8 +25,8 @@ class YourClass {
 and then you can extract the class with all wired classes like this:
 
 ```java
-WiredTypes wiredTypes = new WiredTypes();
-YourClass instance = wiredTypes.get(YourClass.class);
+WireRepository wireRepository = WireRepository.open();
+YourClass instance = wireRepository.get(YourClass.class);
 ```
 
 All classes which you want to connect in this fashion have to be annotated with @Wire.
@@ -38,34 +45,20 @@ We can go even as far as declaring aspects at runtime, even though the proxies a
 
 ## Installation
 
-You require hooking up one annotation processor and the api, as well as the core api. You can do that simply, by adding this to pom.xml
+You require hooking up one annotation processor and the api, as well as the core api. You can do that simply, by adding this parent to your pom.xml
 
 ```xml
-<dependencyManagement>
-    <dependencies>
-        <dependency>
-            <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>simple-di-bootstrap</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
-            <type>pom</type>
-            <scope>import</scope>
-        </dependency>
-    </dependencies>
-</dependencyManagement>
+<parent>
+    <artifactId>wire-di-bootstrap</artifactId>
+    <groupId>com.github.thorbenkuck</groupId>
+    <version>1.0.0-alpha2</version>
+    <relativePath/> <!-- Always look up parent from repository -->
+</parent>
 ```
 
-this introduces the annotation processor and dependency management. Afterwards, you can import all requirements by adding this dependency:
+this introduces the wire-di annotation processor and wire-di-runtime-environment, which allows to utilize the data, generated at compile time, at runtime.
 
-```xml
-<dependencies>
-    <dependency>
-        <groupId>com.github.thorbenkuck</groupId>
-        <artifactId>wire-di</artifactId>
-    </dependency>
-</dependencies>
-```
-
-the `di` artifact contains everything you need to get done. You may only add the `di-annotations` artifact, but this would greatly limit you in functionality (especially since you now would have no access to the central `WiredTypes` class :P).
+For other forms of introducing this library to your application, see the [usage section of the documentation](https://docs.thorbenkuck.de/wiredi/#/usage/).
 
 ## Basic usage
 
@@ -88,8 +81,8 @@ class B {}
 
 public class Main {
     public static void main(String[] args)  {
-        WiredTypes wiredTypes = new WiredTypes();
-        A a = wiredTypes.get(A.class);
+        WireRepository wireRepository = WireRepository.open();
+        A a = wireRepository.get(A.class);
         // Do fancy stuff
     }
 }
@@ -98,23 +91,3 @@ public class Main {
 In this example right here, we have two classes, A and B and A has a dependency to B. Since both classes are marked with `@Wire`, the framework can identify these classes and inject them safely into each other.
 
 As you run this code, a lot happens behind the curtains. The annotation processor generates instance of `IdentifiableProvider` classes, which you can even see in the compiled sources. These providers hold a sum of static information about this class, that are then used at runtime; Including the template as to how this class is created.
-
-#### And why does everything need the @Wire annotation
-
-You are right. Up to a certain point, it would be very easy to remove it. We could just say "the root class needs to have this annotation" and the rest might just be instantiated.
-
-By adding the annotation requirement, we explicitly allow intersection of created instance and to control the lifecycle of those, even though it would be faster when we were doing it correctly.
-
-Far in the future, in an utopia (or dystopia?) where everything would happen at compile time, we could think about dropping this requirement, but for now we won't. This requirement allows us the interoperability with all the existing frameworks
-
-### Setter injection
-
-### Field injection
-
-## Aspects
-
-## Properties
-
-### Compile time bindings
-
-## Property Bindings

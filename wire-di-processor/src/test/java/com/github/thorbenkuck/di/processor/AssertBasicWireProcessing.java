@@ -1,7 +1,7 @@
 package com.github.thorbenkuck.di.processor;
 
+import com.github.thorbenkuck.di.processor.concurrent.ContextRunnable;
 import com.github.thorbenkuck.di.processor.concurrent.ThreadBarrier;
-import com.google.testing.compile.JavaFileObjects;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutorService;
@@ -17,22 +17,25 @@ public class AssertBasicWireProcessing {
 		Result result = new Result();
 		ThreadBarrier barrier = ThreadBarrier.builder()
 				.withExecutorService(executorService)
-				.withRunnable(new TestRunnable(result))
-				.withRunnable(new TestRunnable(result))
-				.withRunnable(new TestRunnable(result))
-				.withRunnable(new TestRunnable(result))
-				.withRunnable(new TestRunnable(result))
-				.withRunnable(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
+				.withRunnables(new TestRunnable(result))
 				.build();
 
 		assertThat(barrier.getRunnableList()).hasSize(6);
-		assertThat(barrier.getExpectedInvocations()).isEqualTo(-5);
-		Logger.debug("Awaiting for the finish");
+		assertThat(barrier.countNotFinishedThreads()).isEqualTo(6);
+		assertThat(barrier.getInitialSemaphoreCount()).isEqualTo(-5);
 		barrier.run();
 		assertThat(result.getI()).isEqualTo(6);
+		assertThat(barrier.getRunnableList()).hasSize(0);
+		assertThat(barrier.getInitialSemaphoreCount()).isEqualTo(-5);
+		assertThat(barrier.countNotFinishedThreads()).isEqualTo(0);
 	}
 
-	private class Result {
+	private static class Result {
 		private int i = 0;
 
 		public void increment() {
@@ -48,7 +51,7 @@ public class AssertBasicWireProcessing {
 		}
 	}
 
-	private class TestRunnable implements Runnable {
+	private static class TestRunnable implements ContextRunnable {
 
 		private final Result result;
 

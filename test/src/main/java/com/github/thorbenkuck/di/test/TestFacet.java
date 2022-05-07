@@ -11,6 +11,7 @@ public class TestFacet {
 
     @Aspect(around = PrintParameter.class)
     // TODO: Allow anything assignable to the actual method
+    // TODO: Why is this executed three times?
     public Object printParametersAspect(ExecutionContext<PrintParameter> context) {
         String parameters = context.listArguments()
                 .stream()

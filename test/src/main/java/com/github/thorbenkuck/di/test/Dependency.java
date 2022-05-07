@@ -1,7 +1,9 @@
 package com.github.thorbenkuck.di.test;
 
 import com.github.thorbenkuck.di.annotations.Wire;
+import com.github.thorbenkuck.di.annotations.Provider;
 import com.github.thorbenkuck.di.test.commands.CommandA;
+import com.github.thorbenkuck.di.test.commands.CommandB;
 
 import javax.annotation.PostConstruct;
 import javax.inject.Inject;
@@ -34,5 +36,10 @@ class Dependency implements IDependency {
     @Override
     public String id() {
         return "Dependency{" + id + "}";
+    }
+
+    @Provider
+    public String example(CommandB commandB) {
+        return "Foo";
     }
 }

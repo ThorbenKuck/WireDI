@@ -1,8 +1,8 @@
 package com.github.thorbenkuck.di.test;
 
-import com.github.thorbenkuck.di.WireConflictStrategy;
-import com.github.thorbenkuck.di.WireRepository;
-import com.github.thorbenkuck.di.WiredTypesConfiguration;
+import com.github.thorbenkuck.di.domain.WireConflictStrategy;
+import com.github.thorbenkuck.di.runtime.WireRepository;
+import com.github.thorbenkuck.di.runtime.WiredTypesConfiguration;
 import com.github.thorbenkuck.di.test.commands.Command;
 import com.github.thorbenkuck.di.test.commands.CommandNote;
 import com.github.thorbenkuck.di.test.inner.SuperDi;
@@ -19,6 +19,7 @@ public class Main {
 		WireRepository wireRepository = WireRepository.open();
 		wireRepository.announce(new Dependency());
 
+		wireRepository.get(MetaAnnotationTest.class);
 		SuperDi instance = wireRepository.get(SuperDi.class);
 
 		instance.print("Bla");

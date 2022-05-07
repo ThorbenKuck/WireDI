@@ -50,12 +50,7 @@
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di-core</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di</artifactId>
+                <artifactId>wire-di-runtime-environment</artifactId>
                 <version>${revision}</version>
             </dependency>
         </dependencies>
@@ -64,15 +59,17 @@
     <dependencies>
         <dependency>
             <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>wire-di</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.google.auto.service</groupId>
-            <artifactId>auto-service</artifactId>
+            <artifactId>wire-di-runtime-environment</artifactId>
         </dependency>
     </dependencies>
 
     <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
+
         <pluginManagement>
             <plugins>
                 <plugin>
@@ -85,7 +82,7 @@
                         <annotationProcessorPaths>
                             <annotationProcessorPath>
                                 <groupId>com.github.thorbenkuck</groupId>
-                                <artifactId>di-processor</artifactId>
+                                <artifactId>wire-di-processor</artifactId>
                                 <version>${revision}</version>
                             </annotationProcessorPath>
                         </annotationProcessorPaths>

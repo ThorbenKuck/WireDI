@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import java.util.Collections;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 public class WireAnnotationInformationExtractor {
 
-    public static WireInformation extractOf(@NotNull TypeElement typeElement) {
+    public static WireInformation.Builder startExtractionFor(@NotNull TypeElement typeElement) {
         boolean singleton = isSingleton(typeElement);
         boolean proxyExpected = isProxyExpected(typeElement);
         TypeElement primaryWireType = getPrimaryWireType(typeElement);
@@ -32,9 +33,31 @@ public class WireAnnotationInformationExtractor {
                 .asSingleton(singleton)
                 .withPrimaryWireType(primaryWireType)
                 .addWiredToElements(wiredToElements)
-                .withPrimaryConstructor(findBestSuitedInvokableConstructor(typeElement).orElse(null))
                 .withWirePriority(getWirePriority(typeElement).orElse(null))
-                .atPackage(packageElement)
+                .atPackage(packageElement);
+    }
+
+    public static WireInformation extractOf(@NotNull TypeElement typeElement) {
+        return startExtractionFor(typeElement)
+                .withPrimaryConstructor(findBestSuitedInvokableConstructor(typeElement).orElse(null))
+                .build();
+    }
+
+    public static WireInformation extractForProvider(@NotNull ExecutableElement method) {
+        if(method.getReturnType().getKind() == TypeKind.VOID) {
+            throw new ProcessingException(method, "Only methods with non-void return values may be annotated with @Provider");
+        }
+
+        TypeElement parentClass = (TypeElement) method.getEnclosingElement();
+        TypeElement primaryWireType = (TypeElement) ProcessorContext.getTypes().asElement(method.getReturnType());
+        WireInformation.Builder builder = startExtractionFor(parentClass);
+
+        return startExtractionFor(parentClass)
+                .buildByMethod(method)
+                .withPrimaryWireType(primaryWireType)
+                .setWiredToElement(primaryWireType)
+                .asSingleton(true)
+                .asProxy(false)
                 .build();
     }
 

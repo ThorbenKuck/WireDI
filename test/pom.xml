@@ -15,20 +15,21 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <wire-di.version>1.0.0-alpha1</wire-di.version>
     </properties>
 
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di-bootstrap</artifactId>
-                <version>${wire-di.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
+    <parent>
+        <artifactId>wire-di-bootstrap</artifactId>
+        <groupId>com.github.thorbenkuck</groupId>
+        <version>1.0.0-alpha2-SNAPSHOT</version>
+        <relativePath/> <!-- Always look up parent from repository -->
+    </parent>
+
+<!--    <dependencies>-->
+<!--        <dependency>-->
+<!--            <groupId>com.github.thorbenkuck</groupId>-->
+<!--            <artifactId>wire-di-runtime-environment</artifactId>-->
+<!--        </dependency>-->
+<!--    </dependencies>-->
 
     <build>
         <plugins>
@@ -39,24 +40,10 @@
                 <configuration>
                     <source>${java.version}</source>
                     <target>${java.version}</target>
-                    <annotationProcessorPaths>
-                        <annotationProcessorPath>
-                            <groupId>com.github.thorbenkuck</groupId>
-                            <artifactId>wire-di-processor</artifactId>
-                            <version>${wire-di.version}</version>
-                        </annotationProcessorPath>
-                    </annotationProcessorPaths>
                 </configuration>
             </plugin>
         </plugins>
     </build>
-
-    <dependencies>
-        <dependency>
-            <groupId>com.github.thorbenkuck</groupId>
-            <artifactId>wire-di</artifactId>
-        </dependency>
-    </dependencies>
 
     <licenses>
         <license>

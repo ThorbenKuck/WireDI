@@ -10,23 +10,21 @@
     <description>Easy and simple di using annotation processors</description>
 
     <properties>
-        <revision>1.0.0-alpha1</revision>
+        <revision>1.0.0-alpha2</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-        <root.version>1</root.version>
 
         <google-auto-service.version>1.0.1</google-auto-service.version>
         <java-poet.version>1.13.0</java-poet.version>
         <javax-inject.version>1</javax-inject.version>
+        <slf4j.version>1.7.33</slf4j.version>
     </properties>
 
     <modules>
         <module>wire-di-bootstrap</module>
         <module>wire-di-annotations</module>
-        <module>wire-di-core</module>
+        <module>wire-di-runtime-environment</module>
         <module>wire-di-processor</module>
-        <module>wire-di-processor-extensions</module>
-        <module>wire-di</module>
+        <module>wire-di-processor-development-kit</module>
     </modules>
 
     <url>https://github.com/ThorbenKuck/WireDI</url>
@@ -36,27 +34,22 @@
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>wire-di-annotations</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di-core</artifactId>
-                <version>${project.version}</version>
+                <artifactId>wire-di-runtime-environment</artifactId>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
                 <artifactId>wire-di-processor</artifactId>
-                <version>${project.version}</version>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di-processor-extensions</artifactId>
-                <version>${project.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.thorbenkuck</groupId>
-                <artifactId>wire-di</artifactId>
-                <version>${project.version}</version>
+                <artifactId>wire-di-processor-development-kit</artifactId>
+                <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>javax.inject</groupId>
@@ -72,6 +65,11 @@
                 <groupId>javax.annotation</groupId>
                 <artifactId>jsr250-api</artifactId>
                 <version>1.0</version>
+            </dependency>
+            <dependency>
+                <groupId>org.slf4j</groupId>
+                <artifactId>slf4j-api</artifactId>
+                <version>${slf4j.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
