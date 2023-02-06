@@ -10,13 +10,13 @@ class MultitonGenericIdentifiableProvider<T> implements IdentifiableProvider<T> 
 	@NotNull
 	private final Function<WireRepository, T> creationFunction;
 	@NotNull
-	private final Class<?>[] wireTypes;
+	private final TypeIdentifier<?>[] wireTypes;
 	@NotNull
 	private final Class<T> type;
 
 	MultitonGenericIdentifiableProvider(
 			@NotNull final Function<WireRepository, T> creationFunction,
-			@NotNull Class<?>[] wireTypes,
+			@NotNull TypeIdentifier<?>[] wireTypes,
 			@NotNull Class<T> type
 	) {
 		this.creationFunction = creationFunction;
@@ -32,7 +32,7 @@ class MultitonGenericIdentifiableProvider<T> implements IdentifiableProvider<T> 
 
 	@Override
 	@NotNull
-	public final Class<?>[] wiredTypes() {
+	public final TypeIdentifier<?>[] wiredTypes() {
 		return wireTypes;
 	}
 

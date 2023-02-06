@@ -5,8 +5,8 @@ import com.github.thorbenkuck.di.domain.WireCapable;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.inject.Provider;
-import java.util.Comparator;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -79,34 +79,34 @@ public interface IdentifiableProvider<T> extends Comparable<IdentifiableProvider
 	}
 
 	static <T> IdentifiableProvider<T> wrap(Supplier<T> supplier, Class<T> type) {
-		return new MultitonGenericIdentifiableProvider<>((r) -> supplier.get(), new Class[]{ type }, type);
+		return new MultitonGenericIdentifiableProvider<>((r) -> supplier.get(), new TypeIdentifier[]{ TypeIdentifier.of(type) }, type);
 	}
 
-	static <T> IdentifiableProvider<T> wrap(Supplier<T> supplier, Class<T> type, Class<?>[] wireTypes) {
+	static <T> IdentifiableProvider<T> wrap(Supplier<T> supplier, Class<T> type, TypeIdentifier<?>[] wireTypes) {
 		return new MultitonGenericIdentifiableProvider<>((r) -> supplier.get(), wireTypes, type);
 	}
 
 	static <T> IdentifiableProvider<T> wrap(Function<WireRepository, T> function, Class<T> type) {
-		return new MultitonGenericIdentifiableProvider<>(function, new Class[]{ type }, type);
+		return new MultitonGenericIdentifiableProvider<>(function, new TypeIdentifier[]{ TypeIdentifier.of(type) }, type);
 	}
 
-	static <T> IdentifiableProvider<T> wrap(Function<WireRepository, T> function, Class<T> type, Class<?>[] wireTypes) {
+	static <T> IdentifiableProvider<T> wrap(Function<WireRepository, T> function, Class<T> type, TypeIdentifier<?>[] wireTypes) {
 		return new MultitonGenericIdentifiableProvider<>(function, wireTypes, type);
 	}
 
 	static <T> IdentifiableProvider<T> wrapSingleton(Supplier<T> supplier, Class<T> type) {
-		return new SingletonGenericIdentifiableProvider<>((r) -> supplier.get(), new Class[]{ type }, type);
+		return new SingletonGenericIdentifiableProvider<>((r) -> supplier.get(), new TypeIdentifier[]{ TypeIdentifier.of(type) }, type);
 	}
 
-	static <T> IdentifiableProvider<T> wrapSingleton(Supplier<T> supplier, Class<T> type, Class<?>[] wireTypes) {
+	static <T> IdentifiableProvider<T> wrapSingleton(Supplier<T> supplier, Class<T> type, TypeIdentifier<?>[] wireTypes) {
 		return new SingletonGenericIdentifiableProvider<>((r) -> supplier.get(), wireTypes, type);
 	}
 
 	static <T> IdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, Class<T> type) {
-		return new SingletonGenericIdentifiableProvider<>(function, new Class[]{ type }, type);
+		return new SingletonGenericIdentifiableProvider<>(function, new TypeIdentifier[]{ TypeIdentifier.of(type) }, type);
 	}
 
-	static <T> IdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, Class<T> type, Class<?>[] wireTypes) {
+	static <T> IdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, Class<T> type, TypeIdentifier<?>[] wireTypes) {
 		return new SingletonGenericIdentifiableProvider<>(function, wireTypes, type);
 	}
 }

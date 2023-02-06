@@ -10,14 +10,14 @@ class SingletonGenericIdentifiableProvider<T> implements IdentifiableProvider<T>
 	@NotNull
 	private final Function<WireRepository, T> creationFunction;
 	@NotNull
-	private final Class<?>[] wireTypes;
+	private final TypeIdentifier<?>[] wireTypes;
 	@NotNull
 	private final Class<T> type;
 	private volatile T instance;
 
 	SingletonGenericIdentifiableProvider(
 			@NotNull final Function<WireRepository, T> creationFunction,
-			@NotNull Class<?>[] wireTypes,
+			@NotNull TypeIdentifier<?>[] wireTypes,
 			@NotNull Class<T> type
 	) {
 		this.creationFunction = creationFunction;
@@ -33,7 +33,7 @@ class SingletonGenericIdentifiableProvider<T> implements IdentifiableProvider<T>
 
 	@Override
 	@NotNull
-	public final Class<?>[] wiredTypes() {
+	public final TypeIdentifier<?>[] wiredTypes() {
 		return wireTypes;
 	}
 

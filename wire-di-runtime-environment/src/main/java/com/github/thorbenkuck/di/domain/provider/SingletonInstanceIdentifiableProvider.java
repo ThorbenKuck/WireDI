@@ -3,25 +3,31 @@ package com.github.thorbenkuck.di.domain.provider;
 import com.github.thorbenkuck.di.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.stream.Collectors;
+
 class SingletonInstanceIdentifiableProvider<T> implements IdentifiableProvider<T> {
 
 	@NotNull
 	private final T instance;
 	@NotNull
-	private final Class<?>[] types;
+	private final TypeIdentifier<?>[] types;
 	@NotNull
 	private final Class<?> type;
 
 	SingletonInstanceIdentifiableProvider(@NotNull final T instance) {
 		this.instance = instance;
 		this.type = instance.getClass();
-		this.types = new Class[]{instance.getClass()};
+		this.types = new TypeIdentifier[]{TypeIdentifier.of(instance.getClass())};
 	}
 
 	SingletonInstanceIdentifiableProvider(@NotNull final T instance, Class<?>... classes) {
 		this.instance = instance;
 		this.type = instance.getClass();
-		this.types = classes;
+		this.types = Arrays.stream(classes)
+				.map(TypeIdentifier::of)
+				.collect(Collectors.toList())
+				.toArray(new TypeIdentifier[]{});
 	}
 
 	@Override
@@ -32,7 +38,7 @@ class SingletonInstanceIdentifiableProvider<T> implements IdentifiableProvider<T
 
 	@Override
 	@NotNull
-	public Class<?>[] wiredTypes() {
+	public TypeIdentifier<?>[] wiredTypes() {
 		return types;
 	}
 

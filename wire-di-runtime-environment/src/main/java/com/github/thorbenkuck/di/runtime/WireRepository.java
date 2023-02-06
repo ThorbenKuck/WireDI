@@ -4,6 +4,7 @@ import com.github.thorbenkuck.di.annotations.ManualWireCandidate;
 import com.github.thorbenkuck.di.aspects.AspectRepository;
 import com.github.thorbenkuck.di.domain.WireConflictResolver;
 import com.github.thorbenkuck.di.domain.WireConflictStrategy;
+import com.github.thorbenkuck.di.domain.provider.TypeIdentifier;
 import com.github.thorbenkuck.di.domain.provider.IdentifiableProvider;
 import com.github.thorbenkuck.di.runtime.exceptions.DiInstantiationException;
 import com.github.thorbenkuck.di.runtime.properties.TypedProperties;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.inject.Provider;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 @ManualWireCandidate
 public interface WireRepository {
@@ -68,6 +70,8 @@ public interface WireRepository {
 	 */
 	@NotNull <T> T get(Class<T> type) throws DiInstantiationException;
 
+	@NotNull <T> T get(@NotNull TypeIdentifier<T> identifier) throws DiInstantiationException;
+
 	/**
 	 *
 	 * @param type
@@ -75,6 +79,8 @@ public interface WireRepository {
 	 * @return
 	 */
 	<T> List<T> getAll(Class<T> type);
+
+	@NotNull <T> Stream<IdentifiableProvider<T>> stream(@NotNull Class<T> type);
 
 	<T> Provider<T> getProvider(Class<T> type);
 

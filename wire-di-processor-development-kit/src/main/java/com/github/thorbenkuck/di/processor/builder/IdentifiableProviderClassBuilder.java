@@ -1,6 +1,7 @@
 package com.github.thorbenkuck.di.processor.builder;
 
 import com.github.thorbenkuck.di.domain.provider.IdentifiableProvider;
+import com.github.thorbenkuck.di.domain.provider.TypeIdentifier;
 import com.github.thorbenkuck.di.processor.WireInformation;
 import com.github.thorbenkuck.di.processor.builder.constructors.MethodConstructor;
 import com.github.thorbenkuck.di.processor.builder.constructors.factory.CreateInstanceForPropertySourceMethodConstructor;
@@ -13,6 +14,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
+import java.lang.invoke.TypeDescriptor;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class IdentifiableProviderClassBuilder extends ClassBuilder {
@@ -89,30 +92,37 @@ public class IdentifiableProviderClassBuilder extends ClassBuilder {
 	}
 
 	public IdentifiableProviderClassBuilder addWiredTypesMethod() {
-		CodeBlock.Builder initializer = CodeBlock.builder()
-				.add("new Class[] { ");
+		final String lineSeparator = System.lineSeparator();
+		final CodeBlock.Builder initializer = CodeBlock.builder()
+				.add("new $T[] {", TypeIdentifier.class)
+				.add(lineSeparator);
 		final AtomicBoolean first = new AtomicBoolean(true);
 		final String fieldName = "ALL_WIRED_TYPES";
+		List<TypeElement> allWireCandidates = wireInformation.getAllWireCandidates();
 
-		wireInformation.getAllWireCandidates()
-				.forEach(it -> {
-					if (first.get()) {
-						initializer.add("$T.class", ClassName.get(it));
-						first.set(false);
-					} else {
-						initializer.add(", $T.class", ClassName.get(it));
-					}
-				});
+		if(!allWireCandidates.isEmpty()) {
+			initializer.indent();
+			allWireCandidates
+					.forEach(it -> {
+						if (first.get()) {
+							initializer.add("$T.of($T.class)", TypeIdentifier.class, ClassName.get(it));
+							first.set(false);
+						} else {
+							initializer.add(",").add(lineSeparator).add("$T.of($T.class)", TypeIdentifier.class, ClassName.get(it));
+						}
+					});
+			initializer.add(lineSeparator).unindent();
+		}
 
 		addField(
-				classConstant(TypeName.get(Class[].class), fieldName)
-						.initializer(initializer.add(" }").build())
+				classConstant(TypeName.get(TypeIdentifier[].class), fieldName)
+						.initializer(initializer.add("}").build())
 		);
 
 		addMethod(
 				overwriteMethod("wiredTypes")
 						.addStatement("return $L", fieldName)
-						.returns(TypeName.get(Class[].class))
+						.returns(TypeName.get(TypeIdentifier[].class))
 		);
 
 		return this;
