@@ -9,6 +9,7 @@
 *.iml
 
 # Sensitive or high-churn files:
+**/target/**
 */target/*
 
 ## File-based project format:

@@ -16,8 +16,10 @@
 
 package org.atinject.tck.auto.accessories;
 
+import com.wiredi.annotations.Wire;
 import jakarta.inject.Inject;
 
+@Wire
 public class RoundThing {
 
     public boolean packagePrivateMethod2Injected;

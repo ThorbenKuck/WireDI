@@ -1,6 +1,6 @@
 # WireDI
 
-![header](img/header.png)
+![header](.img/header.png)
 
 ## Links:
 
@@ -49,8 +49,8 @@ You require hooking up one annotation processor and the api, as well as the core
 
 ```xml
 <parent>
-    <artifactId>wire-di-bootstrap</artifactId>
-    <groupId>com.github.thorbenkuck</groupId>
+    <groupId>com.wiredi</groupId>
+    <artifactId>bootstrap</artifactId>
     <version>1.0.0-alpha2</version>
     <relativePath/> <!-- Always look up parent from repository -->
 </parent>

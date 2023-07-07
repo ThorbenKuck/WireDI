@@ -16,10 +16,18 @@
 
 package org.atinject.tck.auto.accessories;
 
+import com.wiredi.annotations.Wire;
 import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import org.atinject.tck.auto.FuelTank;
 import org.atinject.tck.auto.Tire;
+import org.junit.jupiter.api.DynamicTest;
 
+import java.util.Collection;
+import java.util.List;
+
+@Wire
+@Named("spare")
 public class SpareTire extends Tire {
 
     FuelTank constructorInjection = NEVER_INJECTED;
@@ -35,60 +43,60 @@ public class SpareTire extends Tire {
 
     @Inject void subtypeMethodInjection(FuelTank methodInjection) {
         if (!hasSpareTireBeenFieldInjected()) {
-            methodInjectedBeforeFields = true;
+            fieldsInjectedBeforeMethods.failure("SpareTire was field injected, before it was method injected");
         }
         this.methodInjection = methodInjection;
     }
 
     @Inject static void subtypeStaticMethodInjection(FuelTank methodInjection) {
         if (!hasBeenStaticFieldInjected()) {
-            staticMethodInjectedBeforeStaticFields = true;
+            staticMethodInjectedBeforeStaticFields.failure("SpareTire was field injected, before it was method injected");
         }
         staticMethodInjection = methodInjection;
     }
 
     @Inject private void injectPrivateMethod() {
-        if (subPrivateMethodInjected) {
-            similarPrivateMethodInjectedTwice = true;
+        if (subPrivateMethodInjected.isSuccessful()) {
+            subPrivateMethodInjected.failure("The private method 'SpareTire.injectPrivateMethod' was invoked twice");
         }
-        subPrivateMethodInjected = true;
+        subPrivateMethodInjected.success();
     }
 
     @Inject void injectPackagePrivateMethod() {
-        if (subPackagePrivateMethodInjected) {
-            similarPackagePrivateMethodInjectedTwice = true;
+        if (subPackagePrivateMethodInjected.isSuccessful()) {
+            subPackagePrivateMethodInjected.failure("The package private method 'SpareTire.injectPackagePrivateMethod' was invoked twice");
         }
-        subPackagePrivateMethodInjected = true;
+        subPackagePrivateMethodInjected.success();
     }
 
     @Inject protected void injectProtectedMethod() {
-        if (subProtectedMethodInjected) {
-            overriddenProtectedMethodInjectedTwice = true;
+        if (subProtectedMethodInjected.isSuccessful()) {
+            subProtectedMethodInjected.failure("The protected method 'SpareTire.injectProtectedMethod' was invoked twice");
         }
-        subProtectedMethodInjected = true;
+        subProtectedMethodInjected.success();
     }
 
     @Inject public void injectPublicMethod() {
-        if (subPublicMethodInjected) {
-            overriddenPublicMethodInjectedTwice = true;
+        if (subPublicMethodInjected.isSuccessful()) {
+            subPublicMethodInjected.failure("The public method 'SpareTire.injectPublicMethod' was invoked twice");
         }
-        subPublicMethodInjected = true;
+        subPublicMethodInjected.success();
     }
 
     private void injectPrivateMethodForOverride() {
-        superPrivateMethodForOverrideInjected = true;
+        superPrivateMethodForOverrideInjected.failure("The method 'injectPrivateMethodForOverride' is not annotated with @Inject and should not be injected");
     }
 
     void injectPackagePrivateMethodForOverride() {
-        superPackagePrivateMethodForOverrideInjected = true;
+        superPackagePrivateMethodForOverrideInjected.failure("The method 'injectPackagePrivateMethodForOverride' is not annotated with @Inject and should not be injected");
     }
 
     protected void injectProtectedMethodForOverride() {
-        protectedMethodForOverrideInjected = true;
+        protectedMethodForOverrideInjected.failure("The method 'injectProtectedMethodForOverride' is not annotated with @Inject and should not be injected");
     }
 
     public void injectPublicMethodForOverride() {
-        publicMethodForOverrideInjected = true;
+        publicMethodForOverrideInjected.failure("The method 'injectPublicMethodForOverride' is not annotated with @Inject and should not be injected");
     }
 
     public boolean hasSpareTireBeenFieldInjected() {
@@ -117,5 +125,34 @@ public class SpareTire extends Tire {
 
     void injectPackagePrivateMethod3() {
         packagePrivateMethod3Injected = true;
+    }
+
+    public Collection<DynamicTest> dynamicTests() {
+        return List.of(
+                superPrivateMethodInjected.toDynamicTest(),
+                superPackagePrivateMethodInjected.toDynamicTest(),
+                superProtectedMethodInjected.toDynamicTest(),
+                superPublicMethodInjected.toDynamicTest(),
+
+                subPrivateMethodInjected.toDynamicTest(),
+                subPackagePrivateMethodInjected.toDynamicTest(),
+                subProtectedMethodInjected.toDynamicTest(),
+                subPublicMethodInjected.toDynamicTest(),
+
+                superPrivateMethodForOverrideInjected.toDynamicTest(),
+                superPackagePrivateMethodForOverrideInjected.toDynamicTest(),
+                subPrivateMethodForOverrideInjected.toDynamicTest(),
+                subPackagePrivateMethodForOverrideInjected.toDynamicTest(),
+                protectedMethodForOverrideInjected.toDynamicTest(),
+                publicMethodForOverrideInjected.toDynamicTest(),
+
+                fieldsInjectedBeforeMethods.toDynamicTest(),
+                subtypeFieldInjectedBeforeSupertypeMethods.toDynamicTest(),
+                subtypeMethodInjectedBeforeSupertypeMethods.toDynamicTest(),
+
+                staticMethodInjectedBeforeStaticFields.toDynamicTest(),
+                subtypeStaticFieldInjectedBeforeSupertypeStaticMethods.toDynamicTest(),
+                subtypeStaticMethodInjectedBeforeSupertypeStaticMethods.toDynamicTest()
+        );
     }
 }
