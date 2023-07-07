@@ -8,31 +8,14 @@ body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
-  - type: input
-    id: contact
-    attributes:
-      label: Contact Details
-      description: How can we get in touch with you if we need more info?
-      placeholder: ex. email@example.com
-    validations:
-      required: false
+        We are sorry for your inconveniences. Thank you very much for taking the time to fill out this bug report! |
   - type: textarea
     id: what-happened
     attributes:
       label: What happened?
-      description: Also tell us, what did you expect to happen?
+      description: Please tell us, in the most precise language you can, what happened?
       placeholder: Tell us what you see!
       value: "A bug happened!"
-    validations:
-      required: true
-  - type: textarea
-    id: mcve
-    attributes:
-      label: Minimal, complete and verifiable example
-      description: Could you try to give us a [minimal, complete and verifiable example](https://stackoverflow.com/help/mcve)
-      placeholder: Tell us what you coded!
-      value: "public class Example { ... }"
     validations:
       required: true
   - type: dropdown
@@ -49,8 +32,34 @@ body:
     validations:
       required: true
   - type: textarea
+    id: mcve
+    attributes:
+      label: Minimal, complete and verifiable example
+      description: Please try to give us a [minimal, complete and verifiable example](https://stackoverflow.com/help/mcve), it helps a lot to debug the issue
+      placeholder: Show us what you coded!
+    validations:
+      required: false
+  - type: textarea
+    id: root-cause
+    attributes:
+      label: Root cause
+      description: If you know the root cause, please try to describe it as best as possible here. This can help us to fix the issue faster.
+      placeholder: The issue occurs in ... when ... or ...
+    validations:
+      required: false
+  - type: textarea
     id: logs
     attributes:
       label: Relevant log output
       description: Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks.
       render: shell
+    validations:
+      required: false
+  - type: input
+    id: contact
+    attributes:
+      label: Contact Details
+      description: How can we get in touch with you if we need more info?
+      placeholder: ex. email@example.com
+    validations:
+      required: false
