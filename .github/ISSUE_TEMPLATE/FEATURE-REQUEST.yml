@@ -1,9 +1,9 @@
 name: Feature Request
 description: Suggest a new feature, that extends WireDI
-title: "[FEAT]: "
+title: "[Feature]: "
 labels: ["feature-request", "triage"]
 assignees:
-  - thorben.kuck@gmail.com
+  - ThorbenKuck
 body:
   - type: markdown
     attributes:
