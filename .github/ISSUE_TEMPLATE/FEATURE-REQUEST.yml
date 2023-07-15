@@ -1,0 +1,45 @@
+name: Feature Request
+description: Suggest a new feature, that extends WireDI
+title: "[FEAT]: "
+labels: ["feature-request", "triage"]
+assignees:
+  - thorben.kuck@gmail.com
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you very much for taking the time to make WireDI better! |
+
+  - type: dropdown
+    id: type
+    attributes:
+      label: Type of feature request
+      description: What kind of feature request, do you want to make
+      options:
+        - A completely New Feature
+        - Improvement to an existing feature
+        - Extension of an existing feature
+        - Unsure
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What kind of feature would you like to see
+      description: Please give a general idea about what you want the new feature to look like.
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Code Examples
+      description: How would your feature look in code? Try to give us an idea how to use it.
+    validations:
+      required: false
+  - type: textarea
+    id: design
+    attributes:
+      label: Feature Design
+      description: If you want, you can provide a feature design concept and justifications here.
+    validations:
+      required: false
