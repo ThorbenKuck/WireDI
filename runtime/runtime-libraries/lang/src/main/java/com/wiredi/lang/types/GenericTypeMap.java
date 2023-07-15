@@ -1,4 +1,4 @@
-package com.wiredi.lang;
+package com.wiredi.lang.types;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -7,7 +7,7 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
-public class TypeMap<C, T> {
+public class GenericTypeMap<C, T> {
 
     private final Map<String, T> root = new HashMap<>();
 

@@ -4,6 +4,7 @@ import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.entities.AspectAwareProxyEntity;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.values.ProxyMethod;
+import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.processor.TypeExtractor;
 import com.wiredi.processor.business.AspectAwareProxyService;
@@ -16,6 +17,7 @@ public class AspectAwareProxyFactory implements Factory<AspectAwareProxyEntity> 
 	private final CompilerRepository compilerRepository;
 	private final TypeExtractor typeExtractor;
 	private final AspectAwareProxyService proxyService;
+	private static final Logger logger = Logger.get(AspectAwareProxyFactory.class);
 
 	public AspectAwareProxyFactory(
 			CompilerRepository compilerRepository,
@@ -33,7 +35,7 @@ public class AspectAwareProxyFactory implements Factory<AspectAwareProxyEntity> 
 		if (eligibleMethods.isEmpty()) {
 			return null;
 		}
-
+		logger.info("Will create an aspect proxy for " + typeElement);
 
 		final AspectAwareProxyEntity entity = compilerRepository.newAspectAwareProxy(typeElement);
 		final NameContext nameContext = new NameContext();

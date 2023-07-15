@@ -4,7 +4,7 @@ import com.wiredi.domain.WireConflictResolver;
 import com.wiredi.domain.WireConflictStrategy;
 import com.wiredi.domain.provider.IdentifiableProvider;
 import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.lang.async.DataAccess;
+import com.wiredi.lang.DataAccess;
 import com.wiredi.lang.time.Timed;
 import com.wiredi.qualifier.QualifierType;
 import com.wiredi.runtime.Loader;

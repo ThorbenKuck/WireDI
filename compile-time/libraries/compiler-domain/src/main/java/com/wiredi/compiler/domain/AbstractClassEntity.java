@@ -5,22 +5,26 @@ import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.TypeSpec;
+import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
+import com.wiredi.compiler.domain.entities.methods.MethodFactory;
 import jakarta.annotation.Generated;
 import jakarta.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Element;
+import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.type.TypeMirror;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public abstract class AbstractClassEntity implements ClassEntity {
+public abstract class AbstractClassEntity<T extends ClassEntity> implements ClassEntity {
 
 	protected final TypeSpec.Builder builder;
 	private final TypeMirror rootElement;
-	protected final String className;
+	public final String className;
 	private PackageElement packageElement;
 
 	public AbstractClassEntity(TypeMirror rootElement, String className) {
@@ -41,19 +45,24 @@ public abstract class AbstractClassEntity implements ClassEntity {
 		return Optional.ofNullable(this.packageElement);
 	}
 
-	public AbstractClassEntity setPackageOf(Element element) {
+	public T appendMethod(MethodFactory methodFactory) {
+		methodFactory.append(builder, this);
+		return (T) this;
+	}
+
+	public T setPackageOf(Element element) {
 		return setPackage(TypeUtils.packageOf(element));
 	}
 
-	public AbstractClassEntity setPackage(PackageElement packageElement) {
+	public T setPackage(PackageElement packageElement) {
 		addSource(packageElement);
 		this.packageElement = packageElement;
-		return this;
+		return (T) this;
 	}
 
-	public AbstractClassEntity addSource(Element element) {
+	public T addSource(Element element) {
 		builder.addOriginatingElement(element);
-		return this;
+		return (T) this;
 	}
 
 	@Override
@@ -63,7 +72,7 @@ public abstract class AbstractClassEntity implements ClassEntity {
 				.orElseThrow(() -> new IllegalStateException("Package not set"));
 	}
 
-	protected abstract TypeSpec.Builder createBuilder(TypeMirror typeElement);
+	protected abstract TypeSpec.Builder createBuilder(TypeMirror type);
 
 	protected void finalize(TypeSpec.Builder builder) {
 	}
@@ -87,13 +96,13 @@ public abstract class AbstractClassEntity implements ClassEntity {
 				.build();
 	}
 
-	protected boolean willHaveTheSamePackageAs(Element element) {
+	public boolean willHaveTheSamePackageAs(Element element) {
 		return packageElement()
 				.map(p -> p.equals(packageElementOf(element)))
 				.orElse(false);
 	}
 
-	protected PackageElement packageElementOf(Element element) {
+	public PackageElement packageElementOf(Element element) {
 		Element current = element;
 		while (!(current instanceof PackageElement)) {
 			current = current.getEnclosingElement();
@@ -121,5 +130,21 @@ public abstract class AbstractClassEntity implements ClassEntity {
 	@NotNull
 	public List<Class<?>> autoServiceTypes() {
 		return List.of();
+	}
+
+	public boolean requiresReflectionFor(ExecutableElement element) {
+		if (element.getModifiers().contains(Modifier.PUBLIC)) {
+			return false;
+		}
+
+		return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
+	}
+
+	public boolean requiresReflectionFor(Element element) {
+		if (element.getModifiers().contains(Modifier.PUBLIC)) {
+			return false;
+		}
+
+		return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
 	}
 }

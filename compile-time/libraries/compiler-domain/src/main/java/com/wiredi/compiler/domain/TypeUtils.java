@@ -5,9 +5,8 @@ import com.wiredi.compiler.errors.ProcessingException;
 import jakarta.inject.Inject;
 
 import javax.lang.model.element.*;
+import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Types;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +15,11 @@ public class TypeUtils {
 	public static PackageElement packageOf(Element element) {
 		Element current = element;
 
-		while(!(current instanceof PackageElement)) {
+		while (current.getKind() != ElementKind.PACKAGE) {
 			current = element.getEnclosingElement();
+			if (current.asType().getKind() == TypeKind.NONE) {
+				throw new ProcessingException(element, "Could not extract the package of the element " + element);
+			}
 		}
 
 		return (PackageElement) current;

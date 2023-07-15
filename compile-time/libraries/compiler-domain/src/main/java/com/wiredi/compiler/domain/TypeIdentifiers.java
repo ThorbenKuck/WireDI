@@ -1,6 +1,5 @@
 package com.wiredi.compiler.domain;
 
-import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.domain.provider.TypeIdentifier;
@@ -24,7 +23,6 @@ public class TypeIdentifiers {
 	}
 
 	public CodeBlock newTypeIdentifier(TypeMirror typeMirror) {
-		logger.info(typeMirror.toString());
 		CodeBlock.Builder builder = CodeBlock.builder()
 				.add("$T.of($T.class)", TypeIdentifier.class, types.erasure(typeMirror));
 		var indented = false;

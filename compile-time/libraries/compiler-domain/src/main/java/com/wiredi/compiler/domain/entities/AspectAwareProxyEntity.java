@@ -3,32 +3,44 @@ package com.wiredi.compiler.domain.entities;
 import com.squareup.javapoet.*;
 import com.wiredi.annotations.PrimaryWireType;
 import com.wiredi.annotations.Wire;
-import com.wiredi.aspects.AspectExecutionContext;
-import com.wiredi.aspects.AspectRepository;
+import com.wiredi.aspects.AspectHandler;
+import com.wiredi.aspects.ExecutionChain;
 import com.wiredi.compiler.domain.AbstractClassEntity;
-import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.values.ProxyMethod;
 import com.wiredi.domain.aop.AspectAwareProxy;
 import com.wiredi.lang.ReflectionsHelper;
+import com.wiredi.runtime.WireRepository;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.*;
-import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
-public class AspectAwareProxyEntity extends AbstractClassEntity {
+public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxyEntity> {
 
-	private static final String ASPECT_REPOSITORY_FIELD_NAME = "aspectRepository";
+	private static final String WIRE_REPOSITORY_FIELD_NAME = "wireRepository";
 
 	private final TypeSpecs typeSpecs = new TypeSpecs();
 
+	private final List<FieldEntity> fieldEntities = new ArrayList<>();
+
 	public AspectAwareProxyEntity(TypeElement element) {
 		super(element.asType(), element.getSimpleName() + "$$AspectAwareProxy");
+	}
+
+	private FieldEntity attachNewFieldEntity(String fieldName, TypeName fieldType) {
+		return attachNewFieldEntity(fieldName, fieldType, true);
+	}
+
+	private FieldEntity attachNewFieldEntity(String fieldName, TypeName fieldType, boolean takeAsConstructorParameter) {
+		FieldEntity fieldEntity = new FieldEntity(fieldName, fieldType, takeAsConstructorParameter);
+		fieldEntities.add(fieldEntity);
+		return fieldEntity;
 	}
 
 	public void proxyMethod(
@@ -41,72 +53,88 @@ public class AspectAwareProxyEntity extends AbstractClassEntity {
 		TypeName returnType = ClassName.get(proxyMethod.returnType());
 		MethodSpec.Builder methodBuilder = MethodSpec.overriding(proxyMethod.value())
 				.addModifiers(Modifier.FINAL)
-				.addStatement("final $T aspectContext = aspectRepository.startBuilder($L)", AspectExecutionContext.class, invokeSuperLambda(proxyMethod))
 				.returns(returnType);
 
-		List<FieldSpec> fields = new ArrayList<>();
-		methodBuilder.addCode("\n")
-				.addCode("// Right here we will utilize the ExecutionContextBuilder to make reading easier.\n");
-
-
 		AtomicInteger roundCounter = new AtomicInteger(0);
+		FieldEntity executionChain = attachNewFieldEntity(nameContext.nextName("executionChain"), TypeName.get(ExecutionChain.class), false);
+		executionChain.initializer()
+				.add("this.$L = ", executionChain.name)
+				.add("$T.newInstance((c) -> super.$L($L))\n", ExecutionChain.class, proxyMethod.simpleName(), proxyMethod.parameters()
+						.stream()
+						.map(it -> "c.requireParameter(\"" + it.getSimpleName() + "\")")
+						.collect(Collectors.joining(", "))
+				).indent();
+
 		proxyMethod.proxyAnnotations().forEach(mirror -> {
-			roundCounter.incrementAndGet();
 			TypeName annotationType = ClassName.get(mirror.getAnnotationType());
-			String annotationName = nameContext.nextName("annotation") + roundCounter.get();
-			fields.add(
-					FieldSpec.builder(annotationType, annotationName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
-							.addAnnotation(AnnotationSpec.builder(Nullable.class).build())
-							.initializer("$T.findAnnotationOnMethod($T.class, $T.class, $S, $L, $T.class)",
+			String annotationFieldName = nameContext.nextName("annotation");
+			ParameterizedTypeName aspectHandlerTypeName = ParameterizedTypeName.get(ClassName.get(List.class),
+					ParameterizedTypeName.get(ClassName.get(AspectHandler.class),
+							TypeName.get(mirror.getAnnotationType())
+					)
+			);
+			FieldEntity aspectHandlers = attachNewFieldEntity(nameContext.nextName("aspectHandler"), aspectHandlerTypeName);
+			aspectHandlers.initializer().add("this.$L = $L", aspectHandlers.name, aspectHandlers.name);
+			builder.addField(
+					FieldSpec.builder(aspectHandlers.type, aspectHandlers.name)
+							.addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+							.build()
+			);
+
+			builder.addField(
+					FieldSpec.builder(TypeName.get(mirror.getAnnotationType()), annotationFieldName, Modifier.PRIVATE, Modifier.STATIC, Modifier.FINAL)
+							.initializer(CodeBlock.of("$T.findAnnotationOnMethod($T.class, $T.class, $S, $L, $T.class)",
 									ClassName.get(ReflectionsHelper.class),
 									ClassName.get(rootType()),
 									annotationType,
 									proxyMethod.simpleName(),
 									typeSpecs.parametersAsClassArrayInstance(proxyMethod.value()),
-									returnType
-							)
+									returnType))
 							.build()
 			);
+			executionChain.initializer()
+					.add(".withProcessors($L, $L)\n", annotationFieldName, aspectHandlers.name);
 
-			methodBuilder.addStatement("aspectContext.announceInterestForAspect($T.class, $L)", annotationType, annotationName);
+			roundCounter.incrementAndGet();
 		});
+		executionChain.initializer()
+				.unindent()
+				.add(".build()");
 
-		methodBuilder
-				.addCode("\n")
-				.beginControlFlow("if(aspectContext.noAspectsPresent())")
-				.addCode(simplyInvokeSuper(proxyMethod))
-				.endControlFlow()
-				.addCode("\n");
-
-		proxyMethod.value().getParameters().forEach(parameter -> {
-			methodBuilder.addStatement("aspectContext.declareArgument($S, $L)", parameter.getSimpleName(), parameter.getSimpleName());
-		});
-
-		boolean mayBeNull = proxyMethod.returnType().getKind().equals(TypeKind.VOID) || Annotations.hasByName(proxyMethod.value(), Nullable.class);
-
+		builder.addField(
+				FieldSpec.builder(executionChain.type, executionChain.name)
+						.addModifiers(Modifier.PRIVATE, Modifier.FINAL)
+						.build()
+		);
+		CodeBlock.Builder invokeExecutionChain = CodeBlock.builder();
 		if (proxyMethod.willReturnSomething()) {
-			methodBuilder.addStatement("return ($T) aspectContext.run($L)", ClassName.get(proxyMethod.returnType()), mayBeNull);
-		} else {
-			methodBuilder.addStatement("aspectContext.run($L)", mayBeNull);
+			invokeExecutionChain.add("return ");
 		}
-
+		methodBuilder.addStatement(
+				invokeExecutionChain
+						.add("$L.execute()\n", executionChain.name)
+						.indent()
+						.add(CodeBlock.join(
+								proxyMethod.parameters()
+										.stream()
+										.map(variableElement -> CodeBlock.of(".withParameter($S, $L)\n", variableElement.getSimpleName(), variableElement.getSimpleName()))
+										.toList(),
+								", "
+						))
+						.add(".andReturn()")
+						.unindent()
+						.build()
+		);
 		builder.addMethod(methodBuilder.build());
 	}
 
 	public AspectAwareProxyEntity addWiredAnnotationFor(List<TypeMirror> types) {
-		CodeBlock.Builder value = CodeBlock.builder()
-				.add("{ ");
-		types.forEach(type -> {
-			if (!value.isEmpty()) {
-				value.add(", ");
-			}
-			value.add("$T.class", ClassName.get(type));
-
-		});
+		List<CodeBlock> wireValues = new ArrayList<>();
+		types.forEach(type -> wireValues.add(CodeBlock.of("$T.class", ClassName.get(type))));
 
 		builder.addAnnotation(
 				AnnotationSpec.builder(Wire.class)
-						.addMember("value", value.add(" }").build())
+						.addMember("to", "{$L}", CodeBlock.join(wireValues, ", "))
 						.addMember("singleton", "true")
 						.addMember("proxy", "false")
 						.build()
@@ -141,15 +169,27 @@ public class AspectAwareProxyEntity extends AbstractClassEntity {
 			}
 		}
 
+		fieldEntities.forEach(it -> {
+			if (it.takeAsConstructorParameter) {
+				constructorMethod.addParameter(
+						ParameterSpec.builder(it.type, it.name)
+								.addModifiers(Modifier.FINAL)
+								.addAnnotation(NotNull.class)
+								.build()
+				).build();
+			}
+			constructorInitializer.addStatement(it.initializer().build());
+		});
+
 		builder.addMethod(
 				constructorMethod
 						.addParameter(
-								ParameterSpec.builder(AspectRepository.class, ASPECT_REPOSITORY_FIELD_NAME, Modifier.FINAL)
+								ParameterSpec.builder(WireRepository.class, WIRE_REPOSITORY_FIELD_NAME, Modifier.FINAL)
 										.build()
 						)
 						.addCode(
 								constructorInitializer
-										.addStatement("this.$L = $L", ASPECT_REPOSITORY_FIELD_NAME, ASPECT_REPOSITORY_FIELD_NAME)
+										.addStatement("this.$L = $L", WIRE_REPOSITORY_FIELD_NAME, WIRE_REPOSITORY_FIELD_NAME)
 										.build()
 						).build()
 		);
@@ -169,53 +209,25 @@ public class AspectAwareProxyEntity extends AbstractClassEntity {
 								.build()
 				)
 				.addField(
-						FieldSpec.builder(AspectRepository.class, ASPECT_REPOSITORY_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL)
+						FieldSpec.builder(WireRepository.class, WIRE_REPOSITORY_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL)
 								.build()
 				);
 	}
 
-	private CodeBlock invokeSuperLambda(ProxyMethod method) {
-		CodeBlock.Builder invokeSuperLambda = CodeBlock.builder();
-		invokeSuperLambda.add("context -> {\n").indent();
+	class FieldEntity {
+		private final CodeBlock.Builder constructorInitializer = CodeBlock.builder();
+		private final String name;
+		private final TypeName type;
+		private final boolean takeAsConstructorParameter;
 
-		List<String> variableNames = new ArrayList<>();
-		AtomicInteger parameterCounter = new AtomicInteger(0);
-
-		for (VariableElement parameter : method.parameters()) {
-			String varName = "parameter" + parameterCounter.incrementAndGet();
-			// Casting additionally is required right
-			// here, because the compiler really does
-			// not like it, if we don't. It can never be of
-			// another type, since the "requireArgumentAs"
-			// Already validates AND casts the type.
-			invokeSuperLambda.add("$T $L = ($T) context.requireArgumentAs($S, $T.class);\n", ClassName.get(parameter.asType()), varName, ClassName.get(parameter.asType()), parameter.getSimpleName(), ClassName.get(parameter.asType()));
-			variableNames.add(varName);
+		FieldEntity(String name, TypeName type, boolean takeAsConstructorParameter) {
+			this.name = name;
+			this.type = type;
+			this.takeAsConstructorParameter = takeAsConstructorParameter;
 		}
 
-		if (method.willReturnSomething()) {
-			invokeSuperLambda.add("return super.$L($L);\n", method.simpleName(), String.join(", ", variableNames));
-		} else {
-			invokeSuperLambda.add("super.$L($L);\n", method.simpleName(), String.join(", ", variableNames))
-					.add("return null; // Nothing to return, so just return null\n");
+		public CodeBlock.Builder initializer() {
+			return constructorInitializer;
 		}
-
-		invokeSuperLambda.unindent().add("}");
-		return invokeSuperLambda.build();
-	}
-
-	private CodeBlock simplyInvokeSuper(ProxyMethod proxyMethod) {
-		String variableNames = proxyMethod.parameters()
-				.stream().map(VariableElement::getSimpleName)
-				.collect(Collectors.joining(","));
-		CodeBlock.Builder result = CodeBlock.builder();
-
-		if (proxyMethod.willReturnSomething()) {
-			result.addStatement("return super.$L($L)", proxyMethod.simpleName(), variableNames);
-		} else {
-			result.addStatement("super.$L($L)", proxyMethod.simpleName(), variableNames)
-					.addStatement("return");
-		}
-
-		return result.build();
 	}
 }

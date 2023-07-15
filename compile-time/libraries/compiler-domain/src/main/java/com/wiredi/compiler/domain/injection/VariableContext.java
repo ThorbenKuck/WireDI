@@ -1,7 +1,12 @@
 package com.wiredi.compiler.domain.injection;
 
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeName;
+import com.wiredi.annotations.properties.Resolve;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.TypeUtils;
+import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +33,9 @@ public class VariableContext {
 	@NotNull
 	private final Map<TypeMirror, String> unqualifiedCache = new HashMap<>();
 
+	@NotNull
+	private final Map<String, String> resolveCache = new HashMap<>();
+
 	public VariableContext(@NotNull String varPrefix) {
 		this.varPrefix = varPrefix;
 	}
@@ -36,34 +44,29 @@ public class VariableContext {
 		this("variable");
 	}
 
-	/**
-	 * Allows for single instantiations of variables and therefore reusing existing variables.
-	 * <p>
-	 * The neNameFunction will be invoked, if a new variable name is created.
-	 *
-	 * @param typeMirror      the type of the variable
-	 * @param newNameFunction the function to invoke if a new variable is created
-	 * @return the name associated with the typeMirror
-	 */
-	public String instantiateVariableIfRequired(TypeMirror typeMirror, Consumer<String> newNameFunction) {
-		if (TypeUtils.isSingleton(typeMirror)) {
-			return unqualifiedCache.computeIfAbsent(typeMirror, (typeName) -> {
+	public String instantiateVariableIfRequired(Element element, WireRepositories wireRepositories, CodeBlock.Builder codeBlock) {
+		return instantiateVariableIfRequired(element, (name, qualifier) -> {
+			codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.fetchFromWireRepository(element, qualifier));
+		}, (name, resolve) -> {
+			codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.resolveFromEnvironment(element, resolve));
+		});
+	}
+
+	public String instantiateVariableIfRequired(
+			Element element,
+			BiConsumer<String, QualifierType> newNameFunction,
+			BiConsumer<String, String> newPropertyFunction
+	) {
+		Optional<Resolve> annotation = Annotations.getAnnotation(element, Resolve.class);
+		if (annotation.isPresent()) {
+			Resolve resolve = annotation.get();
+			return resolveCache.computeIfAbsent(resolve.value(), (value) -> {
 				String nextName = nameContext.nextName(varPrefix);
-				newNameFunction.accept(nextName);
+				newPropertyFunction.accept(nextName, value);
 				return nextName;
 			});
 		} else {
-			String nextName = nameContext.nextName(varPrefix);
-			newNameFunction.accept(nextName);
-			return nextName;
-		}
-	}
-	public String instantiateVariableIfRequired(Element element, BiConsumer<String, @Nullable QualifierType> newNameFunction) {
-		QualifierType qualifierType = Qualifiers.injectionQualifier(element);
-		if (qualifierType != null) {
-			return instantiateVariableIfRequired(qualifierType, element.asType(), newNameFunction);
-		} else {
-			return instantiateVariableIfRequired(element. asType(), (name) -> newNameFunction.accept(name, null));
+			return instantiateVariableIfRequired(Qualifiers.injectionQualifier(element), element.asType(), newNameFunction);
 		}
 	}
 

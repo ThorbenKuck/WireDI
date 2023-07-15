@@ -9,10 +9,5 @@ public @interface PropertySource {
 
     String[] value() default {};
 
-    KeyValue[] entries() default {};
-
-    @interface KeyValue {
-        String key();
-        String value();
-    }
+    Entry[] entries() default {};
 }

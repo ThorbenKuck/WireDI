@@ -1,6 +1,5 @@
 package com.wiredi.domain;
 
-import com.wiredi.aspects.AspectRepository;
 import com.wiredi.environment.Environment;
 import com.wiredi.lang.time.Timed;
 import com.wiredi.runtime.WireRepository;
@@ -45,17 +44,9 @@ import java.util.List;
  * choose to interact with the {@link BeanContainer} to append beans.
  * </p>
  * <p>
- * 3) Loading the AspectRepository
  * </p>
  * <p>
- * As the BeanContainer loaded all WiredClasses, the {@link com.wiredi.domain.aop.AspectAwareProxy}
- * will only work once the AspectRepository is loaded. This is also the step,
- * during which additional and external aspects can be added to the
- * {@link AspectRepository}. It is not required to do so inside of a
- * callback, but it can be done.
- * </p>
- * <p>
- * 4) Instantiating Eager classes
+ * 3) Instantiating Eager classes
  * </p>
  * <p>
  * All Bean instances of the {@link Eager} interface, which were
@@ -72,7 +63,6 @@ import java.util.List;
  * @see LoggingWireRepositoryContextCallbacks
  * @see Environment
  * @see BeanContainer
- * @see AspectRepository
  * @see Eager
  * @see WireRepository
  */
@@ -106,25 +96,14 @@ public interface WireRepositoryContextCallbacks extends Ordered {
 	/**
 	 * This method will be called after the second phase of the load lifecycle
 	 * (loading the {@link BeanContainer}) has successfully been concluded and
-	 * before the third phase, loading the {@link AspectRepository} has been
+	 * before the fourth and last phase, loading the {@link Eager EagerInstances}
+	 * has been started.
 	 * started.
 	 *
 	 * @param timed         The time that loading the BeanContainer required
 	 * @param beanContainer the fully configured BeanContainer
 	 */
 	default void loadedBeanContainer(@NotNull Timed timed, @NotNull BeanContainer beanContainer) {
-	}
-
-	/**
-	 * This method will be called after the third phase of the load lifecycle
-	 * (loading the {@link AspectRepository}) has successfully been concluded and
-	 * before the fourth and last phase, loading the {@link Eager EagerInstances}
-	 * has been started.
-	 *
-	 * @param timed            The time that loading the AspectRepository required
-	 * @param aspectRepository the fully configured AspectRepository
-	 */
-	default void loadedAspectRepository(@NotNull Timed timed, @NotNull AspectRepository aspectRepository) {
 	}
 
 	/**

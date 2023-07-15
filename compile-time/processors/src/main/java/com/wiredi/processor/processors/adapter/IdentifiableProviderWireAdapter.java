@@ -23,11 +23,11 @@ public class IdentifiableProviderWireAdapter {
 			Wire wire
 	) {
 		if (wire.proxy() && aspectAwareProxyFactory.create(typeElement) != null) {
-			logger.info(typeElement, () -> "Successfully created an aspect aware proxy");
+			logger.debug(typeElement, () -> "Successfully created an aspect aware proxy");
 			return;
 		}
 		if (identifiableProviderFactory.create(typeElement, wire) != null) {
-			logger.info(typeElement, () -> "Successfully created an identifiable provider");
+			logger.debug(typeElement, () -> "Successfully created an identifiable provider");
 			return;
 		}
 

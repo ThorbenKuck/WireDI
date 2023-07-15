@@ -1,9 +1,13 @@
 package com.wiredi.compiler.domain;
 
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.TypeName;
 import com.wiredi.domain.provider.IdentifiableProvider;
+import com.wiredi.lang.types.TypeMap;
 import com.wiredi.runtime.beans.Bean;
 import jakarta.inject.Provider;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
@@ -12,12 +16,14 @@ import java.util.List;
 
 public class TypeChecker {
 
+	private final TypeMap<TypeMirror> typesCache = new TypeMap<>();
 	private final TypeMirror providerTypeElement;
 	private final TypeMirror nativeProviderTypeElement;
 	private final TypeMirror collectionTypeElement;
 	private final TypeMirror listTypeElement;
 	private final TypeMirror beanTypeElement;
 	private final Types types;
+	private final Elements elements;
 
 	public TypeChecker(Elements elements, Types types) {
 		this.providerTypeElement = elements.getTypeElement(Provider.class.getName()).asType();
@@ -26,10 +32,29 @@ public class TypeChecker {
 		this.listTypeElement = elements.getTypeElement(List.class.getName()).asType();
 		this.beanTypeElement = elements.getTypeElement(Bean.class.getName()).asType();
 		this.types = types;
+		this.elements = elements;
+	}
+
+	public Checker theType(Element element) {
+		return new Checker(element.asType());
 	}
 
 	public Checker theType(TypeMirror typeMirror) {
 		return new Checker(typeMirror);
+	}
+
+	private TypeMirror asTypeMirror(Class<?> type) {
+		synchronized (typesCache) {
+			return typesCache.computeIfAbsent(type, () -> elements.getTypeElement(type.getName()).asType());
+		}
+	}
+
+	private boolean isAssignable(TypeMirror base, TypeMirror request) {
+		return types.isAssignable(base, types.erasure(request));
+	}
+
+	private boolean isAssignable(Class<?> base, TypeMirror request) {
+		return isAssignable(asTypeMirror(base), types.erasure(request));
 	}
 
 	public class Checker {
@@ -41,23 +66,31 @@ public class TypeChecker {
 		}
 
 		public boolean isProvider() {
-			return types.isAssignable(providerTypeElement, types.erasure(typeMirror));
+			return isAssignable(Provider.class, typeMirror);
 		}
 
 		public boolean isNativeProvider() {
-			return types.isAssignable(nativeProviderTypeElement, types.erasure(typeMirror));
+			return isAssignable(IdentifiableProvider.class, typeMirror);
 		}
 
 		public boolean isCollection() {
-			return types.isAssignable(collectionTypeElement, types.erasure(typeMirror));
+			return isAssignable(Collection.class, typeMirror);
 		}
 
 		public boolean isList() {
-			return types.isAssignable(listTypeElement, types.erasure(typeMirror));
+			return isAssignable(List.class, typeMirror);
 		}
 
 		public boolean isBean() {
-			return types.isAssignable(beanTypeElement, types.erasure(typeMirror));
+			return isAssignable(Bean.class, typeMirror);
+		}
+
+		public boolean isOf(Class<?> type) {
+			return isAssignable(type, typeMirror);
+		}
+
+		public TypeName typeName() {
+			return ClassName.get(typeMirror);
 		}
 	}
 }

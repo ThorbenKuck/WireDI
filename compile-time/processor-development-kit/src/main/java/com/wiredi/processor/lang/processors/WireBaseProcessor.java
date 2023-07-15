@@ -5,7 +5,8 @@ import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.logger.messager.MessagerRegistration;
 import com.wiredi.compiler.repository.CompilerRepository;
-import com.wiredi.lang.async.DataAccess;
+import com.wiredi.environment.Environment;
+import com.wiredi.lang.DataAccess;
 import com.wiredi.processor.ProcessorProperties;
 import com.wiredi.processor.PropertyKeys;
 import com.wiredi.processor.lang.concurrent.ContextRunnable;
@@ -59,6 +60,8 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
 	@Inject
 	private CompilerRepository repository;
 
+	private final Environment environment = new Environment();
+
 	public WireBaseProcessor() {
 		injector.bind(Logger.class).toConstructor((caller, type) -> doNotCache(Logger.get(caller)));
 	}
@@ -92,6 +95,8 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
 	public synchronized final void init(ProcessingEnvironment processingEnv) {
 		super.init(processingEnv);
 
+		environment.autoconfigure();
+		injector.bind(Environment.class).to(environment);
 		MessagerRegistration.announce(processingEnv.getMessager());
 		types = injector.bind(Types.class).toValue(processingEnv.getTypeUtils());
 		elements = injector.bind(Elements.class).toValue(processingEnv.getElementUtils());
@@ -102,7 +107,7 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
 		injector.injectInto(this);
 
 		executorService = Executors.newFixedThreadPool(
-				properties.getCount(PropertyKeys.PARALLEL_THREAD_COUNT, Runtime.getRuntime().availableProcessors()),
+				1, // properties.getCount(PropertyKeys.PARALLEL_THREAD_COUNT, Runtime.getRuntime().availableProcessors()),
 				new ProcessorThreadFactory()
 		);
 
@@ -163,7 +168,7 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
 				.withExecutorService(executorService);
 
 		toProcess.forEach(element -> {
-			if (element != null) {
+			if (element != null && !hasBeenProcessed(element)) {
 				logger.debug(() -> "Dispatching processing round for " + element);
 				barrierBuilder.withRunnable(new ProcessRunnable(element, annotationType));
 			} else {

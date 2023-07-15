@@ -1,6 +1,6 @@
 package com.wiredi.compiler.logger.messager;
 
-import com.wiredi.lang.async.DataAccess;
+import com.wiredi.lang.DataAccess;
 
 import javax.annotation.processing.Messager;
 import java.util.ArrayList;

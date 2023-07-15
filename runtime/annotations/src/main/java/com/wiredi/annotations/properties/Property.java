@@ -3,16 +3,13 @@ package com.wiredi.annotations.properties;
 import java.lang.annotation.*;
 
 @Retention(RetentionPolicy.CLASS)
-@Target(ElementType.PARAMETER)
-@Documented
+@Target({ElementType.PARAMETER, ElementType.FIELD})
 @Inherited
+@Documented
 public @interface Property {
 
-    /**
-     * The name of the property, as maintained in the WiredTypes.
-     */
-    String value();
+	String name() default "";
 
-    String defaultValue() default "";
+	String defaultValue() default "";
 
 }

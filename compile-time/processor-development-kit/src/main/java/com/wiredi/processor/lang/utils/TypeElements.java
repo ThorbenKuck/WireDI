@@ -46,7 +46,7 @@ public class TypeElements {
 		}
 	}
 
-	public List<? extends ExecutableElement> determineMethodsOf(TypeElement typeElement) {
+	private List<? extends ExecutableElement> determineMethodsOf(TypeElement typeElement) {
 		Set<ExecutableElement> members = new HashSet<>(
 				typeElement.getEnclosedElements()
 						.stream()
@@ -133,7 +133,6 @@ public class TypeElements {
 		}
 
 		TypeElement superClassType = (TypeElement) types.asElement(superclass);
-		logger.info(() -> "Not Null:" + Objects.nonNull(superClassType));
 		result.addAll(elements.getAllMembers(superClassType));
 		result.addAll(findAllInheritedMembersOf(superClassType));
 		return result;

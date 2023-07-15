@@ -3,7 +3,7 @@
 
     <artifactId>runtime-environment</artifactId>
     <version>${revision}</version>
-    <name>WireDI Core</name>
+    <name>WireDI Runtime Environment</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
 

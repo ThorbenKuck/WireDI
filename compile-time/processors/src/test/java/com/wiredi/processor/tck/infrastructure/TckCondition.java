@@ -64,10 +64,6 @@ public class TckCondition {
 		}
 	}
 
-//	public DynamicTest toDynamicTest() {
-//		return dynamicTest(name, this::assertSuccess);
-//	}
-
 	public DynamicNode toDynamicTest() {
 		if (errors.isEmpty()) {
 			return dynamicTest(name, toUri(creator), this::assertSuccess);

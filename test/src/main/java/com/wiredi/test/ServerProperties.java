@@ -1,9 +1,9 @@
 package com.wiredi.test;
 
-import com.wiredi.annotations.properties.Properties;
-import com.wiredi.annotations.properties.PropertyName;
+import com.wiredi.annotations.properties.PropertyBinding;
+import com.wiredi.annotations.properties.Name;
 
-@Properties(
+@PropertyBinding(
     prefix = "my.namespace.path.server"
 )
 public class ServerProperties {
@@ -11,9 +11,14 @@ public class ServerProperties {
     private final String url;
     private final int aliveTimeSeconds;
 
-    public ServerProperties(@PropertyName(value = "somOtherString", format = false) String url, int aliveTimeSeconds) {
+//    public ServerProperties(@Name(value = "somOtherString") String url, int aliveTimeSeconds) {
+//        this.url = url;
+//        this.aliveTimeSeconds = aliveTimeSeconds;
+//    }
+
+    public ServerProperties(@Name(value = "somOtherString") String url) {
         this.url = url;
-        this.aliveTimeSeconds = aliveTimeSeconds;
+        this.aliveTimeSeconds = 0;
     }
 
     // Getters and other methods

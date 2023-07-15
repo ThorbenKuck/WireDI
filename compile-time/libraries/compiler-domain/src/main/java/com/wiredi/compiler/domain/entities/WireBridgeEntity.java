@@ -30,7 +30,7 @@ public class WireBridgeEntity extends AbstractClassEntity {
 	}
 
 	@Override
-	protected TypeSpec.Builder createBuilder(TypeMirror typeElement) {
+	protected TypeSpec.Builder createBuilder(TypeMirror type) {
 		return TypeSpec.classBuilder(className)
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 	}
@@ -95,9 +95,7 @@ public class WireBridgeEntity extends AbstractClassEntity {
 		List<String> fetchVariables = new ArrayList<>();
 
 		parameters.forEach(parameter -> {
-			String variableName = variableContext.instantiateVariableIfRequired(Qualifiers.injectionQualifier(parameter), parameter.asType(), (name, qualifierType) -> {
-				rootCodeBlock.addStatement("$T $L = $L", parameter.asType(), name, wireRepositories.fetchFromWireRepository(parameter.asType(), qualifierType));
-			});
+			String variableName = variableContext.instantiateVariableIfRequired(parameter, wireRepositories, rootCodeBlock);
 			fetchVariables.add(variableName);
 		});
 

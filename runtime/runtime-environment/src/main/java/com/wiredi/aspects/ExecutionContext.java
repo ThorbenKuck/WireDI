@@ -4,8 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedElement;
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -15,185 +15,90 @@ import java.util.stream.Collectors;
  */
 public class ExecutionContext<T extends Annotation> {
 
-    @NotNull
-    private final AspectWrapper<T> rootAspect;
-    @Nullable
-    private AspectWrapper<T> currentAspectPointer;
     @Nullable
     private final T annotation;
+
     @NotNull
-    private final Map<String, Object> arguments = new HashMap<>();
-    @Nullable
-    private final Function<ExecutionContext<T>, Object> rootMethod;
-    @Nullable
-    private final ExecutionContext<?> then;
+    private final ExecutionChainParameters parameters;
 
     @Nullable
-    private Object lastReturnValue = null;
+    private ExecutionChainLink next = null;
 
     public ExecutionContext(
-            @NotNull AspectWrapper<T> aspect,
             @Nullable T annotation,
-            @NotNull Function<ExecutionContext<T>, Object> rootMethod
+            @NotNull ExecutionChainParameters parameters
     ) {
-        this.rootAspect = aspect;
         this.annotation = annotation;
-        this.rootMethod = rootMethod;
-        this.then = null;
+        this.parameters = parameters;
     }
 
     public ExecutionContext(
-            @NotNull final AspectWrapper<T> aspect,
-            @Nullable final T annotation,
-            @NotNull final ExecutionContext<?> then
+            @Nullable T annotation
     ) {
-        this.rootAspect = aspect;
-        this.annotation = annotation;
-        this.then = then;
-        this.rootMethod = null;
+        this(annotation, new ExecutionChainParameters());
     }
 
-    void clear() {
-        arguments.clear();
-        if (then != null) {
-            then.clear();
-        }
+    public ExecutionContext() {
+        this(null);
     }
 
-    @Nullable
-    Object run() {
-        this.currentAspectPointer = rootAspect;
-        return invokeCurrentAspect();
+    public <S extends Annotation> ExecutionContext<S> prepend(S annotation, ExecutionChainLink nextElement) {
+        ExecutionContext<S> executionContext = new ExecutionContext<>(annotation, parameters);
+        executionContext.next = nextElement;
+        return executionContext;
     }
 
-    @Nullable
-    public Object proceed() {
-        if (currentAspectPointer == null) {
-            throw new IllegalStateException("No aspect pointer registered");
-        }
-        final AspectWrapper<T> followup = currentAspectPointer.getNext();
-        if (followup != null) {
-            currentAspectPointer = followup;
-            return invokeCurrentAspect();
-        } else {
-            if (then != null) {
-                then.arguments.putAll(this.arguments);
-                then.lastReturnValue = lastReturnValue;
-                return then.run();
-            } else if (rootMethod != null) {
-                return rootMethod.apply(this);
-            } else {
-                throw new IllegalStateException("There is neither a root method, nor a next ExecutionContext set. This should never happen!");
-            }
-        }
+    public void clear() {
+        parameters.clear();
+    }
+
+    public ExecutionChainParameters parameters() {
+        return parameters;
     }
 
     @Nullable
-    private Object invokeCurrentAspect() {
-        if (currentAspectPointer == null) {
-            throw new IllegalStateException("No aspect pointer registered");
+    public <S> S proceed() {
+        if (next == null) {
+            throw new IllegalStateException("Proceed was called on the first chain element, which is not allowed");
         }
-        return currentAspectPointer.getRootAspect().process(this);
+        return next.execute();
     }
 
     @NotNull
-    public Optional<Object> getArgument(@NotNull final String name) {
-        return Optional.ofNullable(arguments.get(name));
+    public Optional<Object> getParameter(@NotNull final String name) {
+        return parameters.get(name);
     }
 
     @NotNull
-    public Object requireArgument(@NotNull final String name) {
-        return getArgument(name).orElseThrow(() -> new IllegalArgumentException("Unknown parameter with name " + name));
+    public <S> S requireParameter(@NotNull final String name) {
+        return (S) getParameter(name).orElseThrow(() -> new IllegalArgumentException("Unknown parameter with name " + name));
     }
 
-    @NotNull
-    public <S> S requireArgumentAs(
-            @NotNull final String name,
-            @NotNull final Class<S> type
-    ) {
-        final Object argument = requireArgument(name);
-        if (!type.isInstance(argument)) {
-            throw new IllegalArgumentException("The argument " + name + " was expected to be a " + type.getName() + " but actually is " + argument.getClass().getName() + ". Actual instance: " + argument);
-        }
-
-        return type.cast(argument);
-    }
-
-    public void setArgument(
+    public void setParameter(
             @NotNull final String name,
             @NotNull final Object value
     ) {
-        this.arguments.put(name, value);
+        this.parameters.put(name, value);
     }
 
     @NotNull
     public List<Argument> listArguments() {
-        return arguments.keySet()
+        return parameters.keySet()
                 .stream()
-                .map(key -> new Argument(key, arguments.get(key)))
+                .map(key -> new Argument(key, parameters.get(key)))
                 .collect(Collectors.toList());
     }
 
     @NotNull
-    public Optional<T> getAnnotation() {
-        return Optional.ofNullable(annotation);
+    public T getAnnotation() {
+        return annotation;
     }
 
-    public void setArguments(@NotNull Map<String, Object> arguments) {
-        this.arguments.clear();
-        this.arguments.putAll(arguments);
+    public void setParameters(@NotNull Map<String, Object> parameters) {
+        this.parameters.clear();
+        this.parameters.set(parameters);
     }
 
-    @Nullable
-    public Object getLastReturnValue() {
-        return lastReturnValue;
-    }
-
-    @NotNull
-    public Object requireLastReturnValue() {
-        return Objects.requireNonNull(getLastReturnValue(), "Last return value is not present");
-    }
-
-    @Nullable
-    public <S> S getLastReturnValueAs(Class<S> type) {
-        if(lastReturnValue == null) {
-            return null;
-        }
-        if (!type.isInstance(lastReturnValue)) {
-            throw new IllegalArgumentException("The current last return was expected to be a " + type.getName() + " but actually is " + lastReturnValue.getClass().getName() + ". Actual instance: " + lastReturnValue);
-        }
-
-        return type.cast(lastReturnValue);
-    }
-
-    @NotNull
-    public <S> S requireLastReturnValueAs(Class<S> type) {
-        return Objects.requireNonNull(getLastReturnValueAs(type), "Last return value is not present");
-    }
-
-    public static class Argument {
-
-        @NotNull
-        private final String name;
-        @Nullable
-        private final Object instance;
-
-        public Argument(
-                @NotNull final String name,
-                @Nullable final Object instance
-        ) {
-            this.name = name;
-            this.instance = instance;
-        }
-
-        @NotNull
-        public String getName() {
-            return name;
-        }
-
-        @Nullable
-        public Object getInstance() {
-            return instance;
-        }
+    public record Argument(@NotNull String name, @Nullable Object instance) {
     }
 }

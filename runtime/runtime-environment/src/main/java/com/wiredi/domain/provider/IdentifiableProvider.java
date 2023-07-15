@@ -88,7 +88,7 @@ public interface IdentifiableProvider<T> extends Ordered {
 	 *
 	 * @return true, if the same instance is returned with ever call of the {@link #get(WireRepository) get method}
 	 */
-	boolean isSingleton();
+	default boolean isSingleton() { return true; }
 
 	default boolean primary() {
 		return false;
@@ -115,6 +115,7 @@ public interface IdentifiableProvider<T> extends Ordered {
 	 *
 	 * @return the priority of this IdentifiableProvider
 	 */
+	@Override
 	default int getOrder() {
 		return FIRST;
 	}

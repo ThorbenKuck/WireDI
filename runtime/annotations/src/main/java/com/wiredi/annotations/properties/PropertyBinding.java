@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.TYPE)
 @Inherited
-public @interface Properties {
+public @interface PropertyBinding {
 
     /**
      * A prefix, to reduce the properties based on a prefix. All key names determined by fields and parameters are

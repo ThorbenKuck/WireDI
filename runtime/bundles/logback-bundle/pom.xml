@@ -3,7 +3,7 @@
 
     <artifactId>logback-bundle</artifactId>
     <version>${revision}</version>
-    <name>WireDI Runtime Bundles</name>
+    <name>WireDI Logback Bundles</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
     <packaging>jar</packaging>

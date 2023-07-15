@@ -9,6 +9,7 @@ public interface Ordered extends Comparable<Ordered> {
 
 	int LAST = Order.LAST;
 	int FIRST = Order.FIRST;
+	int DEFAULT = Order.DEFAULT;
 
 	@Override
 	default int compareTo(@NotNull Ordered o) {
@@ -44,6 +45,6 @@ public interface Ordered extends Comparable<Ordered> {
 	}
 
 	default int getOrder() {
-		return 0;
+		return DEFAULT;
 	}
 }

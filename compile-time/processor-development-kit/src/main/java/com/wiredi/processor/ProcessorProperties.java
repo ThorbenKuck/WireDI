@@ -26,7 +26,7 @@ public class ProcessorProperties {
 	}
 
 	public boolean isEnabled(PropertyKeys propertyKey) {
-		return properties.getBoolean(propertyKey.getRawKey(), false);
+		return properties.getBoolean(propertyKey.getRawKey(), toBool(propertyKey.getDefaultValue(), false));
 	}
 
 	public boolean isDisabled(PropertyKeys propertyKey) {
@@ -39,5 +39,15 @@ public class ProcessorProperties {
 
 	public String getName(PropertyKeys extensionFileName) {
 		return properties.require(extensionFileName.getRawKey());
+	}
+
+	private boolean toBool(Object object, boolean def) {
+		if (object instanceof Boolean) {
+			return (Boolean) object;
+		} else if (Objects.equals(object.getClass(), boolean.class)) {
+			return (boolean) object;
+		} else {
+			return def;
+		}
 	}
 }

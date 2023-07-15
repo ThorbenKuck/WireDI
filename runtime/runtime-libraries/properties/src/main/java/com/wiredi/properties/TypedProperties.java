@@ -1,6 +1,6 @@
 package com.wiredi.properties;
 
-import com.wiredi.lang.async.DataAccess;
+import com.wiredi.lang.DataAccess;
 import com.wiredi.properties.exceptions.PropertyNotFoundException;
 import com.wiredi.properties.keys.Key;
 import org.jetbrains.annotations.NotNull;
@@ -40,55 +40,60 @@ public class TypedProperties implements AutoCloseable {
 				.or(() -> Optional.ofNullable(System.getProperty(formattedKey)));
 	}
 
-	public void respectEnvironment(boolean value) {
+	public TypedProperties respectEnvironment(boolean value) {
 		this.respectEnvironment = value;
+		return this;
 	}
 
-	public void setAll(@NotNull final Map<Key, String> rawProperties) {
+	public TypedProperties setAll(@NotNull final Map<Key, String> rawProperties) {
 		dataAccess.write(() -> properties.putAll(rawProperties));
+		return this;
 	}
 
-	public void setAll(@NotNull final TypedProperties typedProperties) {
+	public TypedProperties setAll(@NotNull final TypedProperties typedProperties) {
 		dataAccess.write(() -> properties.putAll(typedProperties.properties));
+		return this;
 	}
 
-	public void set(
+	public TypedProperties set(
 			@NotNull final Key key,
 			@NotNull final String value
 	) {
 		dataAccess.write(() -> properties.put(key, value));
+		return this;
 	}
 
-	public void set(
+	public TypedProperties set(
 			@NotNull final Key key,
 			final boolean value
 	) {
-		set(key, Boolean.toString(value));
+		return set(key, Boolean.toString(value));
 	}
 
-	public void set(
+	public TypedProperties set(
 			@NotNull final Key key,
 			final int value
 	) {
-		set(key, Integer.toString(value));
+		return set(key, Integer.toString(value));
 	}
 
-	public void set(
+	public TypedProperties set(
 			@NotNull final Key key,
 			final float value
 	) {
-		set(key, Float.toString(value));
+		return set(key, Float.toString(value));
 	}
 
-	public void set(
+	public TypedProperties set(
 			@NotNull final Key key,
 			final double value
 	) {
-		set(key, Double.toString(value));
+		return set(key, Double.toString(value));
 	}
 
-	public void clear() {
+	public TypedProperties clear() {
 		dataAccess.write(properties::clear);
+		return this;
 	}
 
 	/* Reading options */

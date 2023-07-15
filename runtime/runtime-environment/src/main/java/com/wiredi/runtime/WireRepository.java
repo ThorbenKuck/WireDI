@@ -1,12 +1,12 @@
 package com.wiredi.runtime;
 
-import com.wiredi.aspects.AspectRepository;
 import com.wiredi.domain.*;
 import com.wiredi.domain.errors.ErrorHandler;
 import com.wiredi.domain.provider.IdentifiableProvider;
 import com.wiredi.domain.provider.TypeIdentifier;
 import com.wiredi.domain.provider.WrappingProvider;
 import com.wiredi.environment.Environment;
+import com.wiredi.lang.StateFull;
 import com.wiredi.lang.time.Timed;
 import com.wiredi.properties.PropertyLoader;
 import com.wiredi.properties.TypedProperties;
@@ -45,9 +45,6 @@ public class WireRepository {
 	private final Environment environment = new Environment();
 
 	@NotNull
-	private final AspectRepository aspectRepository = new AspectRepository();
-
-	@NotNull
 	private final BeanContainer beanContainer = new BeanContainer();
 
 	@NotNull
@@ -71,7 +68,6 @@ public class WireRepository {
 		Timed.of(() -> {
 			logger.trace("Registering all known static types");
 			announce(IdentifiableProvider.singleton(properties, TypeIdentifier.of(WiredTypesProperties.class)));
-			announce(IdentifiableProvider.singleton(aspectRepository, TypeIdentifier.of(AspectRepository.class)));
 			announce(IdentifiableProvider.singleton(beanContainer, TypeIdentifier.of(BeanContainer.class)));
 			announce(IdentifiableProvider.singleton(this, TypeIdentifier.of(WireRepository.class)));
 			announce(IdentifiableProvider.singleton(banner, TypeIdentifier.of(Banner.class)));
@@ -86,7 +82,6 @@ public class WireRepository {
 		return banner;
 	}
 
-
 	public boolean isLoaded() {
 		return beanContainer.isLoaded();
 	}
@@ -98,11 +93,6 @@ public class WireRepository {
 	@NotNull
 	public Environment environment() {
 		return this.environment;
-	}
-
-	@NotNull
-	public AspectRepository aspectRepository() {
-		return aspectRepository;
 	}
 
 	@NotNull
@@ -148,17 +138,34 @@ public class WireRepository {
 				beanContainer.load();
 			}).then(timed -> contextCallbacks.forEach(callback -> callback.loadedBeanContainer(timed, beanContainer)));
 
-			logger.debug("Loading AspectRepository");
-			Timed.of(() -> aspectRepository.load(this))
-					.then(timed -> contextCallbacks.forEach(callback -> callback.loadedAspectRepository(timed, aspectRepository)));
+			if (properties.loadEagerInstance()) {
+				loadEagerClasses(contextCallbacks);
+			}
 
-			logger.debug("Checking for eager classes");
-			final List<Eager> eagerInstances = getAll(Eager.class);
-			if (!eagerInstances.isEmpty()) {
-				Timed.of(() -> eagerInstances.parallelStream().forEach(it -> it.setup(this)))
-						.then(timed -> contextCallbacks.forEach(callback -> callback.loadedEagerClasses(timed, eagerInstances)));
+			if (properties.awaitStates()) {
+				synchronizeOnStates();
 			}
 		}).then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, this)));
+	}
+
+	private void loadEagerClasses(List<WireRepositoryContextCallbacks> contextCallbacks) {
+		logger.debug("Checking for eager classes");
+		final List<Eager> eagerInstances = getAll(Eager.class);
+		if (!eagerInstances.isEmpty()) {
+			Timed.of(() -> eagerInstances.parallelStream().forEach(it -> it.setup(this)))
+					.then(timed -> contextCallbacks.forEach(callback -> callback.loadedEagerClasses(timed, eagerInstances)));
+		}
+	}
+
+	public void synchronizeOnStates() {
+		logger.debug("Synchronizing on states");
+		final List<StateFull> stateFulls = getAll(TypeIdentifier.just(StateFull.class));
+		if (!stateFulls.isEmpty()) {
+			Timed.of(() -> stateFulls.parallelStream()
+							.map(StateFull::getState)
+							.forEach(state -> state.awaitUntilSet(properties.awaitStatesTimeout())))
+					.then(timed -> logger.info("All states have loaded in {}", timed));
+		}
 	}
 
 	/* ############ Try Get methods ############ */

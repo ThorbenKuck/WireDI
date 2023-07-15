@@ -1,16 +1,21 @@
 package com.wiredi.processor.business;
 
 import com.wiredi.annotations.aspects.AspectTarget;
+import com.wiredi.annotations.aspects.Pure;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.values.ProxyMethod;
+import com.wiredi.compiler.logger.Logger;
 import com.wiredi.processor.AspectIgnoredAnnotations;
 import com.wiredi.processor.ProcessorProperties;
 import com.wiredi.processor.PropertyKeys;
+import com.wiredi.processor.factories.AspectAwareProxyFactory;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AspectAwareProxyService {
 
@@ -23,19 +28,18 @@ public class AspectAwareProxyService {
 	}
 
 	public List<ProxyMethod> findEligibleMethods(TypeElement typeElement) {
-		return Collections.emptyList();
-//		return typeElement.getEnclosedElements()
-//				.stream()
-//				.filter(it -> it.getKind() == ElementKind.METHOD)
-//				.filter(it -> it.getAnnotation(Pure.class) == null)
-//				.map(it -> (ExecutableElement) it)
-//				.filter(it -> !it.getModifiers().contains(Modifier.PRIVATE))
-//				.filter(it -> !it.getModifiers().contains(Modifier.FINAL))
-//				// This process can later work, but needs additional work
-//				.filter(it -> !it.getModifiers().contains(Modifier.ABSTRACT))
-//				.map(it -> new ProxyMethod(it, getAopEnabledAnnotations(it)))
-//				.filter(it -> !it.proxyAnnotations().isEmpty())
-//				.collect(Collectors.toList());
+		return typeElement.getEnclosedElements()
+				.stream()
+				.filter(it -> it.getKind() == ElementKind.METHOD)
+				.filter(it -> !Annotations.isAnnotatedWith(it, Pure.class))
+				.map(it -> (ExecutableElement) it)
+				.filter(it -> !it.getModifiers().contains(Modifier.PRIVATE))
+				.filter(it -> !it.getModifiers().contains(Modifier.FINAL))
+				// This process can later work, but needs additional work
+				.filter(it -> !it.getModifiers().contains(Modifier.ABSTRACT))
+				.map(it -> new ProxyMethod(it, getAopEnabledAnnotations(it)))
+				.filter(it -> !it.proxyAnnotations().isEmpty())
+				.toList();
 	}
 
 	public List<AnnotationMirror> getAopEnabledAnnotations(ExecutableElement method) {

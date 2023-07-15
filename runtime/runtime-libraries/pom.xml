@@ -3,7 +3,7 @@
 
     <artifactId>runtime-libraries</artifactId>
     <version>${revision}</version>
-    <name>WireDI Frameworks Parent</name>
+    <name>WireDI Runtime Libraries</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
     <packaging>pom</packaging>

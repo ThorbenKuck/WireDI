@@ -1,5 +1,6 @@
 package com.wiredi.domain.provider;
 
+import com.google.common.primitives.Primitives;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,17 +16,36 @@ public class TypeIdentifier<T> {
     @NotNull
     private final List<TypeIdentifier<?>> genericTypes = new ArrayList<>();
 
+    public static TypeIdentifier<Object> OBJECT = new TypeIdentifier<>(Object.class);
+
+    /**
+     * Creates a new TypeIdentifier for the given type.
+     *
+     * This method behaves like {@link #of(Class)}, but
+     *
+     * @param type
+     * @return
+     * @param <T>
+     */
     @NotNull
-    public static <T> TypeIdentifier<T> of(@NotNull Class<T> type) {
+    public static <T> TypeIdentifier<? extends T> just(@NotNull Class<T> type) {
         return new TypeIdentifier<>(type);
     }
 
     @NotNull
-    public static <T> TypeIdentifier<T> resolve(@NotNull T instance) {
+    public static <T> TypeIdentifier<T> of(@NotNull Class<T> type) {
+        if (type.isPrimitive()) {
+            return new TypeIdentifier<>(Primitives.wrap(type));
+        }
+        return new TypeIdentifier<>(type);
+    }
+
+    @NotNull
+    public static <T> TypeIdentifier<? extends T> resolve(@NotNull T instance) {
         return of((Class<T>) instance.getClass());
     }
 
-    public TypeIdentifier(@NotNull Class<T> rootType) {
+    private TypeIdentifier(@NotNull Class<T> rootType) {
         this.rootType = rootType;
     }
 
@@ -87,11 +107,10 @@ public class TypeIdentifier<T> {
 
     @Override
     public String toString() {
-        StringBuilder stringBuilder = new StringBuilder(rootType.getName());
-        if (!genericTypes.isEmpty()) {
-            List<String> names = genericTypes.stream().map(TypeIdentifier::toString).toList();
-            stringBuilder.append("<").append(String.join(", ", names)).append(">");
+        if (genericTypes.isEmpty()) {
+            return rootType.getName();
         }
-        return stringBuilder.toString();
+
+        return rootType.getName() + "<" + genericTypes.stream().map(TypeIdentifier::toString).collect(Collectors.joining(", ")) +  ">";
     }
 }

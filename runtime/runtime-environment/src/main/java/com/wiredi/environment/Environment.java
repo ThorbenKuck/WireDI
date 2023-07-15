@@ -2,9 +2,11 @@ package com.wiredi.environment;
 
 import com.wiredi.domain.OrderComparator;
 import com.wiredi.environment.resolvers.EnvironmentExpressionResolver;
+import com.wiredi.lang.Booleans;
 import com.wiredi.lang.SafeReference;
 import com.wiredi.properties.PropertyLoader;
 import com.wiredi.properties.PropertyReference;
+import com.wiredi.properties.TypeMapper;
 import com.wiredi.properties.TypedProperties;
 import com.wiredi.properties.keys.Key;
 import com.wiredi.resources.Resource;
@@ -69,6 +71,14 @@ public class Environment {
 				.forEach(config -> config.configure(this));
 	}
 
+	public TypedProperties loadProperties(String path) {
+		Resource resource = loadResource(path);
+		return propertyLoader.load(resource);
+	}
+
+	public TypedProperties loadProperties(Resource resource) {
+		return propertyLoader.load(resource);
+	}
 
 	public void addExpressionResolvers(Collection<? extends EnvironmentExpressionResolver> resolver) {
 		resolver.forEach(this::addExpressionResolver);
@@ -147,6 +157,20 @@ public class Environment {
 		});
 
 		return target.get();
+	}
+
+	public List<String> resolveList(String key) {
+		return Arrays.asList(resolve(key).split(","));
+	}
+
+	public <T> List<T> resolveList(String key, Class<T> type) {
+		return resolveList(key).stream()
+				.map(it -> TypeMapper.convert(type, Key.just(key), it))
+				.toList();
+	}
+
+	public <T> T resolveTyped(String key, Class<T> type) {
+		return TypeMapper.convert(type, Key.just(key), resolve(key));
 	}
 
 	public <T> Optional<T> map(Key key, Function<String, T> function) {

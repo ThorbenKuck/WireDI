@@ -38,6 +38,11 @@ public class CamelToKebabCaseKey implements Key {
     }
 
     @Override
+    public Key withPrefix(String prefix) {
+        return new CamelToKebabCaseKey(Key.joinWithSeparator(".", prefix, value));
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null) return false;

@@ -10,8 +10,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
-import javax.lang.model.util.Elements;
-import javax.lang.model.util.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -24,6 +22,37 @@ public class WireRepositories {
 	public WireRepositories(TypeChecker typeChecker, TypeIdentifiers typeIdentifiers) {
 		this.typeChecker = typeChecker;
 		this.typeIdentifiers = typeIdentifiers;
+	}
+
+	public CodeBlock resolveFromEnvironment(
+			Element element,
+			String resolve
+	) {
+		return resolveFromEnvironment(element.asType(), resolve);
+	}
+
+	public CodeBlock resolveFromEnvironment(
+			TypeMirror typeMirror,
+			String resolve
+	) {
+		CodeBlock.Builder codeBlock = CodeBlock.builder()
+				.add("wireRepository.environment().resolve");
+
+		TypeChecker.Checker rootType = typeChecker.theType(typeMirror);
+		if (rootType.isOf(String.class)) {
+			codeBlock.add("($S)", resolve);
+		} else if(rootType.isList()) {
+			codeBlock.add("List");
+			TypeChecker.Checker genericType = typeChecker.theType(((DeclaredType) typeMirror).getTypeArguments().get(0));
+
+			if (genericType.isOf(String.class)) {
+				codeBlock.add("($S)", resolve);
+			} else {
+				codeBlock.add("($S, $T.class)", resolve, genericType.typeName());
+			}
+		}
+
+		return codeBlock.build();
 	}
 
 	public CodeBlock fetchFromWireRepository(

@@ -1,10 +1,8 @@
 package com.wiredi.domain;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.aspects.AspectRepository;
 import com.wiredi.environment.Environment;
 import com.wiredi.lang.time.Timed;
-import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.beans.BeanContainer;
 import org.jetbrains.annotations.NotNull;
@@ -31,11 +29,6 @@ public class LoggingWireRepositoryContextCallbacks implements WireRepositoryCont
 	@Override
 	public void loadedBeanContainer(@NotNull Timed timed, @NotNull BeanContainer beanContainer) {
 		logger.info("BeanContainer loaded in {}", timed);
-	}
-
-	@Override
-	public void loadedAspectRepository(@NotNull Timed timed, @NotNull AspectRepository aspectRepository) {
-		logger.info("AspectRepository loaded in {}", timed);
 	}
 
 	@Override

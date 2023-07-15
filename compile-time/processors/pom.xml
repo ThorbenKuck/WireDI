@@ -43,6 +43,12 @@
             <artifactId>runtime-environment</artifactId>
             <version>${revision}</version>
         </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>logback-bundle</artifactId>
+            <version>${revision}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

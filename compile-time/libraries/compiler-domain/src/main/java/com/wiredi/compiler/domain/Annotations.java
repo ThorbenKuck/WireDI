@@ -6,11 +6,14 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.type.DeclaredType;
+import javax.lang.model.type.MirroredTypeException;
+import javax.lang.model.type.TypeMirror;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 
 public class Annotations {
 
@@ -18,6 +21,15 @@ public class Annotations {
 
 	public static boolean isNotJdkAnnotation(Element element) {
 		return !isJdkAnnotation(element);
+	}
+
+	public static <T extends Annotation> TypeMirror extractType(T annotation, Function<T, Class<?>> function) {
+		try {
+			function.apply(annotation);
+			throw new IllegalStateException("Impossible");
+		} catch (MirroredTypeException e) {
+			return e.getTypeMirror();
+		}
 	}
 
 	public static boolean isJdkAnnotation(Element element) {

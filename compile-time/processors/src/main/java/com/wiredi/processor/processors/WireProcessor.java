@@ -4,8 +4,6 @@ import com.google.auto.service.AutoService;
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.logger.Logger;
-import com.wiredi.processor.factories.AspectAwareProxyFactory;
-import com.wiredi.processor.factories.IdentifiableProviderFactory;
 import com.wiredi.processor.lang.processors.WireBaseProcessor;
 import com.wiredi.processor.processors.adapter.IdentifiableProviderWireAdapter;
 import jakarta.inject.Inject;

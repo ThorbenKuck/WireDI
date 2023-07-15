@@ -1,5 +1,6 @@
 package com.wiredi.processor.lang.concurrent;
 
+import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.Logger;
 
 import java.util.*;
@@ -57,14 +58,16 @@ public class ThreadBarrier {
 			currentRunnableList.forEach(runnable -> {
 				executorService.submit(() -> {
 					runnable.beforeEach();
-					String prefix = "[corr=" + UUID.randomUUID() + "]:";
 					try {
-						logger.debug(() -> prefix + " started");
+						logger.debug(() -> "Started Thread Barrier Cycle");
 						runnable.run();
-						logger.debug(() -> prefix + " finished successfully");
+						logger.debug(() -> "Finished successfully");
+					} catch(ProcessingException processingException) {
+						logger.error(processingException.getElement(), processingException::getMessage);
+						runnable.onError(processingException);
 					} catch (Throwable throwable) {
-						logger.error(() -> prefix + " encountered " + throwable.getClass().getSimpleName() + ":" + throwable.getMessage());
-						runnable.onError(throwable);
+//						logger.error(() -> "Encountered " + throwable.getClass().getSimpleName() + ":" + throwable.getMessage());
+//						runnable.onError(throwable);
 					} finally {
 						try {
 							runnable.afterEach();

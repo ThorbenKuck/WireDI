@@ -1,4 +1,4 @@
-package com.wiredi.lang.async;
+package com.wiredi.lang;
 
 import org.jetbrains.annotations.NotNull;
 

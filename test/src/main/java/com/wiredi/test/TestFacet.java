@@ -2,7 +2,7 @@ package com.wiredi.test;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.aspects.Aspect;
-import com.wiredi.aspects.ExecutionContext;
+import com.wiredi.aspects.ExecutionChain;
 
 import java.util.stream.Collectors;
 
@@ -12,7 +12,7 @@ public class TestFacet {
     @Aspect(around = PrintParameter.class)
     // TODO: Allow anything assignable to the actual method
     // TODO: Why is this executed three times?
-    public Object printParametersAspect(ExecutionContext<PrintParameter> context) {
+    public Object printParametersAspect(ExecutionChain<PrintParameter> context) {
         String parameters = context.listArguments()
                 .stream()
                 .map(it -> it.getName() + "=" + it.getInstance())
