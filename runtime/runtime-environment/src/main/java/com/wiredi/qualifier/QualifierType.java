@@ -46,7 +46,7 @@ public record QualifierType(String name, Map<String, List<String>> values) {
 		if (values.isEmpty()) {
 			return "Qualifier(" + name + ")";
 		} else {
-			return "Qualifier(" + name  + values + ")";
+			return "Qualifier(" + name + "=>" + values + ")";
 		}
 	}
 

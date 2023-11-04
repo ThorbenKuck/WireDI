@@ -18,6 +18,7 @@
         <module>properties</module>
         <module>lang</module>
         <module>resources</module>
+        <module>retry</module>
     </modules>
 
     <developers>

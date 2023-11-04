@@ -7,7 +7,7 @@ import com.wiredi.annotations.properties.Resolve;
 
 @Wire
 @PropertySource(
-		value = "test.properties",
+		value = "classpath:test.properties",
 		entries = @Entry(key = "endpoint1", value = "${endpoint.one}")
 )
 public class RestClient {

@@ -3,7 +3,7 @@ package com.wiredi.compiler.domain;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
 import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.lang.types.TypeMap;
+import com.wiredi.lang.collections.TypeMap;
 import com.wiredi.runtime.beans.Bean;
 import jakarta.inject.Provider;
 

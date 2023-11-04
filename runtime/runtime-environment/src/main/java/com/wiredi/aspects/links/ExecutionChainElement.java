@@ -3,54 +3,65 @@ package com.wiredi.aspects.links;
 import com.wiredi.aspects.AspectHandler;
 import com.wiredi.aspects.ExecutionChainLink;
 import com.wiredi.aspects.ExecutionContext;
+import com.wiredi.domain.AnnotationMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
-public class ExecutionChainElement<T extends Annotation> implements ExecutionChainLink {
+public class ExecutionChainElement implements ExecutionChainLink {
 
 	@NotNull
-	private final ExecutionContext<T> context;
+	private final ExecutionContext context;
 
 	@NotNull
-	private final AspectHandler<T> function;
+	private final AspectHandler handler;
 
 	public ExecutionChainElement(
-			@NotNull ExecutionContext<T> context,
-			@NotNull AspectHandler<T> function
+			@NotNull ExecutionContext context,
+			@NotNull AspectHandler handler
 	) {
 		this.context = context;
-		this.function = function;
+		this.handler = handler;
 	}
 
 	@NotNull
-	public static <T extends Annotation> ExecutionChainElement<T> create(
-			@NotNull ExecutionContext<T> annotation,
-			@NotNull AspectHandler<T> function
+	public static <T extends Annotation> ExecutionChainElement create(
+			@NotNull ExecutionContext annotation,
+			@NotNull AspectHandler function
 	) {
-		return new ExecutionChainElement<>(annotation, function);
+		return new ExecutionChainElement(annotation, function);
 	}
 
 	@Override
 	@NotNull
-	public ExecutionContext<T> context() {
+	public ExecutionContext context() {
 		return context;
 	}
 
 	@Override
 	@Nullable
 	public Object executeRaw() {
-		return function.process(context);
+		return handler.process(context);
 	}
 
 	@Override
 	@NotNull
-	public <S extends Annotation> ExecutionChainLink prepend(
-			@NotNull S annotation,
-			@NotNull AspectHandler<S> handler
+	public ExecutionChainLink prepend(
+			@NotNull Annotation annotation,
+			@NotNull AspectHandler handler
 	) {
-		ExecutionContext<S> prependedContext = context.prepend(annotation, this);
+		ExecutionContext prependedContext = context.prepend(AnnotationMetaData.of(annotation), this);
+		return ExecutionChainElement.create(prependedContext, handler);
+	}
+
+	@Override
+	@NotNull
+	public ExecutionChainLink prepend(
+			@NotNull AnnotationMetaData annotation,
+			@NotNull AspectHandler handler
+	) {
+		ExecutionContext prependedContext = context.prepend(annotation, this);
 		return ExecutionChainElement.create(prependedContext, handler);
 	}
 }

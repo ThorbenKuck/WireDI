@@ -1,5 +1,5 @@
 package com.wiredi.test;
 
-//@Service
+@Service
 public class MetaAnnotationTest {
 }

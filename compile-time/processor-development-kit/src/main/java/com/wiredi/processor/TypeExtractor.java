@@ -33,7 +33,6 @@ public class TypeExtractor {
 	}
 
 	public List<TypeMirror> getDeclaredSuperTypes(TypeElement typeElement) {
-		TypeMirror typeMirror;
 		if (typeElement == null) {
 			return List.of();
 		}

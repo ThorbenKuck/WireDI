@@ -2,7 +2,7 @@ package com.wiredi;
 
 import com.wiredi.lang.ReflectionsHelper;
 import com.wiredi.lang.SingletonSupplier;
-import com.wiredi.lang.types.TypeMap;
+import com.wiredi.lang.collections.TypeMap;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 

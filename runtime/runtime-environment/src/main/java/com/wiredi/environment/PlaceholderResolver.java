@@ -2,75 +2,80 @@ package com.wiredi.environment;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public class PlaceholderResolver {
 
-	private final String start;
-	private final String stop;
+    private static final String DEFAULT_DELIMITER = ":";
+    private final String start;
+    private final String stop;
 
-	public PlaceholderResolver(String start, String stop) {
-		this.start = start;
-		this.stop = stop;
-	}
+    public PlaceholderResolver(String start, String stop) {
+        this.start = start;
+        this.stop = stop;
+    }
 
-	public List<Placeholder> resolveAllIn(String input) {
-		final Set<Placeholder> placeholders = new HashSet<>();
-		String workPiece = input;
-		while(workPiece.contains(stop)) {
-			if(workPiece.contains(start)) {
-				final int end = workPiece.indexOf(stop);
+    public List<Placeholder> resolveAllIn(String input) {
+        int i = 0;
+        final PlaceholderBuilder builder = new PlaceholderBuilder(this);
+        final List<Placeholder> placeholders = new ArrayList<>();
 
-				if (workPiece.indexOf(start) > end) {
-					workPiece = workPiece.replaceFirst(Pattern.quote(stop), "");
-					continue;
-				} else {
-					final int beginning = findClosestStartToEnd(workPiece, end);
-					final int identifierCharIndex = beginning - 2;
-					final char identifierChar = workPiece.charAt(identifierCharIndex);
-					final String placeHolderValue = workPiece.substring(beginning, end);
-					final Placeholder.Default defaultValue = defaultValue(placeHolderValue);
-					placeholders.add(new Placeholder(start, stop, input, placeHolderValue, defaultValue, identifierChar));
+        while (i < input.length()) {
+            if (input.startsWith(start, i)) {
+                builder.noteStart();
 
-					workPiece = workPiece.replaceFirst(Pattern.quote(start), "");
-				}
-			}
-			workPiece = workPiece.replaceFirst(Pattern.quote(stop), "");
-		}
-		final List<Placeholder> result = new ArrayList<>(placeholders);
-		placeholders.clear();
-		return result;
-	}
+                if (builder.depth() == 1) {
+                    // First found start
+                    if (i > 0 && input.charAt(i - 1) != ' ') {
+                        builder.withIdentifier(input.charAt(i - 1))
+                                .withRelativeStart(i - 1);
+                    } else {
+                        builder.withRelativeStart(i);
+                    }
 
-	@Nullable
-	private Placeholder.Default defaultValue(String placeHolderValue) {
-		int index = placeHolderValue.indexOf(":");
-		if (index == -1) {
-			return null;
-		}
+                    builder.appendToStart(start);
+                } else {
+                    builder.appendToInnerContent(start);
+                }
 
-		return new Placeholder.Default(
-				placeHolderValue.substring(index + 1),
-				":"
-		);
-	}
+                i += start.length();
+            } else if (input.startsWith(stop, i)) {
+                int finalI = i;
+                builder.noteEnd((depth) -> {
+                        if (depth == 0) {
+                            placeholders.add(
+                                    builder.appendToEnd(stop)
+                                            .withRelativeEnd(finalI + stop.length())
+                                            .build()
+                            );
+                            builder.reset();
+                        } else if(builder.depth() > 0) {
+                            builder.appendToInnerContent(stop);
+                        }
+                    });
 
-	private int findClosestStartToEnd(String value, int end) {
-		String workPiece = value;
+                i += stop.length();
+            } else {
+                if (builder.depth() == 0) {
+                    i += start.length();
+                } else {
+                    if (input.startsWith(DEFAULT_DELIMITER, i)) {
+                        builder.startOfDefaultValue(DEFAULT_DELIMITER);
+                        i += DEFAULT_DELIMITER.length();
+                    } else {
+                        builder.appendToInnerContent(input.charAt(i));
+                        i++;
+                    }
+                }
+            }
 
-		int increment = 0;
-		int beginning = workPiece.indexOf(start);
-		int pointer = beginning;
-		String startPattern = Pattern.quote(start);
+        }
 
-		while (pointer != -1 && pointer < end) {
-			workPiece = workPiece.replaceFirst(startPattern, "");
-			beginning = pointer;
-			pointer = workPiece.indexOf(start);
-			++increment;
-		}
-
-		return beginning + increment;
-	}
+        builder.clear();
+        return placeholders;
+    }
 }

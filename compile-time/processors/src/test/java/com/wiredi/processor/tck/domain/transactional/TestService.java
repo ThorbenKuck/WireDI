@@ -9,4 +9,9 @@ public class TestService {
 	public String execute(String input) {
 		return "Processed: " + input;
 	}
+
+	@Transactional
+	public void handler(String input) {
+
+	}
 }

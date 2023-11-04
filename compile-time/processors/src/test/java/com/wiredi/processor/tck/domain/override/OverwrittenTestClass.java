@@ -15,6 +15,7 @@ public class OverwrittenTestClass implements TckTestCase {
 	protected final TckCondition overwritingMethodPreventsInjection = TckCondition.shouldNotFail("A method with no @Inject annotation that overrides a method annotated with @Inject will not be injected.");
 	protected final TckCondition overwritingMethodEnablesInjection = TckCondition.mustSucceed("A method with @Inject annotation that overrides a method annotated with no @Inject will be injected but only in the overwriting method.");
 	protected final TckCondition overwrittenMethodDefinesOtherQualifiers = TckCondition.shouldNotFail("If one injectable method overrides another, the overriding method's parameters do not automatically inherit qualifiers from the overridden method's parameters.");
+	protected final TckCondition notOverwrittenMethodWithInjectIsInvoked = TckCondition.mustSucceed("A method annotated with @Inject that is not overwritten should be called");
 
 	@Inject
 	public void injectQualifiedValue(@Named("qualified") IDependency dependency) {
@@ -43,13 +44,19 @@ public class OverwrittenTestClass implements TckTestCase {
 		overwrittenMethodsWillOnlyBeInvokedOnce.failure("The overwritten method should not be called");
 	}
 
+	@Inject
+	public void notOverwritten() {
+		notOverwrittenMethodWithInjectIsInvoked.success();
+	}
+
 	@Override
 	public Collection<DynamicNode> dynamicTests() {
 		return List.of(
 				overwritingMethodPreventsInjection.toDynamicTest(),
 				overwrittenMethodsWillOnlyBeInvokedOnce.toDynamicTest(),
 				overwrittenMethodDefinesOtherQualifiers.toDynamicTest(),
-				overwritingMethodEnablesInjection.toDynamicTest()
+				overwritingMethodEnablesInjection.toDynamicTest(),
+				notOverwrittenMethodWithInjectIsInvoked.toDynamicTest()
 		);
 	}
 }

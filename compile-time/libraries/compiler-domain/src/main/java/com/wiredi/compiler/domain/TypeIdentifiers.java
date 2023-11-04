@@ -3,12 +3,14 @@ package com.wiredi.compiler.domain;
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.lang.values.Value;
 import jakarta.inject.Inject;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 
 public class TypeIdentifiers {
@@ -17,6 +19,11 @@ public class TypeIdentifiers {
 
 	@Inject
 	private Types types;
+
+	@Inject
+	private Elements elements;
+
+	private Value<TypeMirror> objectTypeMirror = Value.lazy(() -> elements.getTypeElement(Object.class.getName()).asType());
 
 	public CodeBlock newTypeIdentifier(TypeElement typeElement) {
 		return newTypeIdentifier(typeElement.asType());
@@ -45,5 +52,9 @@ public class TypeIdentifiers {
 		}
 
 		return builder.build();
+	}
+
+	public TypeMirror objectType() {
+		return objectTypeMirror.get();
 	}
 }

@@ -6,7 +6,7 @@ import java.util.regex.Pattern;
 
 public class LogPattern {
 
-	private static final String DEFAULT_LOGGING_PATTERN = "[${level:5.5}] [${thread:12.12}] [${type:12.12}] [${annotation:10.10}] [${origin:20.20}] : ${message}";
+	private static final String DEFAULT_LOGGING_PATTERN = "[${level:5.5}] [${thread:12.12}] [${type:30.30}] [${annotation:10.10}] [${origin:20.20}] : ${message}";
 	public static final LogPattern DEFAULT = new LogPattern(DEFAULT_LOGGING_PATTERN);
 	private final Map<String, Object> context = new HashMap<>();
 	private final String pattern;

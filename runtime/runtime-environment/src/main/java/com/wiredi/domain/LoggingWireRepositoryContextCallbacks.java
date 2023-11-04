@@ -14,7 +14,7 @@ import java.util.List;
 @AutoService(WireRepositoryContextCallbacks.class)
 public class LoggingWireRepositoryContextCallbacks implements WireRepositoryContextCallbacks {
 
-	private static final Logger logger = LoggerFactory.getLogger(WireRepository.class);
+	private static final Logger logger = LoggerFactory.getLogger(LoggingWireRepositoryContextCallbacks.class);
 
 	@Override
 	public void loadingStarted(@NotNull WireRepository wireRepository) {

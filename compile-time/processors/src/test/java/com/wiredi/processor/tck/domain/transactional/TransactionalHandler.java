@@ -9,7 +9,7 @@ import com.wiredi.runtime.WireRepository;
 public class TransactionalHandler {
 
 	@Aspect(around = Transactional.class)
-	public String handle(ExecutionContext<Transactional> context, WireRepository wireRepository) {
+	public String handle(ExecutionContext context, WireRepository wireRepository) {
 		Object returnValue = context.proceed();
 		return "[TRANSACTIONAL]: " + returnValue;
 	}

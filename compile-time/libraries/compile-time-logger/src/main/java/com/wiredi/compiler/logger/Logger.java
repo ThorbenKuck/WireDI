@@ -264,6 +264,22 @@ public class Logger {
 		debug(null, msg);
 	}
 
+	public void trace(@Nullable Element element, @NotNull String msg) {
+		log(element, LogLevel.TRACE, msg);
+	}
+
+	public void trace(@Nullable Element element, @NotNull Supplier<String> msg) {
+		log(element, LogLevel.TRACE, msg);
+	}
+
+	public void trace(@NotNull String msg) {
+		trace(null, msg);
+	}
+
+	public void trace(@NotNull Supplier<String> msg) {
+		trace(null, msg);
+	}
+
 	public boolean isEnabled(LogLevel logLevel) {
 		return this.properties.logLevel().isEnabled(logLevel);
 	}

@@ -18,7 +18,6 @@
         <module>annotations</module>
         <module>runtime-libraries</module>
         <module>runtime-environment</module>
-        <module>bundles</module>
     </modules>
 
     <developers>

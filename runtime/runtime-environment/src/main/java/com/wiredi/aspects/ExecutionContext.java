@@ -1,5 +1,6 @@
 package com.wiredi.aspects;
 
+import com.wiredi.domain.AnnotationMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,15 +9,15 @@ import java.lang.reflect.AnnotatedElement;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.wiredi.lang.Preconditions.notNull;
+
 /**
  * TODO: Interface for the using aspect methods
- *
- * @param <T>
  */
-public class ExecutionContext<T extends Annotation> {
+public class ExecutionContext {
 
     @Nullable
-    private final T annotation;
+    private final AnnotationMetaData annotation;
 
     @NotNull
     private final ExecutionChainParameters parameters;
@@ -25,7 +26,7 @@ public class ExecutionContext<T extends Annotation> {
     private ExecutionChainLink next = null;
 
     public ExecutionContext(
-            @Nullable T annotation,
+            @Nullable AnnotationMetaData annotation,
             @NotNull ExecutionChainParameters parameters
     ) {
         this.annotation = annotation;
@@ -33,7 +34,7 @@ public class ExecutionContext<T extends Annotation> {
     }
 
     public ExecutionContext(
-            @Nullable T annotation
+            @Nullable AnnotationMetaData annotation
     ) {
         this(annotation, new ExecutionChainParameters());
     }
@@ -42,8 +43,8 @@ public class ExecutionContext<T extends Annotation> {
         this(null);
     }
 
-    public <S extends Annotation> ExecutionContext<S> prepend(S annotation, ExecutionChainLink nextElement) {
-        ExecutionContext<S> executionContext = new ExecutionContext<>(annotation, parameters);
+    public ExecutionContext prepend(AnnotationMetaData annotation, ExecutionChainLink nextElement) {
+        ExecutionContext executionContext = new ExecutionContext(annotation, parameters);
         executionContext.next = nextElement;
         return executionContext;
     }
@@ -90,8 +91,8 @@ public class ExecutionContext<T extends Annotation> {
     }
 
     @NotNull
-    public T getAnnotation() {
-        return annotation;
+    public AnnotationMetaData getAnnotation() {
+        return notNull(annotation, () -> "The ExecutionContext does not have a linked annotation");
     }
 
     public void setParameters(@NotNull Map<String, Object> parameters) {

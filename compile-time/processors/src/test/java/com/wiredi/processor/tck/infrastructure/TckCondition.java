@@ -88,7 +88,6 @@ public class TckCondition {
 
 	private URI toUri(StackTraceElement stackTraceElement) {
 		String line = "?line=" + stackTraceElement.getLineNumber();
-		System.out.println(stackTraceElement.getFileName() + line + " => " + stackTraceElement.getMethodName());
 		if (stackTraceElement.getMethodName().contains("<init>")) {
 			return URI.create("class:" + stackTraceElement.getClassName() + line);
 		} else {

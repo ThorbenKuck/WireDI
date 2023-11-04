@@ -2,9 +2,9 @@ package com.wiredi.test.inner;
 
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.annotations.Wire;
+import com.wiredi.test.CountInvocations;
 import com.wiredi.test.IDependency;
 import com.wiredi.test.NonExisting;
-import com.wiredi.test.PrintParameter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,14 +46,12 @@ public class SuperDi {
         System.out.println("[POST_CONSTRUCT|SuperDi   ] called");
     }
 
-    @PrintParameter
-    public void print(String message) {
-         System.out.println("[SuperDi]: " + message);
+    @CountInvocations
+    public void countMe() {
     }
 
-    @PrintParameter
-    public String printAndReturn(String message) {
-         print(message);
-         return message;
+    @CountInvocations
+    public void countMeAndInvokeOtherCountMe() {
+         countMe();
     }
 }

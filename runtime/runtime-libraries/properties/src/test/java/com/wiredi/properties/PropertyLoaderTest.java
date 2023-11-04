@@ -1,8 +1,8 @@
 package com.wiredi.properties;
 
 import com.wiredi.properties.keys.Key;
-import com.wiredi.properties.loader.PropertiesPropertyFileLoader;
-import com.wiredi.properties.loader.YamlPropertyFileLoader;
+import com.wiredi.properties.loader.PropertiesPropertyFileTypeLoader;
+import com.wiredi.properties.loader.YamlPropertyFileTypeLoader;
 import com.wiredi.resources.builtin.ClassPathResource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -17,7 +17,7 @@ class PropertyLoaderTest {
 		String file = "test.yaml";
 		String property = "my.test";
 		String expectedValue = "property1,property2";
-		PropertyLoader propertyLoader = new PropertyLoader(new YamlPropertyFileLoader());
+		PropertyLoader propertyLoader = new PropertyLoader(new YamlPropertyFileTypeLoader());
 
 		// Act
 		TypedProperties properties = Assertions.assertDoesNotThrow(() -> propertyLoader.load(new ClassPathResource(file)));
@@ -37,7 +37,7 @@ class PropertyLoaderTest {
 		String file = "test.yml";
 		String property = "my.test";
 		String expectedValue = "property1,property2";
-		PropertyLoader propertyLoader = new PropertyLoader(new YamlPropertyFileLoader());
+		PropertyLoader propertyLoader = new PropertyLoader(new YamlPropertyFileTypeLoader());
 
 		// Act
 		TypedProperties properties = Assertions.assertDoesNotThrow(() -> propertyLoader.load(new ClassPathResource(file)));
@@ -57,7 +57,7 @@ class PropertyLoaderTest {
 		String file = "test.properties";
 		String property = "my.test";
 		String expectedValue = "property1,property2";
-		PropertyLoader propertyLoader = new PropertyLoader(new PropertiesPropertyFileLoader());
+		PropertyLoader propertyLoader = new PropertyLoader(new PropertiesPropertyFileTypeLoader());
 
 		// Act
 		TypedProperties properties = Assertions.assertDoesNotThrow(() -> propertyLoader.load(new ClassPathResource(file)));

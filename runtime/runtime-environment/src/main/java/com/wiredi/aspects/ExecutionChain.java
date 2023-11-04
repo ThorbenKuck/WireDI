@@ -1,147 +1,235 @@
 package com.wiredi.aspects;
 
 import com.wiredi.aspects.links.RootMethod;
+import com.wiredi.domain.AnnotationMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Queue;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
+/**
+ * An ExecutionChain is a chain of responsibility pattern implementation.
+ * <p>
+ * The chain has a tail and a head. The tail will always be the {@link #rootMethod}, which is
+ * the original and concrete method you want to delegate to.
+ * <p>
+ * At the beginning of a chains constructions, the head is the same as the tail. Upon calling
+ * {@link #prepend(Annotation, AspectHandler)}, a new head ist constructed and the existing head
+ * is replaced by the new head. In the relativeEnd, the last added {@link AspectHandler} will be the
+ * head of the execution chain. The tail will always be root method.
+ * <p>
+ * A constructed {@link ExecutionChain} will hold the head/tail information, but for execution
+ * the {@link #execute()} method must be called. This will construct a new {@link ExecutionStage}
+ * in which the context of a concrete execution can be modified.
+ * <p>
+ * Though this class is meant to be used for aspect executions, it can be used standalone.
+ *
+ * @see RootMethod
+ * @see ExecutionChainLink
+ * @see AspectHandler
+ * @see ExecutionContext
+ */
 public class ExecutionChain {
 
-	@NotNull
-	private final RootMethod rootMethod;
+    /**
+     * The original method, also known as the tail.
+     */
+    @NotNull
+    private final RootMethod rootMethod;
 
-	@NotNull
-	private ExecutionChainLink head;
+    /**
+     * The current head of the chain. At the beginning this will be the {@link #rootMethod} and this
+     * will be replaced by the {@link #prepend(Annotation, AspectHandler)} method
+     */
+    @NotNull
+    private ExecutionChainLink head;
 
-	public ExecutionChain(
-			@NotNull RootMethod rootFunction
-	) {
-		this.rootMethod = rootFunction;
-		this.head = rootFunction;
-	}
+    public ExecutionChain(
+            @NotNull RootMethod rootFunction
+    ) {
+        this.rootMethod = rootFunction;
+        this.head = rootFunction;
+    }
 
-	@NotNull
-	public static Builder newInstance(@NotNull AspectHandler<Annotation> rootMethod) {
-		return new Builder(new RootMethod(rootMethod));
-	}
+    @NotNull
+    public static Builder newInstance(@NotNull RootMethod rootMethod) {
+        return new Builder(rootMethod);
+    }
 
-	@NotNull
-	public <T extends Annotation> ExecutionChain prepend(@NotNull T annotation, @NotNull AspectHandler<T> function) {
-		this.head = head.prepend(annotation, function);
-		return this;
-	}
+    @NotNull
+    public ExecutionChain prepend(@NotNull AnnotationMetaData annotation, @NotNull AspectHandler handler) {
+        this.head = head.prepend(annotation, handler);
+        return this;
+    }
 
-	@NotNull
-	public RootMethod rootMethod() {
-		return rootMethod;
-	}
+    @NotNull
+    public ExecutionChain prepend(@NotNull Annotation annotation, @NotNull AspectHandler handler) {
+        return prepend(AnnotationMetaData.of(annotation), handler);
+    }
 
-	@NotNull
-	public ExecutionChainLink tail() {
-		return rootMethod;
-	}
+    @NotNull
+    public RootMethod rootMethod() {
+        return rootMethod;
+    }
 
-	@NotNull
-	public ExecutionChainLink head() {
-		return head;
-	}
+    @NotNull
+    public ExecutionChainLink tail() {
+        return rootMethod;
+    }
 
-	@Nullable
-	public <S> S execute(@NotNull Map<String, Object> parameters) {
-		Object result = doExecute(parameters);
-		if (result == null) {
-			return null;
-		} else {
-			return (S) result;
-		}
-	}
+    @NotNull
+    public ExecutionChainLink head() {
+        return head;
+    }
 
-	@Nullable
-	public <S> S execute(@NotNull Map<String, Object> parameters, @NotNull Class<S> type) {
-		Object result = doExecute(parameters);
-		if (result == null) {
-			return null;
-		} else {
-			return type.cast(result);
-		}
-	}
+    @Nullable
+    public <S> S execute(@NotNull Map<String, Object> parameters) {
+        Object result = doExecute(parameters);
+        if (result == null) {
+            return null;
+        } else {
+            return (S) result;
+        }
+    }
 
-	@NotNull
-	public ExecutionStage execute() {
-		return new ExecutionStage();
-	}
+    @Nullable
+    public <S> S execute(@NotNull Map<String, Object> parameters, @NotNull Class<S> type) {
+        Object result = doExecute(parameters);
+        if (result == null) {
+            return null;
+        } else {
+            return type.cast(result);
+        }
+    }
 
-	@Nullable
-	private Object doExecute(@NotNull Map<String, Object> parameters) {
-		try {
-			rootMethod.parameters().set(parameters);
-			return head.executeRaw();
-		} finally {
-			rootMethod.parameters().clear();
-		}
-	}
+    @NotNull
+    public ExecutionStage execute() {
+        return new ExecutionStage();
+    }
 
-	public static class Builder {
+    @Nullable
+    private Object doExecute(@NotNull Map<String, Object> parameters) {
+        try {
+            rootMethod.parameters().set(parameters);
+            return head.executeRaw();
+        } finally {
+            rootMethod.parameters().clear();
+        }
+    }
 
-		@NotNull
-		private final RootMethod rootMethod;
+    public static class Builder {
 
-		@NotNull
-		private final Queue<ComponentBuilder<? extends Annotation>> prepends = new LinkedBlockingDeque<>();
+        @NotNull
+        private final RootMethod rootMethod;
+        @NotNull
+        private final Queue<ComponentBuilder<? extends Annotation>> prepends = new LinkedBlockingDeque<>();
+        private boolean distinct = false;
 
-		public Builder(@NotNull RootMethod rootMethod) {
-			this.rootMethod = rootMethod;
-		}
+        public Builder(@NotNull RootMethod rootMethod) {
+            this.rootMethod = rootMethod;
+        }
 
-		@NotNull
-		public <S extends Annotation> Builder withProcessor(@NotNull S annotation, @NotNull AspectHandler<S> handler) {
-			prepends.add(new ComponentBuilder<>(annotation, handler));
-			return this;
-		}
+        @NotNull
+        public <S extends Annotation> Builder withProcessor(@NotNull S annotation, @NotNull AspectHandler handler) {
+            return withProcessor(AnnotationMetaData.of(annotation), handler);
+        }
 
-		@NotNull
-		public <S extends Annotation> Builder withProcessors(@NotNull S annotation, @NotNull List<AspectHandler<S>> handlers) {
-			handlers.forEach(handler -> prepends.add(new ComponentBuilder<>(annotation, handler)));
-			return this;
-		}
+        @NotNull
+        public <S extends Annotation> Builder withProcessors(@NotNull S annotation, @NotNull List<AspectHandler> handlers) {
+            return withProcessors(AnnotationMetaData.of(annotation), handlers);
+        }
 
-		@NotNull
-		public ExecutionChain build() {
-			ExecutionChain executionChain = new ExecutionChain(rootMethod);
+        @NotNull
+        public Builder withProcessor(@NotNull AnnotationMetaData annotation, @NotNull AspectHandler handler) {
+            if (handler.appliesTo(annotation, rootMethod)) {
+                prepends.add(new ComponentBuilder<>(annotation, handler));
+            }
+            return this;
+        }
 
-			while (prepends.peek() != null) {
-				prepend(executionChain, prepends.poll());
-			}
+        @NotNull
+        public Builder withProcessors(@NotNull AnnotationMetaData annotation, @NotNull List<AspectHandler> handlers) {
+            for (AspectHandler handler : handlers) {
+                if (handler.appliesTo(annotation, rootMethod)) {
+                    prepends.add(new ComponentBuilder<>(annotation, handler));
+                }
+            }
+            return this;
+        }
 
-			return executionChain;
-		}
+        /**
+         * Whether the builder should filter out duplicate handlers.
+         * <p>
+         * If true, the builder will only use handlers once, even if added multiple times.
+         * If false, the builder will not care about duplicated handlers and will allow duplicates.
+         *
+         * @param distinct whether duplicates should be filtered or not
+         * @return this
+         */
+        @NotNull
+        public Builder distinct(boolean distinct) {
+            this.distinct = distinct;
+            return this;
+        }
 
-		private <T extends Annotation> void prepend(@NotNull ExecutionChain executionChain, @NotNull ComponentBuilder<T> componentBuilder) {
-			executionChain.prepend(componentBuilder.annotation, componentBuilder.function);
-		}
+        @NotNull
+        public ExecutionChain build() {
+            if(distinct) {
+                return buildDistinct();
+            } else {
+                return buildIndistinct();
+            }
+        }
 
-		private record ComponentBuilder<T extends Annotation>(@NotNull T annotation, @NotNull AspectHandler<T> function) {}
-	}
+        private ExecutionChain buildDistinct() {
+            final ExecutionChain executionChain = new ExecutionChain(rootMethod);
+            final HashSet<AspectHandler> handlers = new HashSet<>();
 
-	public class ExecutionStage {
-		@NotNull
-		private final Map<String, Object> content = new HashMap<>();
+            while (prepends.peek() != null) {
+                ComponentBuilder<? extends Annotation> current = prepends.poll();
+                if (!handlers.contains(current.function)) {
+                    prepend(executionChain, current);
+                    handlers.add(current.function);
+                }
+            }
 
-		@NotNull
-		public ExecutionStage withParameter(@NotNull String name, @Nullable Object value) {
-			content.put(name, value);
-			return this;
-		}
+            return executionChain;
+        }
 
-		@Nullable
-		public <S> S andReturn() {
-			return ExecutionChain.this.execute(content);
-		}
-	}
+        private ExecutionChain buildIndistinct() {
+            final ExecutionChain executionChain = new ExecutionChain(rootMethod);
+
+            while (prepends.peek() != null) {
+                prepend(executionChain, prepends.poll());
+            }
+
+            return executionChain;
+        }
+
+        private <T extends Annotation> void prepend(@NotNull ExecutionChain executionChain, @NotNull ComponentBuilder<T> componentBuilder) {
+            executionChain.prepend(componentBuilder.annotation, componentBuilder.function);
+        }
+
+        private record ComponentBuilder<T extends Annotation>(@NotNull AnnotationMetaData annotation,
+                                                              @NotNull AspectHandler function) {
+        }
+    }
+
+    public class ExecutionStage {
+        @NotNull
+        private final Map<String, Object> content = new HashMap<>();
+
+        @NotNull
+        public ExecutionStage withParameter(@NotNull String name, @Nullable Object value) {
+            content.put(name, value);
+            return this;
+        }
+
+        @Nullable
+        public <S> S andReturn() {
+            return ExecutionChain.this.execute(content);
+        }
+    }
 }

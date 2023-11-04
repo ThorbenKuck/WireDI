@@ -22,6 +22,10 @@ public class Barrier {
 		return barrier;
 	}
 
+	public boolean isOpen() {
+		return isOpen;
+	}
+
 	public void open() {
 		if (isOpen) {
 			return;

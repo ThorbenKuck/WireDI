@@ -1,17 +1,15 @@
 package com.wiredi.properties;
 
+import com.wiredi.lang.collections.TypeMap;
 import com.wiredi.properties.converter.*;
 import com.wiredi.properties.exceptions.MissingTypeConverterException;
 import com.wiredi.properties.keys.Key;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class TypeMapper {
 
 	@NotNull
-	private static final Map<Class<?>, PropertyConverter<?>> typeMappings = new HashMap<>();
+	private static final TypeMap<PropertyConverter<?>> typeMappings = new TypeMap<>();
 
 	static {
 		setTypeConverter(boolean.class, new BooleanPropertyConverter());

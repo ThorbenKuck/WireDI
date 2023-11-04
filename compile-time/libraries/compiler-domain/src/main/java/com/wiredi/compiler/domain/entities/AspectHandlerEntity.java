@@ -11,7 +11,7 @@ import javax.lang.model.type.TypeMirror;
 public class AspectHandlerEntity extends AbstractClassEntity<AspectHandlerEntity> {
 
 	public AspectHandlerEntity(ExecutableElement declaringMethod) {
-		super(declaringMethod.getReturnType(), nameOf(declaringMethod));
+		super(declaringMethod, declaringMethod.getReturnType(), nameOf(declaringMethod));
 	}
 
 	private static String nameOf(ExecutableElement element) {
@@ -23,7 +23,7 @@ public class AspectHandlerEntity extends AbstractClassEntity<AspectHandlerEntity
 
 	@Override
 	protected TypeSpec.Builder createBuilder(TypeMirror type) {
-		return TypeSpec.classBuilder(className)
+		return TypeSpec.classBuilder(className())
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addAnnotation(Wire.class);
 	}

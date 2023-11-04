@@ -1,6 +1,6 @@
 package com.wiredi.retry;
 
-import com.wiredi.lang.SafeReference;
+import com.wiredi.lang.values.SafeReference;
 import com.wiredi.lang.time.Timed;
 import com.wiredi.retry.exception.RetryFailedException;
 import org.junit.jupiter.api.Test;

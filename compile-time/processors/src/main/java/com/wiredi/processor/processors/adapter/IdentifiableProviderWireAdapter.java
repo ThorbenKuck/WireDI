@@ -1,12 +1,16 @@
 package com.wiredi.processor.processors.adapter;
 
 import com.wiredi.annotations.Wire;
+import com.wiredi.compiler.domain.entities.AspectAwareProxyEntity;
+import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.processor.factories.AspectAwareProxyFactory;
 import com.wiredi.processor.factories.IdentifiableProviderFactory;
 import jakarta.inject.Inject;
+import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.TypeElement;
+import java.util.Optional;
 
 public class IdentifiableProviderWireAdapter {
 
@@ -18,16 +22,45 @@ public class IdentifiableProviderWireAdapter {
 	@Inject
 	private IdentifiableProviderFactory identifiableProviderFactory;
 
+	@Nullable
+	public AspectAwareProxyEntity tryCreateProxy(
+			TypeElement typeElement,
+			@Nullable Wire wire
+	) {
+		if (Optional.ofNullable(wire).map(Wire::proxy).orElse(true)) {
+			AspectAwareProxyEntity proxyEntity = aspectAwareProxyFactory.create(typeElement);
+			logger.debug(typeElement, () -> "Successfully created an aspect aware proxy");
+			return proxyEntity;
+		}
+
+		return null;
+	}
+
+	@Nullable
+	public IdentifiableProviderEntity tryCreateIdentifiableProvider(
+			TypeElement typeElement,
+			@Nullable Wire wire
+	) {
+		IdentifiableProviderEntity entity = identifiableProviderFactory.create(typeElement, wire);
+		if (entity != null) {
+			logger.debug(typeElement, () -> "Successfully created an identifiable provider");
+			return entity;
+		}
+
+		return null;
+	}
+
 	public void handle(
 			TypeElement typeElement,
-			Wire wire
+			@Nullable Wire wire
 	) {
-		if (wire.proxy() && aspectAwareProxyFactory.create(typeElement) != null) {
-			logger.debug(typeElement, () -> "Successfully created an aspect aware proxy");
+		AspectAwareProxyEntity proxy = tryCreateProxy(typeElement, wire);
+		if (proxy != null) {
 			return;
 		}
-		if (identifiableProviderFactory.create(typeElement, wire) != null) {
-			logger.debug(typeElement, () -> "Successfully created an identifiable provider");
+
+		IdentifiableProviderEntity identifiableProvider = tryCreateIdentifiableProvider(typeElement, wire);
+		if (identifiableProvider != null) {
 			return;
 		}
 

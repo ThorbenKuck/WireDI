@@ -1,8 +1,6 @@
 package com.wiredi.annotations;
 
-import java.lang.annotation.Inherited;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.*;
 
 /**
  * This annotation is used to signal a processor that the annotated class is wired automatically.
@@ -57,6 +55,8 @@ import java.lang.annotation.RetentionPolicy;
  * </code></pre>
  */
 @Retention(RetentionPolicy.CLASS)
+@Target({ElementType.TYPE})
 @Inherited
+@Documented
 public @interface ManualWireCandidate {
 }

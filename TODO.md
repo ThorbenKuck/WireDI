@@ -4,16 +4,27 @@
 
 The processor requires a lot how high effort to work. So these changes will make it easier.
 
-* Add support for "Qualifier first" out of the box (i.e. without conflict strategy)
-* Add support generic dependencies (based on best match).
+* Implement "Conditional" feature
+  * The IdentifiableProvider should implement the "condition" function
 
 
-### Provider
+### Properties
 
-Currently, the processor does not support a Provider or IdentifiableProvider dependency. This must change
+PropertyBinding should support nested classes and automatically resolve the correct property path
 
-* Let the processor correctly understand and process the Provider interface
-* Let the processor correctly understand and process the Identifiable Provider interface
+
+### WireRepository
+
+Implement "Destroy" lifecycle
+Implement scopes
+
+
+Make the Aspect part a plugin
+AspectHandler should gain a method "appliesTo"
+  - returns boolean
+  - parameters: AnnotationMetaData
+  - returns true if the AnnotationMetaData contains the annotation we care about
+  - ExecutionChain should only hold AspectHandler instances that return true
 
 # Future
 

@@ -2,7 +2,7 @@ package com.wiredi.properties;
 
 import com.wiredi.properties.exceptions.PropertyLoadingException;
 import com.wiredi.properties.keys.Key;
-import com.wiredi.properties.loader.PropertyFileLoader;
+import com.wiredi.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.resources.Resource;
 import org.jetbrains.annotations.NotNull;
 
@@ -10,9 +10,9 @@ import java.util.*;
 
 public class PropertyLoader {
 
-	private final Map<String, PropertyFileLoader> propertyFileLoaders = new HashMap<>();
+	private final Map<String, PropertyFileTypeLoader> propertyFileLoaders = new HashMap<>();
 
-	public PropertyLoader(List<PropertyFileLoader> loaderList) {
+	public PropertyLoader(List<PropertyFileTypeLoader> loaderList) {
 		loaderList.forEach(loader -> {
 			loader.supportedFileTypes().forEach(supportedFileType -> {
 				propertyFileLoaders.computeIfPresent(supportedFileType, (key, existingLoader) -> {
@@ -23,7 +23,7 @@ public class PropertyLoader {
 		});
 	}
 
-	public PropertyLoader(PropertyFileLoader... loaderList) {
+	public PropertyLoader(PropertyFileTypeLoader... loaderList) {
 		this(Arrays.asList(loaderList));
 	}
 
@@ -31,13 +31,13 @@ public class PropertyLoader {
 		// No-Arg
 	}
 
-	public void addPropertyFileLoaders(Collection<PropertyFileLoader> loaders) {
+	public void addPropertyFileLoaders(Collection<PropertyFileTypeLoader> loaders) {
 		loaders.forEach(this::addPropertyFileLoader);
 	}
 
-	public void addPropertyFileLoader(PropertyFileLoader loader) {
+	public void addPropertyFileLoader(PropertyFileTypeLoader loader) {
 		loader.supportedFileTypes().forEach(supportedFileType -> {
-			PropertyFileLoader existingPropertyLoader = propertyFileLoaders.get(supportedFileType);
+			PropertyFileTypeLoader existingPropertyLoader = propertyFileLoaders.get(supportedFileType);
 			if (existingPropertyLoader != null) {
 				throw new IllegalStateException("Tried to register " + loader + " for file type " + supportedFileType + " but " + existingPropertyLoader + " was already registered");
 			}
@@ -45,7 +45,7 @@ public class PropertyLoader {
 		});
 	}
 
-	public void setPropertyFileLoader(PropertyFileLoader loader) {
+	public void setPropertyFileLoader(PropertyFileTypeLoader loader) {
 		loader.supportedFileTypes().forEach(supportedFileType -> propertyFileLoaders.put(supportedFileType, loader));
 	}
 
@@ -67,10 +67,10 @@ public class PropertyLoader {
 		}
 		String fileType = resource.fileType()
 				.orElseThrow(() -> new PropertyLoadingException(resource.getFilename(), "Could not get file type"));
-		PropertyFileLoader propertyFileLoader = Optional.ofNullable(propertyFileLoaders.get(fileType))
+		PropertyFileTypeLoader propertyFileTypeLoader = Optional.ofNullable(propertyFileLoaders.get(fileType))
 				.orElseThrow(() -> new PropertyLoadingException(resource.getFilename(), "No PropertyFileLoader registered for the type " + fileType));
 
-		Map<Key, String> result = propertyFileLoader.extract(resource);
+		Map<Key, String> result = propertyFileTypeLoader.extract(resource);
 		return TypedProperties.from(result);
 	}
 
@@ -96,8 +96,8 @@ public class PropertyLoader {
 			}
 
 			resource.fileType().ifPresent(fileType -> {
-				Optional.ofNullable(propertyFileLoaders.get(fileType)).ifPresent(propertyFileLoader -> {
-					Map<Key, String> result = propertyFileLoader.extract(resource);
+				Optional.ofNullable(propertyFileLoaders.get(fileType)).ifPresent(propertyFileTypeLoader -> {
+					Map<Key, String> result = propertyFileTypeLoader.extract(resource);
 					typedProperties.setAll(result);
 				});
 			});

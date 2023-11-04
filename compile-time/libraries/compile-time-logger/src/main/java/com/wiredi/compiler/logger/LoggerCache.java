@@ -1,6 +1,6 @@
 package com.wiredi.compiler.logger;
 
-import com.wiredi.lang.types.TypeMap;
+import com.wiredi.lang.collections.TypeMap;
 
 import java.util.function.Supplier;
 

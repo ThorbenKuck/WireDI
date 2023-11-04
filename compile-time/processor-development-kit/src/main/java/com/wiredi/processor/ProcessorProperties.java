@@ -4,8 +4,8 @@ import com.wiredi.processor.lang.AnnotationProcessorResource;
 import com.wiredi.properties.PropertyLoader;
 import com.wiredi.properties.TypedProperties;
 import com.wiredi.properties.keys.Key;
-import com.wiredi.properties.loader.PropertiesPropertyFileLoader;
-import com.wiredi.properties.loader.YamlPropertyFileLoader;
+import com.wiredi.properties.loader.PropertiesPropertyFileTypeLoader;
+import com.wiredi.properties.loader.YamlPropertyFileTypeLoader;
 
 import javax.annotation.processing.Filer;
 import java.util.*;
@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 public class ProcessorProperties {
 
 	private static final String FILE_NAME = "wire-di.processor.properties";
-	private static final PropertyLoader propertyLoader = new PropertyLoader(new PropertiesPropertyFileLoader(), new YamlPropertyFileLoader());
+	private static final PropertyLoader propertyLoader = new PropertyLoader(new PropertiesPropertyFileTypeLoader(), new YamlPropertyFileTypeLoader());
 	private final TypedProperties properties;
 
 	public ProcessorProperties(Filer filer) {

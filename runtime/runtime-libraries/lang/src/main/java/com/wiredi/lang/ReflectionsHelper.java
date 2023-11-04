@@ -15,6 +15,8 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static com.wiredi.lang.Preconditions.notNull;
+
 public class ReflectionsHelper {
 
 	public static void setField(
@@ -85,6 +87,24 @@ public class ReflectionsHelper {
 		} else {
 			return declaredMethod.getAnnotation(annotationType);
 		}
+	}
+
+	@NotNull
+	public static <A extends Annotation> A requireAnnotationOnMethod(
+			@NotNull Class<?> type,
+			@NotNull Class<A> annotationType,
+			@NotNull String name,
+			@NotNull Class<?>[] parameterNames,
+			@NotNull Class<?> returnValue
+	) {
+		return notNull(
+				findAnnotationOnMethod(type, annotationType, name, parameterNames, returnValue),
+				() -> "Could not find the annotation @" + annotationType.getSimpleName()
+						+ " on " + type.getName() + "." + name + "(" + Arrays.stream(parameterNames)
+						.map(Class::getSimpleName)
+						.collect(Collectors.joining(", "))
+						+ ")"
+		);
 	}
 
 	@Nullable

@@ -18,6 +18,12 @@ public record FactoryMethod(TypeElement enclosingType, ExecutableElement method)
 				.orElse(true);
 	}
 
+	public Provider.SuperTypes superTypes() {
+		return Optional.ofNullable(method.getAnnotation(Provider.class))
+				.map(Provider::respect)
+				.orElse(Provider.SuperTypes.ALL);
+	}
+
 	public String name() {
 		return method.getSimpleName().toString();
 	}

@@ -28,10 +28,10 @@ class KeysTest {
 	@ParameterizedTest
 	@MethodSource("propertyPrefixingArguments")
 	public void testPrefixingInsideOfKeys(String prefix, String suffix, String expectedResult) {
-		// Act
+		// Arrange
 		Key suffixKey = Key.just(suffix);
 
-		// Assert
+		// Act
 		Key fullKey = suffixKey.withPrefix(prefix);
 
 		// Assert
@@ -43,8 +43,6 @@ class KeysTest {
 	@MethodSource("propertyPrefixingArguments")
 	public void testRawPrefixing(String prefix, String suffix, String expectedResult) {
 		// Act
-
-		// Assert
 		String fullKey = Key.joinWithSeparator(".", prefix, suffix);
 
 		// Assert

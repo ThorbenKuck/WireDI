@@ -16,8 +16,9 @@
 
     <modules>
         <module>libraries</module>
-        <module>processors</module>
         <module>processor-development-kit</module>
+        <module>processor-plugins</module>
+        <module>processors</module>
     </modules>
 
     <developers>

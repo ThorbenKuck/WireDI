@@ -1,8 +1,13 @@
 package com.wiredi.domain.provider;
 
+import com.wiredi.domain.AnnotationMetaData;
 import com.wiredi.domain.Ordered;
 import com.wiredi.domain.WireConflictResolver;
-import com.wiredi.domain.WireConflictStrategy;
+import com.wiredi.domain.StandardWireConflictResolver;
+import com.wiredi.domain.conditional.builtin.ConditionalOnBeanEvaluator;
+import com.wiredi.domain.provider.condition.BatchLoadCondition;
+import com.wiredi.domain.provider.condition.LoadCondition;
+import com.wiredi.domain.provider.condition.LoadConditionEvaluationStage;
 import com.wiredi.qualifier.QualifierType;
 import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -111,7 +117,7 @@ public interface IdentifiableProvider<T> extends Ordered {
 
 	/**
 	 * The priority of this IdentifiableProvider, which might be used in the {@link WireConflictResolver}
-	 * and is used in {@link WireConflictStrategy#BEST_MATCH}
+	 * and is used in {@link StandardWireConflictResolver#BEST_MATCH}
 	 *
 	 * @return the priority of this IdentifiableProvider
 	 */
@@ -123,5 +129,10 @@ public interface IdentifiableProvider<T> extends Ordered {
 	@NotNull
 	default List<QualifierType> qualifiers() {
 		return Collections.emptyList();
+	}
+
+	@Nullable
+	default LoadCondition condition() {
+		return null;
 	}
 }

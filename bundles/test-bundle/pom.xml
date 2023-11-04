@@ -1,0 +1,93 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>test-bundle</artifactId>
+    <version>${revision}</version>
+    <name>WireDI Bundles - Test</name>
+    <description>Easy and simple di using annotation processors</description>
+    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <packaging>jar</packaging>
+
+    <parent>
+        <groupId>com.wiredi</groupId>
+        <artifactId>bundles</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <developers>
+        <developer>
+            <id>thorbenkuck</id>
+            <name>Thorben Kuck</name>
+            <email>thorben.kuck@gmail.com</email>
+        </developer>
+    </developers>
+
+    <properties>
+        <junit.version>5.9.3</junit.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.8.1</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <annotationProcessorPaths>
+                        <processorPath>
+                            <groupId>com.wiredi</groupId>
+                            <artifactId>processors</artifactId>
+                            <version>${revision}</version>
+                        </processorPath>
+                        <annotationProcessorPath>
+                            <groupId>com.wiredi</groupId>
+                            <artifactId>processors</artifactId>
+                            <version>${revision}</version>
+                        </annotationProcessorPath>
+                        <path>
+                            <groupId>com.wiredi</groupId>
+                            <artifactId>processors</artifactId>
+                            <version>${revision}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>runtime-environment</artifactId>
+        </dependency>
+    </dependencies>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+</project>

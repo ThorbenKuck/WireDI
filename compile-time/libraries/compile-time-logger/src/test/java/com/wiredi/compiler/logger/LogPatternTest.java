@@ -44,6 +44,6 @@ class LogPatternTest {
 		var message = logPattern.compile().format();
 
 		// Assert
-		assertThat(message).isEqualTo("[ INFO] [        main] [class com.wi] [          ] [                    ] : A log message");
+		assertThat(message).isEqualTo("[ INFO] [        main] [class com.wiredi.compiler.logg] [          ] [                    ] : A log message");
 	}
 }

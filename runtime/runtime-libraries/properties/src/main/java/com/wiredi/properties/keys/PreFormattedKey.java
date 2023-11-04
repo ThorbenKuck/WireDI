@@ -28,4 +28,9 @@ public record PreFormattedKey(@NotNull String value) implements Key {
 	public Key withPrefix(String prefix) {
 		return new PreFormattedKey(Key.joinWithSeparator(".", prefix, value));
 	}
+
+	@Override
+	public Key withSuffix(String suffix) {
+		return new PreFormattedKey(Key.joinWithSeparator(".", value, suffix));
+	}
 }

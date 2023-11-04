@@ -1,16 +1,21 @@
 package com.wiredi.aspects;
 
+import com.wiredi.domain.AnnotationMetaData;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 
 public interface ExecutionChainLink {
 
-	ExecutionContext<? extends Annotation> context();
+	ExecutionContext context();
 
 	Object executeRaw();
 
-	<T extends Annotation> ExecutionChainLink prepend(T annotation, AspectHandler<T> handler);
+	ExecutionChainLink prepend(AnnotationMetaData annotation, AspectHandler handler);
+
+	default ExecutionChainLink prepend(Annotation annotation, AspectHandler handler) {
+		return prepend(AnnotationMetaData.of(annotation), handler);
+	}
 
 	@Nullable
 	default <S> S execute() {

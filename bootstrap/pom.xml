@@ -88,9 +88,6 @@
                     <configuration>
                         <source>${java.version}</source>
                         <target>${java.version}</target>
-                        <compilerArgs>
-                            --enable-preview
-                        </compilerArgs>
                         <annotationProcessorPaths>
                             <processorPath>
                                 <groupId>com.wiredi</groupId>

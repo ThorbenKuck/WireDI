@@ -10,6 +10,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeMirror;
+import javax.lang.model.util.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,11 +18,13 @@ public class WireRepositories {
 
 	private final TypeChecker typeChecker;
 	private final TypeIdentifiers typeIdentifiers;
+	private final Types types;
 	private final Logger logger = Logger.get(WireRepositories.class);
 
-	public WireRepositories(TypeChecker typeChecker, TypeIdentifiers typeIdentifiers) {
+	public WireRepositories(TypeChecker typeChecker, TypeIdentifiers typeIdentifiers, Types types) {
 		this.typeChecker = typeChecker;
 		this.typeIdentifiers = typeIdentifiers;
+		this.types = types;
 	}
 
 	public CodeBlock resolveFromEnvironment(
@@ -58,32 +61,39 @@ public class WireRepositories {
 	public CodeBlock fetchFromWireRepository(
 			TypeElement element
 	) {
-		return fetchFromWireRepository(element.asType(), null);
+		return fetchFromWireRepository(element.asType(), null, false);
 	}
 
 	public CodeBlock fetchFromWireRepository(
 			Element element
 	) {
-		return fetchFromWireRepository(element.asType(), Qualifiers.injectionQualifier(element));
+		return fetchFromWireRepository(element.asType(), Qualifiers.injectionQualifier(element), isNullable(element));
 	}
 
 	public CodeBlock fetchFromWireRepository(
 			Element element,
 			@Nullable QualifierType qualifierTypes
 	) {
-		return fetchFromWireRepository(element.asType(), qualifierTypes);
+		return fetchFromWireRepository(element.asType(), qualifierTypes, isNullable(element));
 	}
 
 	public CodeBlock fetchFromWireRepository(
 			VariableElement variableElement,
 			@Nullable QualifierType qualifierTypes
 	) {
-		return fetchFromWireRepository(variableElement.asType(), qualifierTypes);
+		return fetchFromWireRepository(variableElement.asType(), qualifierTypes, isNullable(variableElement));
+	}
+	public CodeBlock fetchFromWireRepository(
+			TypeMirror typeMirror,
+			@Nullable QualifierType qualifierType
+	) {
+		return fetchFromWireRepository(typeMirror, qualifierType, false);
 	}
 
 	public CodeBlock fetchFromWireRepository(
 			TypeMirror typeMirror,
-			@Nullable QualifierType qualifierType
+			@Nullable QualifierType qualifierType,
+			boolean nullable
 	) {
 		var codeBlock = CodeBlock.builder()
 				.add("wireRepository.");
@@ -104,7 +114,11 @@ public class WireRepositories {
 			codeBlock.add("getAll");
 		} else {
 			codeBlocks.add(typeIdentifiers.newTypeIdentifier(typeMirror));
-			codeBlock.add("get");
+			if(nullable) {
+				codeBlock.add("tryGet");
+			} else {
+				codeBlock.add("get");
+			}
 		}
 
 		if (qualifierType != null) {
@@ -112,15 +126,20 @@ public class WireRepositories {
 		}
 
 		if (codeBlocks.size() == 1) {
-			return codeBlock.add("($L)", CodeBlock.join(codeBlocks, ", ")).build();
+			codeBlock.add("($L)", CodeBlock.join(codeBlocks, ", "));
 		} else {
-			return codeBlock.add("(\n")
+			codeBlock.add("(\n")
 					.indent()
 					.add(CodeBlock.join(codeBlocks, ",\n"))
 					.unindent()
-					.add("\n)")
-					.build();
+					.add("\n)");
 		}
+
+		if (nullable) {
+			codeBlock.add(".orElse(null)");
+		}
+
+		return codeBlock.build();
 	}
 
 	private TypeMirror getGenericTypeOf(TypeMirror typeMirror) {
@@ -128,5 +147,13 @@ public class WireRepositories {
 			throw new IllegalArgumentException("Only declared types are allowed");
 		}
 		return declared.getTypeArguments().get(0);
+	}
+
+	public boolean isNullable(Element element) {
+		if (element instanceof VariableElement) {
+			return Annotations.hasByName(element, "Nullable");
+		}
+
+		return false;
 	}
 }

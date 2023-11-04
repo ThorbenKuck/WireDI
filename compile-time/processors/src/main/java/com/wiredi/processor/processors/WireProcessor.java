@@ -39,10 +39,9 @@ public class WireProcessor extends WireBaseProcessor {
 		final TypeElement typeElement = (TypeElement) element;
 		Optional<Wire> wireAnnotation = Annotations.getFrom(typeElement, Wire.class);
 		if (wireAnnotation.isEmpty()) {
-			logger.error(element, "Failed to find a WireAnnotation!");
-			return;
+			logger.warn(element, "Failed to find a WireAnnotation. This is likely an error with the algorithm to determine inherited annotations.");
 		}
 
-		adapter.handle(typeElement, wireAnnotation.get());
+		adapter.handle(typeElement, wireAnnotation.orElse(null));
 	}
 }

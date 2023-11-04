@@ -1,19 +1,22 @@
 package com.wiredi.runtime.beans;
 
-import com.wiredi.domain.WireConflictResolver;
-import com.wiredi.domain.WireConflictStrategy;
 import com.wiredi.domain.provider.IdentifiableProvider;
 import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.domain.provider.condition.LoadCondition;
 import com.wiredi.lang.DataAccess;
 import com.wiredi.lang.time.Timed;
 import com.wiredi.qualifier.QualifierType;
 import com.wiredi.runtime.Loader;
+import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WiredRepositoryProperties;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.wiredi.lang.Preconditions.require;
 
 public class BeanContainer {
 
@@ -23,7 +26,11 @@ public class BeanContainer {
 	@NotNull
 	private final Map<TypeIdentifier<?>, ModifiableBean<?>> mapping = new HashMap<>();
 	private volatile boolean loaded = false;
-	private WireConflictResolver wireConflictResolver = WireConflictStrategy.DIRECT_MATCH;
+	private final WiredRepositoryProperties properties;
+
+	public BeanContainer(@NotNull WiredRepositoryProperties properties) {
+		this.properties = properties;
+	}
 
 	public void clear() {
 		dataAccess.write(() -> {
@@ -33,10 +40,10 @@ public class BeanContainer {
 		});
 	}
 
-	public Timed load() {
+	public Timed load(WireRepository wireRepository) {
 		// pre check to avoid unnecessary synchronization
 		if (loaded) {
-			return Timed.empty();
+			return Timed.ZERO;
 		}
 		return dataAccess.writeValue(() -> {
 			// Check again, to combat race conditions,
@@ -47,15 +54,24 @@ public class BeanContainer {
 			// We want to ensure under any and all
 			// circumstance, that we only load once.
 			if (loaded) {
-				return Timed.empty();
+				return Timed.ZERO;
 			}
 
 			AtomicInteger count = new AtomicInteger();
 			logger.debug("Registering all known identifiable providers");
 			Timed timed = Timed.of(() -> {
-				List<IdentifiableProvider> identifiableProviders = Loader.identifiableProviders();
-				registerAll(identifiableProviders);
-				count.set(identifiableProviders.size());
+				Loader.identifiableProviders().forEach(provider -> {
+					LoadCondition condition = provider.condition();
+					if (condition != null) {
+						if (condition.matches(wireRepository)) {
+							count.incrementAndGet();
+							unsafeRegister(provider);
+						}
+					} else {
+						count.incrementAndGet();
+						unsafeRegister(provider);
+					}
+				});
 				loaded = true;
 			});
 			logger.info("Registered {} identifiable providers in {}", count.get(), timed);
@@ -76,43 +92,61 @@ public class BeanContainer {
 		logger.trace("Registering instance of type {} with wired types {} and qualifiers {}", t.getClass(), t.additionalWireTypes(), t.qualifiers());
 		for (final TypeIdentifier<?> wiredType : t.additionalWireTypes()) {
 			logger.trace("Registering {} for {}", t, wiredType);
-			unsafeGetOrCreate(wiredType).put((IdentifiableProvider) t);
+			unsafeGetOrCreate(wiredType).register((TypeIdentifier) wiredType, (IdentifiableProvider) t);
 		}
-		unsafeGetOrCreate(t.type()).put(t);
+		unsafeGetOrCreate(t.type()).register((TypeIdentifier) t.type(), (IdentifiableProvider) t);
 	}
 
 	public final boolean isLoaded() {
 		return loaded;
 	}
 
-	public <T> ModifiableBean<T> access(TypeIdentifier<T> typeIdentifier) {
+	public <T> Bean<T> access(TypeIdentifier<T> typeIdentifier) {
+		require(typeIdentifier.referenceConcreteType(), () -> "Cannot call access on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
+
 		return Optional.ofNullable(
 				dataAccess.readValue(() -> unsafeGet(typeIdentifier))
 		).orElse(ModifiableBean.empty());
 	}
 
-	public <T> ModifiableBean<T> accessOrCreate(TypeIdentifier<T> typeIdentifier) {
+	public <T> Bean<T> accessOrCreate(TypeIdentifier<T> typeIdentifier) {
+		require(typeIdentifier.referenceConcreteType(), () -> "Cannot call accessOrCreate on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
+
 		return Optional.ofNullable(
 				dataAccess.readValue(() -> unsafeGet(typeIdentifier))
-		).orElseGet(() -> dataAccess.writeValue(() -> unsafeGetOrCreate(typeIdentifier)));
+		).orElseGet(() -> dataAccess.writeValue(() -> (ModifiableBean<T>) unsafeGetOrCreate(typeIdentifier)));
 	}
 
-	public <T> Optional<IdentifiableProvider<T>> get(final TypeIdentifier<T> typeIdentifier) {
+	public <T> Optional<IdentifiableProvider<T>> get(final TypeIdentifier<T> concreteType) {
+		require(concreteType.referenceConcreteType(), () -> "Cannot call get on a reference type (Bean, IdentifiableProvider): " + concreteType);
+
 		return Optional.ofNullable(
-				dataAccess.readValue(() -> unsafeGet(typeIdentifier))
-		).flatMap(it -> it.get(wireConflictResolver));
+				dataAccess.readValue(() -> unsafeGet(concreteType))
+		).flatMap(it -> it.get(concreteType, properties.conflictResolverSupplier()));
 	}
 
 	public <T> Optional<IdentifiableProvider<T>> get(final TypeIdentifier<T> typeIdentifier, QualifierType qualifierType) {
+		require(typeIdentifier.referenceConcreteType(), () -> "Cannot call get on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
+
 		return Optional.ofNullable(
 				dataAccess.readValue(() -> unsafeGet(typeIdentifier))
 		).flatMap(it -> it.get(qualifierType));
 	}
 
 	public <T> List<IdentifiableProvider<T>> getAll(final TypeIdentifier<T> typeIdentifier) {
+		require(typeIdentifier.referenceConcreteType(), () -> "Cannot call getAll on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
+
 		return Optional.ofNullable(
 				dataAccess.readValue(() -> unsafeGet(typeIdentifier))
-		).map(ModifiableBean::getAll).orElse(Collections.emptyList());
+		).map(Bean::getAll).orElse(Collections.emptyList());
+	}
+
+	private <T> ModifiableBean<T> unsafeGet(@NotNull final TypeIdentifier<T> type) {
+		return (ModifiableBean<T>) mapping.get(type.erasure());
+	}
+
+	private ModifiableBean<?> unsafeGetOrCreate(@NotNull final TypeIdentifier<?> type) {
+		return mapping.computeIfAbsent(type.erasure(), t -> new ModifiableBean<>(type));
 	}
 
 	@Override
@@ -121,13 +155,5 @@ public class BeanContainer {
 		return getClass().getSimpleName() + "{" +
 				"loaded=" + loaded +
 				'}';
-	}
-
-	private <T> ModifiableBean<T> unsafeGet(@NotNull final TypeIdentifier<T> type) {
-		return (ModifiableBean<T>) mapping.get(type);
-	}
-
-	private <T> ModifiableBean<T> unsafeGetOrCreate(@NotNull final TypeIdentifier<T> type) {
-		return (ModifiableBean<T>) mapping.computeIfAbsent(type, t -> new ModifiableBean<>(type));
 	}
 }

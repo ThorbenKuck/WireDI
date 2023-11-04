@@ -49,6 +49,16 @@
             <version>${revision}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>conditional-processor-plugin</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>qualifiers-processor-plugin</artifactId>
+            <version>${revision}</version>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

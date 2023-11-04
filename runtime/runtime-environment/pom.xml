@@ -39,6 +39,11 @@
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
+            <artifactId>retry</artifactId>
+            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
             <artifactId>environment</artifactId>
             <version>${revision}</version>
         </dependency>

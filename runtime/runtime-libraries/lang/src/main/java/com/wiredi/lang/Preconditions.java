@@ -6,7 +6,7 @@ public class Preconditions {
 
 	public static <T> T notNull(T instance, Supplier<String> message) {
 		if (instance == null) {
-			throw new IllegalArgumentException(message.get());
+			throw new IllegalStateException(message.get());
 		}
 		return instance;
 	}
@@ -20,12 +20,12 @@ public class Preconditions {
 
 	public static void require(boolean bool, Supplier<String> message) {
 		if (!bool) {
-			throw new IllegalArgumentException(message.get());
+			throw new IllegalStateException(message.get());
 		}
 	}
 	public static void requireNot(boolean bool, Supplier<String> message) {
 		if (bool) {
-			throw new IllegalArgumentException(message.get());
+			throw new IllegalStateException(message.get());
 		}
 	}
 }

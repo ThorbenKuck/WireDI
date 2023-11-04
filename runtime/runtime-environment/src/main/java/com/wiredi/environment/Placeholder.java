@@ -2,109 +2,150 @@ package com.wiredi.environment;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
 public class Placeholder {
 
-	private final String start;
-	private final String stop;
-	private final String input;
-	private final String placeholderValue;
-	@Nullable private final Placeholder.Default defaultValue;
-	private final char identifierChar;
+    @Nullable
+    private final Character identifierChar;
+    private final String start;
+    private final String content;
+    @Nullable
+    private final Placeholder.Default defaultValue;
+    private final String end;
+    private final PlaceholderResolver parent;
+    private final int relativeStart;
+    private final int relativeStop;
 
-	public Placeholder(
-			String start,
-			String stop,
-			String input,
-			String placeholderValue,
-			@Nullable Placeholder.Default defaultValue,
-			char identifierChar
-	) {
-		this.start = start;
-		this.stop = stop;
-		this.input = input;
-		if (defaultValue != null) {
-			this.placeholderValue = placeholderValue.replaceFirst(Pattern.quote(defaultValue.toString()), "");
-		} else {
-			this.placeholderValue = placeholderValue;
-		}
-		this.defaultValue = defaultValue;
-		this.identifierChar = identifierChar;
-	}
+    public Placeholder(
+            @Nullable Character identifierChar,
+            String start,
+            String content,
+            @Nullable Placeholder.Default defaultValue,
+            String end,
+            PlaceholderResolver parent,
+            int relativeStart, int relativeStop) {
+        this.start = start;
+        this.end = end;
+        this.parent = parent;
+        this.relativeStart = relativeStart;
+        this.relativeStop = relativeStop;
+        this.content = content;
+        this.defaultValue = defaultValue;
+        this.identifierChar = identifierChar;
+    }
 
-	public char getIdentifierChar() {
-		return identifierChar;
-	}
+    public Optional<Character> getIdentifierChar() {
+        return Optional.ofNullable(identifierChar);
+    }
 
-	public String originalValue() {
-		StringBuilder stringBuilder = new StringBuilder()
-				.append(identifierChar)
-				.append(start)
-				.append(placeholderValue);
+    public Optional<Default> getDefaultValue() {
+        return Optional.ofNullable(defaultValue);
+    }
 
-		if (defaultValue != null) {
-			stringBuilder.append(defaultValue);
-		}
+    public String getStart() {
+        return start;
+    }
 
-		return stringBuilder.append(stop).toString();
-	}
+    public String getContent() {
+        return content;
+    }
 
-	public String getPlaceholderValue() {
-		return placeholderValue;
-	}
+    public String getEnd() {
+        return end;
+    }
 
-	public String replaceIn(String value, String replacement) {
-		return value.replace(originalValue(), replacement);
-	}
+    public PlaceholderResolver getParent() {
+        return parent;
+    }
 
-	@Nullable
-	public String tryReplacementWithDefault(String value) {
-		return Optional.ofNullable(defaultValue)
-				.map(it -> replaceIn(value, it.replacement))
-				.orElse(null);
-	}
+    public int getRelativeStart() {
+        return relativeStart;
+    }
 
-	public String replaceWith(String replacement) {
-		return replaceIn(input, replacement);
-	}
+    public int getRelativeStop() {
+        return relativeStop;
+    }
 
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		Placeholder that = (Placeholder) o;
-		return Objects.equals(start, that.start) &&
-				Objects.equals(stop, that.stop) &&
-				identifierChar == that.identifierChar &&
-				Objects.equals(input, that.input) &&
-				Objects.equals(placeholderValue, that.placeholderValue) &&
-				Objects.equals(defaultValue, that.defaultValue);
-	}
+    public String compile() {
+        StringBuilder stringBuilder = new StringBuilder();
+        if (identifierChar != null) {
+            stringBuilder.append(identifierChar);
+        }
 
-	@Override
-	public int hashCode() {
-		return Objects.hash(start, stop, input, placeholderValue, identifierChar, defaultValue);
-	}
+        stringBuilder.append(start).append(content);
 
-	@Override
-	public String toString() {
-		return "Placeholder{" +
-				"start='" + start + '\'' +
-				", stop='" + stop + '\'' +
-				", input='" + input + '\'' +
-				", defaultValue='" + defaultValue + '\'' +
-				", placeholderValue='" + placeholderValue + '\'' +
-				", identifierChar=" + identifierChar +
-				'}';
-	}
+        if (defaultValue != null) {
+            stringBuilder.append(defaultValue.delimiter).append(defaultValue.content);
+        }
+        return stringBuilder.append(end).toString();
 
-	record Default(String replacement, String delimiter) {
-		@Override
-		public String toString() {
-			return delimiter + replacement;
-		}
-	}
+    }
+
+    public String replaceRelativeIn(String wholeString, String replacement) {
+        String start = wholeString.substring(0, relativeStart);
+        String stop = wholeString.substring(relativeStop);
+        return start + replacement + stop;
+    }
+
+    public String replaceIn(String wholeString, String replacement) {
+        return wholeString.replace(compile(), replacement);
+    }
+
+    @Nullable
+    public String tryReplacementValueWithDefault(String value) {
+        return Optional.ofNullable(defaultValue)
+                .map(it -> replaceIn(value, it.content))
+                .orElse(null);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Placeholder that = (Placeholder) o;
+
+        return relativeStart == that.relativeStart
+                && relativeStop == that.relativeStop
+                && Objects.equals(identifierChar, that.identifierChar)
+                && Objects.equals(start, that.start)
+                && Objects.equals(content, that.content)
+                && Objects.equals(end, that.end)
+                && Objects.equals(defaultValue, that.defaultValue)
+                && Objects.equals(parent, that.parent);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(identifierChar, start, content, end, defaultValue, parent, relativeStart, relativeStop);
+    }
+
+    @Override
+    public String toString() {
+        return compile();
+    }
+
+    public record Default(
+            String content,
+            String delimiter,
+            PlaceholderResolver parent
+    ) {
+        @Override
+        public String toString() {
+            return delimiter + content;
+        }
+
+        public Optional<Placeholder> asPlaceholder() {
+            List<Placeholder> placeholders = parent.resolveAllIn(content);
+
+            if (placeholders.size() == 1) {
+                return Optional.ofNullable(placeholders.get(0));
+            }
+
+            return Optional.empty();
+        }
+    }
 }

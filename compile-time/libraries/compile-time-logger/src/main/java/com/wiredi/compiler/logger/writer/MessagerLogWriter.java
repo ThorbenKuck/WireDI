@@ -3,7 +3,7 @@ package com.wiredi.compiler.logger.writer;
 import com.wiredi.compiler.logger.LogEntry;
 import com.wiredi.compiler.logger.messager.MessagerRegistration;
 import com.wiredi.compiler.logger.messager.MessagerAware;
-import com.wiredi.lang.SafeReference;
+import com.wiredi.lang.values.SafeReference;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.processing.Messager;

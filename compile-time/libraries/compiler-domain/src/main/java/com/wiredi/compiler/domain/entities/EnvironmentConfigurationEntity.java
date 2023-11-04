@@ -3,14 +3,12 @@ package com.wiredi.compiler.domain.entities;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
-import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.environment.Environment;
 import com.wiredi.properties.keys.Key;
 import com.wiredi.resources.Resource;
 import com.wiredi.environment.EnvironmentConfiguration;
 import com.wiredi.resources.ResourceLoader;
-import com.wiredi.resources.builtin.ClassPathResource;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -20,7 +18,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class EnvironmentConfigurationEntity extends AbstractClassEntity {
+public class EnvironmentConfigurationEntity extends AbstractClassEntity<EnvironmentConfigurationEntity> {
 
 	private final List<String> propertiesToLoad = new ArrayList<>();
 	private final List<Entry> entries = new ArrayList<>();
@@ -29,13 +27,13 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity {
 	private static final Logger logger = Logger.get(EnvironmentConfigurationEntity.class);
 
 	public EnvironmentConfigurationEntity(TypeElement element) {
-		super(element.asType(), element.getSimpleName().toString() + "EnvironmentConfiguration");
+		super(element, element.asType(), element.getSimpleName().toString() + "EnvironmentConfiguration");
 		this.typeElement = element;
 	}
 
 	@Override
 	protected TypeSpec.Builder createBuilder(TypeMirror type) {
-		return TypeSpec.classBuilder(className)
+		return TypeSpec.classBuilder(className())
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
 				.addSuperinterface(EnvironmentConfiguration.class)
 				.addAnnotation(

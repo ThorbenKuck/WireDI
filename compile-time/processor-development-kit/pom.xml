@@ -3,7 +3,7 @@
 
     <artifactId>processor-development-kit</artifactId>
     <version>${revision}</version>
-    <name>WireDI Compiler Annotation Processor Development Kit</name>
+    <name>WireDI Processor Development Kit</name>
     <description>Easy and simple di using annotation processors</description>
     <url>https://github.com/ThorbenKuck/SimpleDI</url>
 

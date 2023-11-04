@@ -19,7 +19,7 @@ public class TimeRenderer {
 		HUMAN_READABLE.put(TimeUnit.MINUTES, "m");
 		HUMAN_READABLE.put(TimeUnit.SECONDS, "s");
 		HUMAN_READABLE.put(TimeUnit.MILLISECONDS, "ms");
-		HUMAN_READABLE.put(TimeUnit.MICROSECONDS, "\u33B2");
+		HUMAN_READABLE.put(TimeUnit.MICROSECONDS, "㎲");
 		HUMAN_READABLE.put(TimeUnit.NANOSECONDS, "ns");
 	}
 

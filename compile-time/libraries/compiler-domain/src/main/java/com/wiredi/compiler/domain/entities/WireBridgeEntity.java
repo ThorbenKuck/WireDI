@@ -13,32 +13,38 @@ import com.wiredi.qualifier.QualifierType;
 import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WireBridgeEntity extends AbstractClassEntity {
+public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 
 	private final NameContext nameContext = new NameContext();
 	private final WireRepositories wireRepositories;
 
-	public WireBridgeEntity(TypeMirror rootElement, String className, WireRepositories wireRepositories) {
-		super(rootElement, className);
+	public WireBridgeEntity(
+			@NotNull TypeElement rootElement,
+			@NotNull String className,
+			@NotNull WireRepositories wireRepositories
+	) {
+		super(rootElement, rootElement.asType(), className);
 		this.wireRepositories = wireRepositories;
 	}
 
 	@Override
-	protected TypeSpec.Builder createBuilder(TypeMirror type) {
-		return TypeSpec.classBuilder(className)
+	protected TypeSpec.Builder createBuilder(@NotNull TypeMirror type) {
+		return TypeSpec.classBuilder(className())
 				.addModifiers(Modifier.PUBLIC, Modifier.FINAL);
 	}
 
-	public String bridgePackagePrivateField(FieldInjectionPoint injectionPoint) {
+	public String bridgePackagePrivateField(@NotNull FieldInjectionPoint injectionPoint) {
 		String methodName = nameContext.nextName(injectionPoint.name());
 		QualifierType qualifier = Qualifiers.injectionQualifier(injectionPoint.field());
-		CodeBlock fieldValue = wireRepositories.fetchFromWireRepository(injectionPoint.type(), qualifier);
+		CodeBlock fieldValue = wireRepositories.fetchFromWireRepository(injectionPoint.field(), qualifier);
 
 		builder.addMethod(
 				MethodSpec.methodBuilder(methodName)
@@ -60,7 +66,7 @@ public class WireBridgeEntity extends AbstractClassEntity {
 		return methodName;
 	}
 
-	public String bridgePackagePrivateMethod(MethodInjectionPoint injectionPoint) {
+	public String bridgePackagePrivateMethod(@NotNull MethodInjectionPoint injectionPoint) {
 		String methodName = nameContext.nextName(injectionPoint.name());
 		CodeBlock.Builder methodBody = CodeBlock.builder();
 		VariableContext variableContext = new VariableContext();
@@ -88,9 +94,9 @@ public class WireBridgeEntity extends AbstractClassEntity {
 	}
 
 	private String getVariablesFromWireRepository(
-			CodeBlock.Builder rootCodeBlock,
-			List<? extends VariableElement> parameters,
-			VariableContext variableContext
+			@NotNull CodeBlock.Builder rootCodeBlock,
+			@NotNull List<? extends VariableElement> parameters,
+			@NotNull VariableContext variableContext
 	) {
 		List<String> fetchVariables = new ArrayList<>();
 
@@ -101,5 +107,4 @@ public class WireBridgeEntity extends AbstractClassEntity {
 
 		return String.join(", ", fetchVariables);
 	}
-
 }

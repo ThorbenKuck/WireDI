@@ -78,7 +78,7 @@ public class InjectionPointService {
 					}
 
 					return Annotations.getFrom(it, Constructed.class)
-							.map(annotation -> new PostConstructInjectionPoint(it, true))
+							.map(annotation -> new PostConstructInjectionPoint(it, annotation.async()))
 							.orElse(null);
 				})
 				.filter(Objects::nonNull)

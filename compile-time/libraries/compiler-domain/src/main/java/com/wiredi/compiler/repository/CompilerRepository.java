@@ -27,26 +27,38 @@ public class CompilerRepository {
 
 	private final Map<String, WireBridgeEntity> wireBridgeEntities = new HashMap<>();
 
+	private final Set<CompilerRepositoryCallback> repositoryCallbacks = new HashSet<>();
+
 	@Inject
 	private Filer filer;
+
 	@Inject
 	private Elements elements;
+
 	@Inject
 	private Types types;
+
 	@Inject
 	private WireRepositories wireRepositories;
+
+	@Inject
+	private TypeIdentifiers typeIdentifiers;
 
 	public void flush() {
 		synchronized (classEntries) {
 			classEntries.forEach(entry -> {
-				TypeSpec typeSpec = entry.build();
+				if(!entry.isValid()) {
+					return;
+				}
+				repositoryCallbacks.forEach(it -> it.finalize(entry));
+				TypeSpec typeSpec = entry.compile();
 				var rootType = types.asElement(entry.rootType());
-				PackageElement packageElement = entry.packageElement().orElseGet(() -> elements.getPackageOf(rootType));
+				PackageElement packageElement = (PackageElement) entry.packageElement().orElseGet(() -> elements.getPackageOf(rootType));
 
-				logger.info("Writing the file " + entry.className());
+				logger.debug(() -> "Writing the file " + entry.className());
 				try {
 					JavaFile.builder(packageElement.getQualifiedName().toString(), typeSpec)
-							.indent("   ")
+							.indent("    ")
 							.build()
 							.writeTo(filer);
 				} catch (Exception e) {
@@ -57,12 +69,8 @@ public class CompilerRepository {
 		}
 	}
 
-	public <T extends ClassEntity> T save(T entity, Consumer<T> consumer) {
-		synchronized (classEntries) {
-			this.classEntries.add(entity);
-			consumer.accept(entity);
-		}
-		return entity;
+	public void registerCallback(CompilerRepositoryCallback callback) {
+		this.repositoryCallbacks.add(callback);
 	}
 
 	public EnvironmentConfigurationEntity newEnvironmentConfiguration(TypeElement typeElement) {
@@ -73,9 +81,9 @@ public class CompilerRepository {
 		return save(new AspectHandlerEntity(executableElement), entity -> attach(entity, typeElement).addSource(executableElement));
 	}
 
-	public IdentifiableProviderEntity newIdentifiableProvider(String name, TypeMirror typeMirror) {
+	public IdentifiableProviderEntity newIdentifiableProvider(Element source, String name, TypeMirror typeMirror) {
 		Element element = types.asElement(typeMirror);
-		return save(create(typeMirror, name), entity -> attach(entity, element));
+		return save(create(source, typeMirror, name), entity -> attach(entity, element));
 	}
 
 	public IdentifiableProviderEntity newIdentifiableProvider(TypeElement typeElement) {
@@ -84,15 +92,28 @@ public class CompilerRepository {
 
 	public WireBridgeEntity newWireBridgeEntity(String caller, TypeElement typeElement) {
 		synchronized (wireBridgeEntities) {
-			return wireBridgeEntities.computeIfAbsent(caller + "$" + typeElement.getSimpleName() + "$WireBridge", name -> save(new WireBridgeEntity(typeElement.asType(), name, wireRepositories), entity -> attach(entity, typeElement).setPackageOf(typeElement)));
+			return wireBridgeEntities.computeIfAbsent(caller + "$" + typeElement.getSimpleName() + "$WireBridge", name -> save(new WireBridgeEntity(typeElement, name, wireRepositories), entity -> attach(entity, typeElement).setPackageOf(typeElement)));
 		}
 	}
 
 	public AspectAwareProxyEntity newAspectAwareProxy(TypeElement typeElement) {
-		return save(new AspectAwareProxyEntity(typeElement), it -> attach(it, typeElement).setPackageOf(typeElement));
+		// TODO move asyncExecutionChainConstruction to properties
+		return save(new AspectAwareProxyEntity(typeElement, typeIdentifiers, true), it -> attach(it, typeElement).setPackageOf(typeElement));
+	}
+
+	public <T extends ClassEntity<T>> T save(T entity, Consumer<T> consumer) {
+		logger.debug("Saving " + entity);
+		synchronized (classEntries) {
+			this.classEntries.add(entity);
+			consumer.accept(entity);
+			repositoryCallbacks.forEach(it -> it.saved(entity));
+		}
+		logger.debug("Saved " + entity);
+		return entity;
 	}
 
 	private <T extends AbstractClassEntity<T>> T attach(T entity, Element typeElement) {
+		logger.debug(() -> "Attaching " + entity);
 		return entity.setPackage(TypeUtils.packageOf(typeElement))
 				.addSource(typeElement);
 	}
@@ -101,7 +122,7 @@ public class CompilerRepository {
 		return new IdentifiableProviderEntity(typeElement);
 	}
 
-	private IdentifiableProviderEntity create(TypeMirror mirror, String name) {
-		return new IdentifiableProviderEntity(mirror, name);
+	private IdentifiableProviderEntity create(Element source, TypeMirror mirror, String name) {
+		return new IdentifiableProviderEntity(source, mirror, name);
 	}
 }

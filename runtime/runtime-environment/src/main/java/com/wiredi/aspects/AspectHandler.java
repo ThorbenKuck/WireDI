@@ -1,9 +1,12 @@
 package com.wiredi.aspects;
 
+import com.wiredi.aspects.links.RootMethod;
+import com.wiredi.domain.AnnotationMetaData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
+import java.util.function.Consumer;
 
 /**
  * Any instance of this interface, are treated as a handler for a specific
@@ -26,8 +29,8 @@ import java.lang.annotation.Annotation;
  * </code></pre>
  * <p>
  * It is important, that this class is annotated with {@link com.wiredi.annotations.Wire @Wire}, or
- * manually added to the {@link com.wiredi.runtime.WireRepository}. Only then will it be picked up
- * and inserted into the {@link com.wiredi.domain.aop.AspectAwareProxy Proxy} instances.
+ * manually added to the {@link com.wiredi.runtime.WireRepository} before loading classes. Only then
+ * will it be picked up and inserted into the {@link com.wiredi.domain.aop.AspectAwareProxy Proxy} instances.
  * <p>
  * The second possibility is, that you annotate a handler method in any wire bean with
  * {@link com.wiredi.annotations.aspects.Aspect @Aspect}, like this:
@@ -56,7 +59,6 @@ import java.lang.annotation.Annotation;
  * meaning a super call to the original method. If your handler does not call <code>context.proceed()</code>,
  * the original method will never be invoked.
  *
- * @param <T> the annotation that this AspectHandler handles.
  * @see com.wiredi.annotations.aspects.Aspect
  * @see com.wiredi.annotations.aspects.AspectTarget
  * @see ExecutionContext
@@ -64,9 +66,24 @@ import java.lang.annotation.Annotation;
  * @see ExecutionChainParameters
  */
 @FunctionalInterface
-public interface AspectHandler<T extends Annotation> {
+public interface AspectHandler {
+
+	@NotNull
+	static AspectHandler wrap(@NotNull Consumer<ExecutionContext> consumer) {
+		return new AspectHandlerConsumerWrapper(consumer);
+	}
 
 	@Nullable
-	Object process(@NotNull final ExecutionContext<T> context);
+	Object process(@NotNull final ExecutionContext context);
 
+	/**
+	 * This method describes if an AspectHandler instance should be used in an ExecutionChain
+	 *
+	 * @param annotationMetaData
+	 * @param rootMethod
+	 * @return
+	 */
+	default boolean appliesTo(AnnotationMetaData annotationMetaData, RootMethod rootMethod) {
+		return true;
+	}
 }

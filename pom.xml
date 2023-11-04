@@ -22,9 +22,10 @@
     </properties>
 
     <modules>
-        <module>bootstrap</module>
-        <module>compile-time</module>
         <module>runtime</module>
+        <module>compile-time</module>
+        <module>bundles</module>
+        <module>bootstrap</module>
     </modules>
 
     <url>https://github.com/ThorbenKuck/WireDI</url>

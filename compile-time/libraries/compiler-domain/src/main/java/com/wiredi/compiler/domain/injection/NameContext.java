@@ -1,6 +1,6 @@
 package com.wiredi.compiler.domain.injection;
 
-import com.wiredi.lang.SafeReference;
+import com.wiredi.lang.values.SafeReference;
 
 import java.util.*;
 

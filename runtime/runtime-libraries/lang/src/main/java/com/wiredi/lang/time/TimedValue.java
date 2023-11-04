@@ -6,14 +6,14 @@ import java.util.function.Supplier;
 public record TimedValue<T>(T value, Timed time) {
 
 	public static <T> TimedValue<T> get(Supplier<T> supplier) {
-		final Stopwatch stopwatch = Stopwatch.started();
+		final long start = System.nanoTime();
 		final T result = supplier.get();
-		stopwatch.stop();
-		return new TimedValue<>(result, Timed.of(stopwatch));
+		final long stop = System.nanoTime();
+		return new TimedValue<>(result, new Timed(stop - start));
 	}
 
 	public static <T> TimedValue<T> just(T t) {
-		return new TimedValue<>(t, Timed.empty());
+		return new TimedValue<>(t, Timed.ZERO);
 	}
 
 	public TimedValue<T> then(Consumer<TimedValue<T>> consumer) {

@@ -1,6 +1,6 @@
 package com.wiredi.properties.keys;
 
-import com.wiredi.lang.SafeReference;
+import com.wiredi.lang.values.SafeReference;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
@@ -40,6 +40,11 @@ public class CamelToKebabCaseKey implements Key {
     @Override
     public Key withPrefix(String prefix) {
         return new CamelToKebabCaseKey(Key.joinWithSeparator(".", prefix, value));
+    }
+
+    @Override
+    public Key withSuffix(String suffix) {
+        return new CamelToKebabCaseKey(Key.joinWithSeparator(".", value, suffix));
     }
 
     @Override

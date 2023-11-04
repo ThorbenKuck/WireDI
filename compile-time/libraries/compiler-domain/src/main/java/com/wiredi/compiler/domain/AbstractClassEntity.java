@@ -1,12 +1,10 @@
 package com.wiredi.compiler.domain;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.AnnotationSpec;
-import com.squareup.javapoet.ClassName;
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeSpec;
-import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
+import com.squareup.javapoet.*;
+import com.wiredi.compiler.domain.entities.FieldFactory;
 import com.wiredi.compiler.domain.entities.methods.MethodFactory;
+import com.wiredi.compiler.logger.Logger;
 import jakarta.annotation.Generated;
 import jakarta.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
@@ -16,135 +14,209 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.type.TypeMirror;
-import java.time.ZonedDateTime;
+import java.time.OffsetDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-public abstract class AbstractClassEntity<T extends ClassEntity> implements ClassEntity {
+public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements ClassEntity<T> {
 
-	protected final TypeSpec.Builder builder;
-	private final TypeMirror rootElement;
-	public final String className;
-	private PackageElement packageElement;
+    @NotNull
+    protected final TypeSpec.Builder builder;
+    @NotNull
+    private final String className;
+    @NotNull
+    private final TypeMirror rootElement;
+    @NotNull
+    private final Element source;
+    @NotNull
+    private final Map<String, MethodSpec> methods = new HashMap<>();
+    @NotNull
+    private final Map<String, FieldSpec> fields = new HashMap<>();
+    @Nullable
+    private MethodSpec constructor;
+    @Nullable
+    private PackageElement packageElement;
+    private boolean valid = true;
 
-	public AbstractClassEntity(TypeMirror rootElement, String className) {
-		this.className = className;
-		this.builder = createBuilder(rootElement)
-				.addAnnotation(generatedAnnotation());
+    public AbstractClassEntity(
+            @NotNull Element source,
+            @NotNull TypeMirror rootElement,
+            @NotNull String className
+    ) {
+        this.rootElement = rootElement;
+        this.source = source;
+        this.className = className;
+        this.builder = createBuilder(rootElement)
+                .addAnnotation(generatedAnnotation());
 
-		List<Class<?>> autoServiceType = autoServiceTypes();
-		if (!autoServiceType.isEmpty()) {
-			builder.addAnnotation(autoServiceAnnotation(autoServiceType));
-		}
+        List<Class<?>> autoServiceType = autoServiceTypes();
+        if (!autoServiceType.isEmpty()) {
+            builder.addAnnotation(autoServiceAnnotation(autoServiceType));
+        }
+    }
 
-		this.rootElement = rootElement;
-	}
+    @Override
+    public void invalidate() {
+        this.valid = false;
+    }
 
-	@Override
-	public Optional<PackageElement> packageElement() {
-		return Optional.ofNullable(this.packageElement);
-	}
+    @Override
+    public boolean isValid() {
+        return this.valid;
+    }
 
-	public T appendMethod(MethodFactory methodFactory) {
-		methodFactory.append(builder, this);
-		return (T) this;
-	}
+    @NotNull
+    public Element getSource() {
+        return source;
+    }
 
-	public T setPackageOf(Element element) {
-		return setPackage(TypeUtils.packageOf(element));
-	}
+    @Override
+    public T setConstructor(MethodFactory methodFactory) {
+        MethodSpec.Builder builder = MethodSpec.constructorBuilder();
+        methodFactory.append(builder, this);
+        constructor = builder.build();
 
-	public T setPackage(PackageElement packageElement) {
-		addSource(packageElement);
-		this.packageElement = packageElement;
-		return (T) this;
-	}
+        return (T) this;
+    }
 
-	public T addSource(Element element) {
-		builder.addOriginatingElement(element);
-		return (T) this;
-	}
+    @Override
+    public T addMethod(String name, MethodFactory methodFactory) {
+        MethodSpec.Builder builder = MethodSpec.methodBuilder(name);
+        methodFactory.append(builder, this);
+        methods.put(name, builder.build());
 
-	@Override
-	public ClassName className() {
-		return packageElement()
-				.map(p -> ClassName.get(p.getQualifiedName().toString(), className))
-				.orElseThrow(() -> new IllegalStateException("Package not set"));
-	}
+        return (T) this;
+    }
 
-	protected abstract TypeSpec.Builder createBuilder(TypeMirror type);
+    @Override
+    public T addField(TypeName type, String name, FieldFactory fieldFactory) {
+        FieldSpec.Builder builder = FieldSpec.builder(type, name);
+        fieldFactory.append(builder, this);
+        fields.put(name, builder.build());
 
-	protected void finalize(TypeSpec.Builder builder) {
-	}
+        return (T) this;
+    }
 
-	private AnnotationSpec generatedAnnotation() {
-		AnnotationSpec.Builder generatedBuilder = AnnotationSpec.builder(Generated.class)
-				.addMember("value", "$S", getClass().getName())
-				.addMember("date", "$S", ZonedDateTime.now().toString());
+    @Override
+    public T addAnnotation(AnnotationSpec annotationSpec) {
+        this.builder.addAnnotation(annotationSpec);
+        return (T) this;
+    }
 
-		String comments = comments();
-		if (comments != null) {
-			generatedBuilder.addMember("comments", "$S", comments);
-		}
+    @Override
+    public T addInterface(TypeName typeName) {
+        this.builder.addSuperinterface(typeName);
+        return (T) this;
+    }
 
-		return generatedBuilder.build();
-	}
+    @Override
+    public Optional<PackageElement> packageElement() {
+        return Optional.ofNullable(this.packageElement);
+    }
 
-	private AnnotationSpec autoServiceAnnotation(List<Class<?>> types) {
-		return AnnotationSpec.builder(AutoService.class)
-				.addMember("value", "{$L}", CodeBlock.join(types.stream().map(type -> CodeBlock.builder().add("$T.class", type).build()).toList(), ", "))
-				.build();
-	}
+    private final Logger logger = Logger.get(getClass());
 
-	public boolean willHaveTheSamePackageAs(Element element) {
-		return packageElement()
-				.map(p -> p.equals(packageElementOf(element)))
-				.orElse(false);
-	}
+    @Override
+    public T setPackage(PackageElement packageElement) {
+        addSource(packageElement);
+        this.packageElement = packageElement;
+        return (T) this;
+    }
 
-	public PackageElement packageElementOf(Element element) {
-		Element current = element;
-		while (!(current instanceof PackageElement)) {
-			current = current.getEnclosingElement();
-		}
+    @Override
+    public T addSource(Element element) {
+        builder.addOriginatingElement(element);
+        return (T) this;
+    }
 
-		return (PackageElement) current;
-	}
+    @Override
+    public ClassName compileFinalClassName() {
+        return packageElement()
+                .map(p -> ClassName.get(p.getQualifiedName().toString(), className))
+                .orElseThrow(() -> new IllegalStateException("Package not set for class " + className));
+    }
 
-	@Override
-	public final TypeSpec build() {
-		finalize(builder);
-		return builder.build();
-	}
+    @Override
+    public String className() {
+        return className;
+    }
 
-	@Override
-	public final TypeMirror rootType() {
-		return rootElement;
-	}
+    protected abstract TypeSpec.Builder createBuilder(TypeMirror type);
 
-	@Nullable
-	public String comments() {
-		return null;
-	}
+    protected void finalize(TypeSpec.Builder builder) {
+    }
 
-	@NotNull
-	public List<Class<?>> autoServiceTypes() {
-		return List.of();
-	}
+    private AnnotationSpec generatedAnnotation() {
+        AnnotationSpec.Builder generatedBuilder = AnnotationSpec.builder(Generated.class)
+                .addMember("value", "$S", getClass().getName())
+                .addMember("date", "$S", OffsetDateTime.now().toString());
 
-	public boolean requiresReflectionFor(ExecutableElement element) {
-		if (element.getModifiers().contains(Modifier.PUBLIC)) {
-			return false;
-		}
+        String comments = comments();
+        if (comments != null) {
+            generatedBuilder.addMember("comments", "$S", comments);
+        }
 
-		return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
-	}
+        return generatedBuilder.build();
+    }
 
-	public boolean requiresReflectionFor(Element element) {
-		if (element.getModifiers().contains(Modifier.PUBLIC)) {
-			return false;
-		}
+    private AnnotationSpec autoServiceAnnotation(List<Class<?>> types) {
+        return AnnotationSpec.builder(AutoService.class)
+                .addMember("value", "{$L}", CodeBlock.join(types.stream().map(type -> CodeBlock.builder().add("$T.class", type).build()).toList(), ", "))
+                .build();
+    }
 
-		return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
-	}
+    @Override
+    public boolean willHaveTheSamePackageAs(Element element) {
+        return packageElement()
+                .map(p -> p.equals(packageElementOf(element)))
+                .orElse(false);
+    }
+
+    public PackageElement packageElementOf(Element element) {
+        Element current = element;
+        while (!(current instanceof PackageElement)) {
+            current = current.getEnclosingElement();
+        }
+
+        return (PackageElement) current;
+    }
+
+    @Override
+    public final TypeSpec compile() {
+        MethodSpec constructor = this.constructor;
+        builder.addFields(fields.values());
+        if (constructor != null) {
+            builder.addMethod(constructor);
+        }
+        builder.addMethods(methods.values());
+
+        finalize(builder);
+        return builder.build();
+    }
+
+    @Override
+    public final TypeMirror rootType() {
+        return rootElement;
+    }
+
+    @Nullable
+    public String comments() {
+        return null;
+    }
+
+    @NotNull
+    public List<Class<?>> autoServiceTypes() {
+        return List.of();
+    }
+
+    @Override
+    public boolean requiresReflectionFor(Element element) {
+        if (element.getModifiers().contains(Modifier.PUBLIC)) {
+            return false;
+        }
+
+        return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
+    }
 }

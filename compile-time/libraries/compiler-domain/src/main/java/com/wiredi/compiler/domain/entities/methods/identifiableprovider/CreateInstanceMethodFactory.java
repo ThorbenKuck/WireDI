@@ -2,10 +2,10 @@ package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
-import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.entities.WireBridgeEntity;
-import com.wiredi.compiler.domain.entities.methods.MethodFactory;
+import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.compiler.domain.injection.FieldInjectionPoint;
 import com.wiredi.compiler.domain.injection.MethodInjectionPoint;
 import com.wiredi.compiler.domain.injection.PostConstructInjectionPoint;
@@ -13,13 +13,13 @@ import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.lang.ReflectionsHelper;
-import com.wiredi.lang.async.FutureValue;
+import com.wiredi.lang.values.FutureValue;
 
 import javax.lang.model.element.VariableElement;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class CreateInstanceMethodFactory implements MethodFactory {
+public abstract class CreateInstanceMethodFactory implements StandaloneMethodFactory {
 
 	private final Logger logger = Logger.get(getClass());
 	private static final CodeBlock EMPTY = CodeBlock.builder().build();
@@ -34,7 +34,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 
 	protected CodeBlock fieldInjectionStep(
 			List<? extends FieldInjectionPoint> fieldInjections,
-			AbstractClassEntity entity,
+			ClassEntity entity,
 			VariableContext variableContext
 	) {
 		if (fieldInjections.isEmpty()) {
@@ -45,7 +45,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 
 		fieldInjections.forEach(injectionPoint -> {
 			if (injectionPoint.isPackagePrivate() && !entity.willHaveTheSamePackageAs(injectionPoint.field())) {
-				WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className, injectionPoint.getDeclaringClass());
+				WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className(), injectionPoint.getDeclaringClass());
 				codeBlockBuilder.add("$T", bridge.className())
 						.add(".$L", bridge.bridgePackagePrivateField(injectionPoint));
 				codeBlockBuilder.addStatement("(wireRepository, instance)");
@@ -54,7 +54,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 
 				if (injectionPoint.requiresReflection() || entity.requiresReflectionFor(injectionPoint.field())) {
 					logger.reflectionWarning(injectionPoint.field());
-					codeBlockBuilder.add("// This Field requires reflections. If you are reading this think about make this field package private or protected instead\n");
+//					codeBlockBuilder.add("// This Field requires reflections. If you are reading this think about make this field package private or protected instead\n");
 					codeBlockBuilder.add("$T.setField(", ReflectionsHelper.class)
 							.add("$S, ", injectionPoint.name())
 							.add("$L, ", "instance")
@@ -67,7 +67,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 		});
 		return codeBlockBuilder.build();
 	}
-	protected CodeBlock methodInjectionStep(List<? extends MethodInjectionPoint> methodInjections, AbstractClassEntity entity, VariableContext variableContext) {
+	protected CodeBlock methodInjectionStep(List<? extends MethodInjectionPoint> methodInjections, ClassEntity<?> entity, VariableContext variableContext) {
 		if (methodInjections.isEmpty()) {
 			return EMPTY;
 		}
@@ -77,7 +77,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 		return codeBlockBuilder.build();
 	}
 
-	protected CodeBlock postConstruct(List<? extends PostConstructInjectionPoint> injectionPoints, AbstractClassEntity entity, VariableContext variableContext) {
+	protected CodeBlock postConstruct(List<? extends PostConstructInjectionPoint> injectionPoints, ClassEntity<?> entity, VariableContext variableContext) {
 		if (injectionPoints.isEmpty()) {
 			return EMPTY;
 		}
@@ -98,10 +98,10 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 		return codeBlockBuilder.build();
 	}
 
-	protected CodeBlock callMethod(MethodInjectionPoint injectionPoint, AbstractClassEntity entity, VariableContext variableContext) {
+	protected CodeBlock callMethod(MethodInjectionPoint injectionPoint, ClassEntity<?> entity, VariableContext variableContext) {
 		CodeBlock.Builder codeBlockBuilder = CodeBlock.builder();
 		if (injectionPoint.isPackagePrivate() && !entity.willHaveTheSamePackageAs(injectionPoint.method())) {
-			WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className, injectionPoint.getDeclaringClass());
+			WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className(), injectionPoint.getDeclaringClass());
 			codeBlockBuilder.add("$T", bridge.className())
 					.add(".$L", bridge.bridgePackagePrivateMethod(injectionPoint));
 			codeBlockBuilder.addStatement("(wireRepository, instance)");
@@ -110,7 +110,7 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 
 			if (injectionPoint.requiresReflection() || entity.requiresReflectionFor(injectionPoint.method())) {
 				logger.reflectionWarning(injectionPoint.method());
-				codeBlockBuilder.add("// This function requires reflections. If you are reading this think about make this function package private or protected instead\n");
+//				codeBlockBuilder.add("// This function requires reflections. If you are reading this think about make this function package private or protected instead\n");
 				codeBlockBuilder.add("$T.invokeMethod(", ReflectionsHelper.class)
 						.add("$L, ", "instance")
 						.add("$T.class, ", injectionPoint.getDeclaringClass())
@@ -138,4 +138,8 @@ public abstract class CreateInstanceMethodFactory implements MethodFactory {
 		return String.join(", ", fetchVariables);
 	}
 
+	@Override
+	public String methodName() {
+		return "createInstance";
+	}
 }

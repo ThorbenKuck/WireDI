@@ -18,4 +18,10 @@ import java.lang.annotation.*;
 @Inherited
 public @interface AspectTarget {
 
+    /**
+     * Which class is going to handle the aspect.
+     * <p>
+     * This is mainly relevant for documentation purposes, not for the annotation processors.
+     */
+    Class<?> aspect() default Void.class;
 }

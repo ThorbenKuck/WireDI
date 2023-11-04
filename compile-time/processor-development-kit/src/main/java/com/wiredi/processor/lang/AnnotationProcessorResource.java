@@ -1,6 +1,6 @@
 package com.wiredi.processor.lang;
 
-import com.wiredi.lang.SafeReference;
+import com.wiredi.lang.values.SafeReference;
 import com.wiredi.resources.PathUtils;
 import com.wiredi.resources.Resource;
 import org.jetbrains.annotations.NotNull;

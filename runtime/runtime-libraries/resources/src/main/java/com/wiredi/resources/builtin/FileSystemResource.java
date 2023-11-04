@@ -44,7 +44,6 @@ public class FileSystemResource implements WritableResource {
 			return path.toUri().toURL();
 		} catch (MalformedURLException e) {
 			throw new ResourceException("Error creating URL", e);
-
 		}
 	}
 
