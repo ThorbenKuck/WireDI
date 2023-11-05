@@ -1,6 +1,7 @@
 package com.wiredi.resources;
 
 import com.wiredi.resources.builtin.ClassPathResourceProtocolResolver;
+import com.wiredi.resources.builtin.FileSystemResourceProtocolResolver;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -10,10 +11,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ResourceLoaderTest {
 
 	@Test
-	public void test() throws IOException {
+	public void testClassPathResource() throws IOException {
 		// Arrange
 		ResourceLoader resourceLoader = new ResourceLoader();
-		resourceLoader.addProtocolResolver(new ClassPathResourceProtocolResolver());
+		resourceLoader.addProtocolResolver(ClassPathResourceProtocolResolver.INSTANCE);
 
 		// Act
 		Resource resource = resourceLoader.load("classpath:Test.txt");
@@ -23,4 +24,17 @@ class ResourceLoaderTest {
 		assertThat(resource.getContentAsString()).isEqualTo("TEST");
 	}
 
+	@Test
+	public void testFileSystemResource() throws IOException {
+		// Arrange
+		ResourceLoader resourceLoader = new ResourceLoader();
+		resourceLoader.addProtocolResolver(FileSystemResourceProtocolResolver.INSTANCE);
+
+		// Act
+		Resource resource = resourceLoader.load("file:src/test/resources/Test.txt");
+
+		// Assert
+		assertThat(resource.exists()).isTrue();
+		assertThat(resource.getContentAsString()).isEqualTo("TEST");
+	}
 }

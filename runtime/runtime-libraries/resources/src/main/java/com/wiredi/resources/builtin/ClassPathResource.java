@@ -29,7 +29,7 @@ public class ClassPathResource implements Resource {
 
 	@Override
 	public boolean exists() {
-		return getURL() != null && Files.exists(getPath());
+		return this.classLoader.getResource(this.path) != null && Files.exists(getPath());
 	}
 
 	@Override
@@ -38,16 +38,20 @@ public class ClassPathResource implements Resource {
 	}
 
 	@Override
-	public URL getURL() {
+	public @NotNull URL getURL() {
 		if (this.classLoader != null) {
-			return this.classLoader.getResource(this.path);
+			URL resource = this.classLoader.getResource(this.path);
+			if (resource == null) {
+				throw new ResourceException("Could not create an URL for the resource " + path);
+			}
+			return resource;
 		} else {
 			return ClassLoader.getSystemResource(this.path);
 		}
 	}
 
 	@Override
-	public URI getURI() {
+	public @NotNull URI getURI() {
 		try {
 			return getURL().toURI();
 		} catch (URISyntaxException e) {
@@ -56,12 +60,12 @@ public class ClassPathResource implements Resource {
 	}
 
 	@Override
-	public Path getPath() {
+	public @NotNull Path getPath() {
 		return Path.of(getURI());
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public @NotNull InputStream getInputStream() {
 		InputStream is;
 		if (this.classLoader != null) {
 			is = this.classLoader.getResourceAsStream(this.path);
@@ -75,7 +79,7 @@ public class ClassPathResource implements Resource {
 	}
 
 	@Override
-	public Resource createRelative(String relativePath) {
+	public @NotNull Resource createRelative(@NotNull String relativePath) {
 		if(isFile()) {
 			throw new ResourceException("Cannot create a relative path from file " + path);
 		}

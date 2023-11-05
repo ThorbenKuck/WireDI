@@ -57,8 +57,7 @@ public class AnnotationProcessorResource implements Resource {
 	}
 
 	@Override
-	@Nullable
-	public URL getURL() {
+    public @NotNull URL getURL() {
 		try {
 			return getFileObject().mapIfPresent(it -> it.toUri().toURL());
 		} catch (IOException e) {
@@ -67,8 +66,7 @@ public class AnnotationProcessorResource implements Resource {
 	}
 
 	@Override
-	@Nullable
-	public URI getURI() {
+	public @NotNull URI getURI() {
 		return getFileObject().mapIfPresent(FileObject::toUri);
 	}
 
@@ -81,7 +79,7 @@ public class AnnotationProcessorResource implements Resource {
 	}
 
 	@Override
-	public InputStream getInputStream() {
+	public @NotNull InputStream getInputStream() {
 		InputStream inputStream = null;
 		try {
 			inputStream = getFileObject().mapIfPresent(FileObject::openInputStream);
@@ -91,7 +89,7 @@ public class AnnotationProcessorResource implements Resource {
 	}
 
 	@Override
-	public Resource createRelative(String relativePath) {
+	public @NotNull Resource createRelative(@NotNull String relativePath) {
 		return new AnnotationProcessorResource(
 				filer,
 				PathUtils.join(this.path, relativePath)
