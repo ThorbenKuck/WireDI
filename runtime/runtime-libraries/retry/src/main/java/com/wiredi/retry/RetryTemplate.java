@@ -2,94 +2,170 @@ package com.wiredi.retry;
 
 import com.wiredi.lang.ThrowingRunnable;
 import com.wiredi.lang.ThrowingSupplier;
-import com.wiredi.retry.exception.RetryFailedException;
+import com.wiredi.retry.backoff.BackOffStrategy;
+import com.wiredi.retry.backoff.ExponentialBackOffStrategy;
+import com.wiredi.retry.backoff.NoBackOffStrategy;
+import com.wiredi.retry.exception.UnsupportedRetryException;
+import com.wiredi.retry.policy.RetryExceptionBarrier;
 import com.wiredi.retry.policy.RetryPolicy;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
+import static com.wiredi.lang.Preconditions.notNull;
+
+/**
+ * This class provides the possibility to execute code and retry on conditions.
+ * <p>
+ * A RetryTemplate consists of two main parts, the {@link RetryPolicy} and the {@link BackOffStrategy}.
+ * The {@link RetryPolicy} describes what to retry. It is responsible for defining outline values for retries.
+ * The {@link BackOffStrategy} defines how the delay between retries is defined.
+ */
 public class RetryTemplate {
 
-	private final RetryPolicy retryPolicy;
-	private final BackOffStrategy backOffStrategy;
+    @NotNull
+    private final RetryPolicy retryPolicy;
 
-	public RetryTemplate(RetryPolicy retryPolicy, BackOffStrategy backOffStrategy) {
-		this.retryPolicy = retryPolicy;
-		this.backOffStrategy = backOffStrategy;
-	}
+    @NotNull
+    private final BackOffStrategy<?> backOffStrategy;
 
-	public static Builder newInstance() {
-		return new Builder();
-	}
+    public RetryTemplate(
+            @NotNull final RetryPolicy retryPolicy,
+            @NotNull final BackOffStrategy<?> backOffStrategy
+    ) {
+        this.retryPolicy = retryPolicy;
+        this.backOffStrategy = backOffStrategy;
+    }
 
-	public <T> T get(ThrowingSupplier<T> supplier) {
-		return doExecute(supplier);
-	}
+    @NotNull
+    public static Builder newInstance() {
+        return new Builder();
+    }
 
-	public <T> T safeGet(Supplier<T> supplier) {
-		return get(ThrowingSupplier.wrap(supplier));
-	}
+    /**
+     * Retrieves the value from the provided supplier, respecting the {@link RetryPolicy} with the {@link BackOffStrategy}.
+     * <p>
+     * This function does not support null values. If you require support for null values, use {@link #tryGet(ThrowingSupplier)}.
+     *
+     * @param supplier the supplier to produce the value
+     * @param <T>      The type of the value to extract
+     * @return the value returned by the {@link ThrowingSupplier}
+     * @see #tryGet(ThrowingSupplier)
+     * @see #execute(ThrowingRunnable)
+     */
+    @NotNull
+    public <T> T get(@NotNull final ThrowingSupplier<@NotNull T> supplier) {
+        return notNull(doExecute(supplier), () -> "Provided supplier returned null. If null is a valid return value please use tryGet or execute instead.");
+    }
 
-	public void execute(ThrowingRunnable runnable) {
-		doExecute(ThrowingSupplier.wrap(runnable));
-	}
+    /**
+     * Retrieves the value from the provided supplier, respecting the {@link RetryPolicy} with the {@link BackOffStrategy}.
+     * <p>
+     * The provided supplier may return a null value, contrary to {@link #get(ThrowingSupplier)}.
+     *
+     * @param supplier the supplier to produce the value
+     * @param <T>      The type of the value to extract
+     * @return the value returned by the {@link ThrowingSupplier}
+     * @see #get(ThrowingSupplier)
+     * @see #execute(ThrowingRunnable)
+     */
+    @Nullable
+    public <T> T tryGet(@NotNull final ThrowingSupplier<@NotNull T> supplier) {
+        return doExecute(supplier);
+    }
 
-	private <T> T doExecute(ThrowingSupplier<T> supplier) {
-		List<Throwable> errors = new ArrayList<>();
-		RetryState retryState = retryPolicy.newRetryState();
+    /**
+     * Runs a code, respecting the {@link RetryPolicy} with the {@link BackOffStrategy}.
+     *
+     * @param runnable the runnable to execute
+     * @see #get(ThrowingSupplier)
+     * @see #execute(ThrowingRunnable)
+     */
+    public void execute(@NotNull final ThrowingRunnable runnable) {
+        doExecute(ThrowingSupplier.wrap(runnable));
+    }
 
-		while (retryState.isActive()) {
-			retryState.sleep();
-			try {
-				return supplier.get();
-			} catch (Throwable throwable) {
-				errors.add(throwable);
-				Duration nextTimeout = backOffStrategy.next(retryState.timeout());
-				retryState = retryState.next(nextTimeout);
-			}
-		}
+    @Nullable
+    private <T> T doExecute(@NotNull final ThrowingSupplier<@Nullable T> supplier) {
+        final RetryState retryState = retryPolicy.newRetryState();
+        final RetryExceptionBarrier retryExceptionBarrier = retryPolicy.exceptionBarrier();
 
-		throw new RetryFailedException(retryState, errors);
-	}
+        retryState.start();
+        while (retryState.isActive()) {
+            retryState.sleep();
+            try {
+                return supplier.get();
+            } catch (@NotNull final Throwable throwable) {
+                if (retryExceptionBarrier.passes(throwable)) {
+                    final Duration nextTimeout = backOffStrategy.next(retryState.timeout());
+                    retryState.setNextTimeout(nextTimeout);
+                    retryState.addError(throwable);
+                } else {
+                    retryState.abort();
+                    throwable.addSuppressed(new UnsupportedRetryException(throwable));
+                }
+            }
+        }
 
-	public static class Builder {
-		private final RetryPolicy retryPolicy = new RetryPolicy();
-		private BackOffStrategy backOffStrategy = new FixedBackOffStrategy(Duration.ZERO);
+        return retryState.raiseError();
+    }
 
-		public Builder withFixedTimeout(Duration duration) {
-			backOffStrategy = BackOffStrategy.fixed(duration);
-			return this;
-		}
+    public static final class Builder {
+        @NotNull
+        private RetryPolicy retryPolicy = RetryPolicy.DEFAULT;
 
-		public Builder withFixedTimeout(long timeout, TimeUnit timeUnit) {
-			return withFixedTimeout(Duration.of(timeout, timeUnit.toChronoUnit()));
-		}
+        @NotNull
+        private BackOffStrategy<?> backOffStrategy = BackOffStrategy.none();
 
-		public Builder withExponentialBackoff(double increment) {
-			backOffStrategy = new ExponentialBackOffStrategy(increment);
-			return this;
-		}
+        @NotNull
+        public Builder withBackOff(@NotNull final BackOffStrategy<?> backOffStrategy) {
+            this.backOffStrategy = backOffStrategy;
+            return this;
+        }
 
-		public Builder withMaxTries(long maxTries) {
-			retryPolicy.setMaxAttempts(maxTries);
-			return this;
-		}
+        @NotNull
+        public Builder withFixedBackOff(@NotNull final Duration duration) {
+            return withBackOff(BackOffStrategy.fixed(duration));
+        }
 
-		public Builder retryFor(Class<? extends Throwable> type) {
-			retryPolicy.retryOnException(type);
-			return this;
-		}
+        @NotNull
+        public Builder withFixedBackOff(final long timeout, @NotNull final TimeUnit timeUnit) {
+            return withFixedBackOff(Duration.of(timeout, timeUnit.toChronoUnit()));
+        }
 
-		public Builder doNotRetryFor(Class<? extends Throwable> type) {
-			retryPolicy.doNotRetryOnException(type);
-			return this;
-		}
+        @NotNull
+        public Builder withLinearBackOff(@NotNull final Duration duration) {
+            return withBackOff(BackOffStrategy.fixed(duration));
+        }
 
-		public RetryTemplate build() {
-			return new RetryTemplate(retryPolicy, backOffStrategy);
-		}
-	}
+        @NotNull
+        public Builder withLinearBackOff(final long timeout, @NotNull final TimeUnit timeUnit) {
+            return withLinearBackOff(Duration.of(timeout, timeUnit.toChronoUnit()));
+        }
+
+        @NotNull
+        public Builder withExponentialBackoff(final double increment) {
+            backOffStrategy = new ExponentialBackOffStrategy(increment);
+            return this;
+        }
+
+        @NotNull
+        public Builder withNoBackoff() {
+            backOffStrategy = NoBackOffStrategy.INSTANCE;
+            return this;
+        }
+
+        @NotNull
+        public Builder withRetryPolicy(@NotNull final RetryPolicy retryPolicy) {
+            this.retryPolicy = retryPolicy;
+            return this;
+        }
+
+        @NotNull
+        public RetryTemplate build() {
+            return new RetryTemplate(retryPolicy, backOffStrategy);
+        }
+    }
 }

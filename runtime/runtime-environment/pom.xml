@@ -44,7 +44,7 @@
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
-            <artifactId>environment</artifactId>
+            <artifactId>properties</artifactId>
             <version>${revision}</version>
         </dependency>
         <dependency>

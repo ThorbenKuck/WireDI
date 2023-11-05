@@ -43,6 +43,7 @@ public class ExecutionContext {
         this(null);
     }
 
+    @NotNull
     public ExecutionContext prepend(AnnotationMetaData annotation, ExecutionChainLink nextElement) {
         ExecutionContext executionContext = new ExecutionContext(annotation, parameters);
         executionContext.next = nextElement;
@@ -53,6 +54,7 @@ public class ExecutionContext {
         parameters.clear();
     }
 
+    @NotNull
     public ExecutionChainParameters parameters() {
         return parameters;
     }

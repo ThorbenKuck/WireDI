@@ -1,9 +1,9 @@
 package com.wiredi.retry.exception;
 
-public class RetryInterruptedException extends RuntimeException {
+import org.jetbrains.annotations.NotNull;
 
-	public RetryInterruptedException(InterruptedException e) {
+public final class RetryInterruptedException extends RetryException {
+	public RetryInterruptedException(@NotNull final InterruptedException e) {
 		super(e);
 	}
-
 }

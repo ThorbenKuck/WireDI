@@ -18,8 +18,10 @@ public class RootMethod implements ExecutionChainLink {
 	private final ExecutionContext context = new ExecutionContext();
 	@NotNull
 	private final AspectHandler rootMethod;
-	@NotNull private final String methodName;
-	@NotNull private final Map<String, TypeIdentifier<?>> parameters;
+	@NotNull
+	private final String methodName;
+	@NotNull
+	private final Map<String, TypeIdentifier<?>> parameters;
 
 	public RootMethod(
 			@NotNull AspectHandler rootMethod,
@@ -42,24 +44,33 @@ public class RootMethod implements ExecutionChainLink {
 	}
 
 	@Override
-	public ExecutionChainLink prepend(AnnotationMetaData annotation, AspectHandler handler) {
+	public ExecutionChainLink prepend(
+			@NotNull AnnotationMetaData annotation,
+			@NotNull AspectHandler handler
+	) {
 		ExecutionContext prependedContext = context.prepend(annotation, this);
 		return ExecutionChainElement.create(prependedContext, handler);
 	}
 
+	@NotNull
 	public String getMethodName() {
 		return methodName;
 	}
 
+	@NotNull
 	public Map<String, TypeIdentifier<?>> parameterTypes() {
 		return parameters;
 	}
 
+	@NotNull
 	public ExecutionChainParameters parameters() {
 		return context.parameters();
 	}
 
-	public static RootMethod just(String methodName, AspectHandler aspectHandler) {
+	public static RootMethod just(
+			@NotNull String methodName,
+			@NotNull AspectHandler aspectHandler
+	) {
 		return new Builder(methodName).build(aspectHandler);
 	}
 
@@ -77,7 +88,10 @@ public class RootMethod implements ExecutionChainLink {
 			this.methodName = methodName;
 		}
 
-		public Builder withParameter(@NotNull String name, @NotNull TypeIdentifier<?> type) {
+		public Builder withParameter(
+				@NotNull String name,
+				@NotNull TypeIdentifier<?> type
+		) {
 			parameters.put(name, type);
 			return this;
 		}
