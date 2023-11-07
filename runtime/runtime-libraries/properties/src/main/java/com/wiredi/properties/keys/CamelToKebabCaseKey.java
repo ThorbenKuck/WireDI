@@ -1,20 +1,26 @@
 package com.wiredi.properties.keys;
 
-import com.wiredi.lang.values.SafeReference;
+import com.wiredi.lang.values.Value;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class CamelToKebabCaseKey implements Key {
+public final class CamelToKebabCaseKey implements Key {
 
-    private final SafeReference<String> formatted = SafeReference.empty();
+    @NotNull
     private final String value;
 
-    public CamelToKebabCaseKey(String value) {
+    @NotNull
+    private final Value<String> formatted;
+
+    public CamelToKebabCaseKey(@NotNull final String value) {
         this.value = value;
+        this.formatted = Value.lazy(() -> camelToKebabCase(value));
     }
 
-    private static String camelToKebabCase(String name) {
+    @NotNull
+    private static String camelToKebabCase(@NotNull final String name) {
         StringBuilder result = new StringBuilder();
         char c = name.charAt(0);
         result.append(c);
@@ -34,21 +40,21 @@ public class CamelToKebabCaseKey implements Key {
     @Override
     @NotNull
     public String value() {
-        return formatted.getOrSet(() -> camelToKebabCase(value));
+        return formatted.get();
     }
 
     @Override
-    public Key withPrefix(String prefix) {
+    public @NotNull Key withPrefix(@NotNull String prefix) {
         return new CamelToKebabCaseKey(Key.joinWithSeparator(".", prefix, value));
     }
 
     @Override
-    public Key withSuffix(String suffix) {
+    public @NotNull Key withSuffix(@NotNull String suffix) {
         return new CamelToKebabCaseKey(Key.joinWithSeparator(".", value, suffix));
     }
 
     @Override
-    public boolean equals(Object o) {
+    public boolean equals(@Nullable final Object o) {
         if (this == o) return true;
         if (o == null) return false;
         if (!(o instanceof Key that)) return false;
@@ -62,6 +68,7 @@ public class CamelToKebabCaseKey implements Key {
     }
 
     @Override
+    @NotNull
     public String toString() {
         return value();
     }

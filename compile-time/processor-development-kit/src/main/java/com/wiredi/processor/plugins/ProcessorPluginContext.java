@@ -20,9 +20,9 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
 
     private static final Logger logger = Logger.get(ProcessorPluginContext.class);
     private static final TypeMap<List<? extends Plugin>> cache = new TypeMap<>();
+    private final TypeMap<Consumer<ClassEntity<?>>> invokers = new TypeMap<>();
     public final List<CompilerEntityPlugin> wireProcessorPlugins;
     private final Consumer<ClassEntity<?>> defaultHandler;
-    private final Map<Class<? extends ClassEntity<?>>, Consumer<ClassEntity<?>>> invokers = new HashMap<>();
 
     public ProcessorPluginContext(Injector injector, CompilerRepository compilerRepository) {
         wireProcessorPlugins = ProcessorPluginContext.load(injector, CompilerEntityPlugin.class);

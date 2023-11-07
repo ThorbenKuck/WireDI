@@ -1,16 +1,13 @@
 package com.wiredi.properties.converter;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public interface PropertyConverter<T> {
 
-    @NotNull
+    @Nullable
     T apply(
             @NotNull final String key,
             @NotNull final String value
     );
-
-    static PropertyConverter<String> identity() {
-        return (key, value) -> value;
-    }
 }

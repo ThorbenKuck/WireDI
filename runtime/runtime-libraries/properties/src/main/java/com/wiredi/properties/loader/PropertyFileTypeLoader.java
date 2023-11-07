@@ -2,6 +2,7 @@ package com.wiredi.properties.loader;
 
 import com.wiredi.properties.keys.Key;
 import com.wiredi.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Map;
@@ -17,8 +18,10 @@ import java.util.Map;
  */
 public interface PropertyFileTypeLoader {
 
+    @NotNull
     Map<Key, String> extract(Resource resource);
 
+    @NotNull
     List<String> supportedFileTypes();
 
 }

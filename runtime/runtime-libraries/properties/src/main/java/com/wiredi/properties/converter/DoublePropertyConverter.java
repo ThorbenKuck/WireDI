@@ -4,6 +4,9 @@ import com.wiredi.properties.exceptions.InvalidPropertyTypeException;
 import org.jetbrains.annotations.NotNull;
 
 public class DoublePropertyConverter implements PropertyConverter<Double> {
+
+	public static final DoublePropertyConverter INSTANCE = new DoublePropertyConverter();
+
 	@Override
 	public @NotNull Double apply(@NotNull String key, @NotNull String value) {
 		try {

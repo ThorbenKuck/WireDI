@@ -25,12 +25,12 @@ public record PreFormattedKey(@NotNull String value) implements Key {
 	}
 
 	@Override
-	public Key withPrefix(String prefix) {
+	public @NotNull Key withPrefix(@NotNull String prefix) {
 		return new PreFormattedKey(Key.joinWithSeparator(".", prefix, value));
 	}
 
 	@Override
-	public Key withSuffix(String suffix) {
+	public @NotNull Key withSuffix(@NotNull String suffix) {
 		return new PreFormattedKey(Key.joinWithSeparator(".", value, suffix));
 	}
 }

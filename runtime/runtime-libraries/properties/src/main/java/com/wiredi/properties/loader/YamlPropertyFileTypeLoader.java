@@ -3,97 +3,123 @@ package com.wiredi.properties.loader;
 import com.google.auto.service.AutoService;
 import com.wiredi.properties.keys.Key;
 import com.wiredi.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.stream.Collectors;
 
+/**
+ * A {@link PropertyFileTypeLoader} that is able to resolve yaml files.
+ * <p>
+ * This loader completely flattens the contents of yaml files, which means that it joins different
+ * levels of the yaml to individual property lines.
+ */
 @AutoService(PropertyFileTypeLoader.class)
-public class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader {
+public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader {
 
-	private final Yaml yaml = new Yaml();
+    @NotNull
+    private static final Yaml yaml = new Yaml();
 
-	@Override
-	public Map<Key, String> extract(Resource resource) {
-		Map<String, Object> load = yaml.load(resource.getInputStream());
-		return flatten(load);
-	}
+    @Override
+    public @NotNull Map<Key, String> extract(@NotNull final Resource resource) {
+        @NotNull final Map<String, Object> load = yaml.load(resource.getInputStream());
+        return flatten(load);
+    }
 
-	private Map<Key, String> flatten(Map<String, Object> input) {
-		FlatteningContext flatteningContext = new FlatteningContext();
-		flatten(input, flatteningContext);
+    @NotNull
+    private Map<Key, String> flatten(@NotNull final Map<String, Object> input) {
+        @NotNull final FlatteningContext flatteningContext = new FlatteningContext();
+        flatten(input, flatteningContext);
 
-		return flatteningContext.drain()
-				.entrySet()
-				.stream()
-				.collect(
-						Collectors.toMap(
-								it -> Key.format(it.getKey()),
-								it -> String.join(",", it.getValue())
-						)
-				);
-	}
+        return flatteningContext.drain()
+                .entrySet()
+                .stream()
+                .collect(
+                        Collectors.toMap(
+                                it -> Key.format(it.getKey()),
+                                it -> String.join(",", it.getValue())
+                        )
+                );
+    }
 
-	private void flatten(Map<String, ?> collection, FlatteningContext context) {
-		collection.forEach((key, value) -> {
-			context.nextDepth(key, () -> flattenEntry(value, context));
-		});
-	}
+    private void flatten(
+            @NotNull final Map<String, ?> collection,
+            @NotNull final FlatteningContext context
+    ) {
+        collection.forEach((key, value) -> {
+            context.nextDepth(key, () -> flattenEntry(value, context));
+        });
+    }
 
-	private void flattenEntry(Object instance, FlatteningContext context) {
-		if (instance instanceof String) {
-			context.appendValue((String) instance);
-		} else if (instance instanceof Map<?, ?>) {
-			flatten((Map<String, Object>) instance, context);
-		} else if (instance instanceof List<?>) {
-			((List<?>) instance).forEach(entry -> flattenEntry(entry, context));
-		} else {
-			throw new IllegalStateException("Unexpected element " + instance);
-		}
-	}
+    private void flattenEntry(
+            @NotNull final Object instance,
+            @NotNull final FlatteningContext context
+    ) {
+        if (instance instanceof String string) {
+            context.appendValue(string);
+        } else if (instance instanceof Map<?, ?> map) {
+            flatten((Map<String, Object>) map, context);
+        } else if (instance instanceof List<?> list) {
+            list.forEach(entry -> flattenEntry(entry, context));
+        } else {
+            throw new IllegalStateException("Unexpected element " + instance);
+        }
+    }
 
-	class FlatteningContext {
+    @Override
+    public @NotNull List<String> supportedFileTypes() {
+        return List.of("yaml", "yml");
+    }
 
-		private final Map<String, List<String>> result = new HashMap<>();
-		private final LinkedBlockingDeque<String> paths = new LinkedBlockingDeque<>();
+    private static final class FlatteningContext {
 
-		public String currentPath() {
-			StringBuilder stringBuilder = new StringBuilder();
-			paths.descendingIterator().forEachRemaining(entry -> {
-				if(!stringBuilder.isEmpty()) {
-					stringBuilder.append(".");
-				}
-				stringBuilder.append(entry);
-			});
-			return stringBuilder.toString();
-		}
+        @NotNull
+        private final Map<String, List<String>> result = new HashMap<>();
 
-		public void nextDepth(String path, Runnable consumer) {
-			paths.addFirst(path);
-			try {
-				consumer.run();
-			} catch (Exception e) {
-				throw new IllegalArgumentException("Error while flattening path: " + currentPath(), e);
-			}
-			paths.removeFirst();
-		}
+        @NotNull
+        private final LinkedBlockingDeque<String> paths = new LinkedBlockingDeque<>();
 
-		public void appendValue(String value) {
-			List<String> values = result.computeIfAbsent(currentPath(), (s) -> new ArrayList<>());
-			values.add(value);
-		}
+        @NotNull
+        public String currentPath() {
+            @NotNull final StringBuilder stringBuilder = new StringBuilder();
+            paths.descendingIterator().forEachRemaining(entry -> {
+                if (!stringBuilder.isEmpty()) {
+                    stringBuilder.append(".");
+                }
+                stringBuilder.append(entry);
+            });
+            return stringBuilder.toString();
+        }
 
-		public Map<String, List<String>> drain() {
-			HashMap<String, List<String>> value = new HashMap<>(result);
-			paths.clear();
-			result.clear();
-			return value;
-		}
-	}
+        public void nextDepth(
+                @NotNull final String path,
+                @NotNull final Runnable consumer
+        ) {
+            paths.addFirst(path);
+            try {
+                consumer.run();
+            } catch (@NotNull final Exception e) {
+                throw new IllegalArgumentException("Error while flattening path: " + currentPath(), e);
+            }
+            paths.removeFirst();
+        }
 
-	@Override
-	public List<String> supportedFileTypes() {
-		return List.of("yaml", "yml");
-	}
+        public void appendValue(@NotNull final String value) {
+            @NotNull final List<String> values = result.computeIfAbsent(currentPath(), (s) -> new ArrayList<>());
+            values.add(value);
+        }
+
+        @NotNull
+        public Map<String, List<String>> drain() {
+            @NotNull final HashMap<String, List<String>> value = new HashMap<>(result);
+            paths.clear();
+            result.clear();
+            return value;
+        }
+    }
 }

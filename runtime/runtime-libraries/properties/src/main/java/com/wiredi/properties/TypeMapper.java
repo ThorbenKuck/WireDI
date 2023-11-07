@@ -6,34 +6,54 @@ import com.wiredi.properties.exceptions.MissingTypeConverterException;
 import com.wiredi.properties.keys.Key;
 import org.jetbrains.annotations.NotNull;
 
-public class TypeMapper {
+/**
+ * A static utility class to map certain types in the typed properties.
+ */
+public final class TypeMapper {
 
-	@NotNull
-	private static final TypeMap<PropertyConverter<?>> typeMappings = new TypeMap<>();
+    @NotNull
+    private static final TypeMap<@NotNull PropertyConverter<?>> typeMappings = new TypeMap<>();
 
-	static {
-		setTypeConverter(boolean.class, new BooleanPropertyConverter());
-		setTypeConverter(int.class, new IntPropertyConverter());
-		setTypeConverter(float.class, new FloatPropertyConverter());
-		setTypeConverter(double.class, new DoublePropertyConverter());
+    static {
+        setTypeConverter(boolean.class, BooleanPropertyConverter.INSTANCE);
+        setTypeConverter(int.class, IntPropertyConverter.INSTANCE);
+        setTypeConverter(float.class, FloatPropertyConverter.INSTANCE);
+        setTypeConverter(double.class, DoublePropertyConverter.INSTANCE);
 
-		setTypeConverter(Boolean.class, new BooleanPropertyConverter());
-		setTypeConverter(Integer.class, new IntPropertyConverter());
-		setTypeConverter(Float.class, new FloatPropertyConverter());
-		setTypeConverter(Double.class, new DoublePropertyConverter());
+        setTypeConverter(Boolean.class, BooleanPropertyConverter.INSTANCE);
+        setTypeConverter(Integer.class, IntPropertyConverter.INSTANCE);
+        setTypeConverter(Float.class, FloatPropertyConverter.INSTANCE);
+        setTypeConverter(Double.class, DoublePropertyConverter.INSTANCE);
 
-		setTypeConverter(String.class, PropertyConverter.identity());
-	}
+        setTypeConverter(String.class, StringPropertyConverter.INSTANCE);
+    }
 
-	public static <T> void setTypeConverter(Class<T> type, PropertyConverter<T> converter) {
-		typeMappings.put(type, converter);
-	}
+    /**
+     * Registers a type converter to be used for the specified type.
+     *
+     * @param type      the type to convert property values to
+     * @param converter the converter
+     * @param <T>       the generic of the converter result
+     */
+    public static <T> void setTypeConverter(@NotNull final Class<T> type, @NotNull final PropertyConverter<T> converter) {
+        typeMappings.put(type, converter);
+    }
 
-	public static <T> T convert(Class<T> type, Key key, String value) {
-		PropertyConverter<?> conversion = typeMappings.get(type);
-		if (conversion == null) {
-			throw new MissingTypeConverterException(type, value);
-		}
-		return (T) conversion.apply(key.value(), value);
-	}
+    /**
+     * Converts the provided value to the provided type
+     *
+     * @param type The type to convert to
+     * @param key The key of the property
+     * @param value The property value
+     * @return the converted type
+     * @param <T> The type to convert to
+     * @throws MissingTypeConverterException if no converter is registered for the type
+     */
+    public static <T> @NotNull T convert(@NotNull final Class<T> type, @NotNull final Key key, @NotNull final String value) {
+        final PropertyConverter<?> conversion = typeMappings.get(type);
+        if (conversion == null) {
+            throw new MissingTypeConverterException(type, value);
+        }
+        return (T) conversion.apply(key.value(), value);
+    }
 }

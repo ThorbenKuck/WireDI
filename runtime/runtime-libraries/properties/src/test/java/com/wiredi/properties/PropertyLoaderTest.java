@@ -26,9 +26,8 @@ class PropertyLoaderTest {
 		assertThat(properties.get(Key.just(property)))
 				.withFailMessage("Property was missing")
 				.isPresent()
-				.get()
 				.withFailMessage("Property had the wrong value")
-				.isEqualTo(expectedValue);
+				.hasValue(expectedValue);
 	}
 
 	@Test
@@ -46,9 +45,8 @@ class PropertyLoaderTest {
 		assertThat(properties.get(Key.just(property)))
 				.withFailMessage("Property was missing")
 				.isPresent()
-				.get()
 				.withFailMessage("Property had the wrong value")
-				.isEqualTo(expectedValue);
+				.hasValue(expectedValue);
 	}
 
 	@Test
@@ -66,8 +64,7 @@ class PropertyLoaderTest {
 		assertThat(properties.get(Key.just(property)))
 				.withFailMessage("Property was missing")
 				.isPresent()
-				.get()
 				.withFailMessage("Property had the wrong value")
-				.isEqualTo(expectedValue);
+				.hasValue(expectedValue);
 	}
 }

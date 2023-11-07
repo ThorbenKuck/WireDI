@@ -6,80 +6,125 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * A Key is an in memory representation for a property key.
+ * <p>
+ * Implementations are required to overwrite equals and hash code. A key must be equal to another key, if the values
+ * are the same.
+ * <p>
+ * Different implementations can handle keys differently. One build in implementation, the {@link CamelToKebabCaseKey}
+ * will (for example) format the provided key to be conformed to the kebab standard. This helps with property file
+ * containing non kebab case keys (like <pre>my.customKey</pre>), whilst code references as kebab case
+ * (like <pre>my.custom-key</pre>).
+ * <p>
+ * Though the problem would be, that it would be quite computationally expensive if every key would need to be converted.
+ * This is why the annotation processors pre-format the keys and then construct a {@link PreFormattedKey} that is
+ * already in kebab case.
+ * <p>
+ * To support but not enforce this standard and to eliminate computational complexity that can be prevented, the format
+ * of the key is left open to the implementation of the Key and is not assumed by the properties.
+ */
 public interface Key {
 
-	@NotNull
-	String value();
+    @NotNull
+    static Builder build() {
+        return new Builder();
+    }
 
-	Key withPrefix(String prefix);
+    static String joinWithSeparator(
+            @NotNull final String delimiter,
+            @NotNull final String prefix,
+            @NotNull final String suffix
+    ) {
+        if (prefix.isBlank()) {
+            return suffix;
+        } else if (suffix.isBlank()) {
+            return prefix;
+        }
 
-	Key withSuffix(String suffix);
+        if (prefix.endsWith(delimiter) && suffix.startsWith(delimiter)) {
+            return prefix + suffix.substring(1);
+        } else if (!prefix.endsWith(delimiter) && !suffix.startsWith(delimiter)) {
+            return prefix + delimiter + suffix;
+        } else {
+            return prefix + suffix;
+        }
+    }
 
-	static Builder build() {
-		return new Builder();
-	}
+    /**
+     * Constructs a preformatted key, not formatting the provided value
+     *
+     * @param value the pre-formatted key
+     * @return a Key instance for the pre-formatted key
+     */
+    static Key just(@NotNull final String value) {
+        return new PreFormattedKey(value);
+    }
 
-	static String joinWithSeparator(@NotNull String delimiter, @NotNull String prefix, @NotNull String suffix) {
-		if (prefix.isBlank()) {
-			return suffix;
-		} else if (suffix.isBlank()) {
-			return prefix;
-		}
+    /**
+     * Constructs a new Key that formats the provided value to adhere to the standard.
+     * <p>
+     * Depending on the length of the key, this might be complex.
+     *
+     * @param value the key to format
+     * @return a new instance of the pre-formatted key.
+     */
+    static Key format(@NotNull final String value) {
+        return new CamelToKebabCaseKey(value);
+    }
 
-		if (prefix.endsWith(delimiter) && suffix.startsWith(delimiter)) {
-			return prefix + suffix.substring(1);
-		} else if (!prefix.endsWith(delimiter) && !suffix.startsWith(delimiter)) {
-			return prefix + delimiter + suffix;
-		} else {
-			return prefix + suffix;
-		}
-	}
+    @NotNull
+    String value();
 
-	class Builder {
-		private final List<String> content = new ArrayList<>();
-		private final CharSequence delimiter;
+    @NotNull
+    Key withPrefix(@NotNull final String prefix);
 
-		public Builder(CharSequence delimiter) {
-			this.delimiter = delimiter;
-		}
+    @NotNull
+    Key withSuffix(@NotNull final String suffix);
 
-		public Builder() {
-			this.delimiter = ".";
-		}
+    final class Builder {
+        @NotNull
+        private final List<@NotNull String> content = new ArrayList<>();
+        @NotNull
+        private final CharSequence delimiter;
 
-		public Builder append(String s) {
-			String current = s;
-			if (current.startsWith(".")) {
-				current = current.substring(1);
-			}
-			if (current.endsWith(".")) {
-				current = current.substring(0, current.length() - 1);
-			}
+        public Builder(@NotNull final CharSequence delimiter) {
+            this.delimiter = delimiter;
+        }
 
-			content.add(current);
-			return this;
-		}
+        public Builder() {
+            this.delimiter = ".";
+        }
 
-		private String build() {
-			return content.stream()
-					.filter(String::isBlank)
-					.collect(Collectors.joining(delimiter));
-		}
+        @NotNull
+        public Builder append(@NotNull final String s) {
+            String current = s;
+            if (current.startsWith(".")) {
+                current = current.substring(1);
+            }
+            if (current.endsWith(".")) {
+                current = current.substring(0, current.length() - 1);
+            }
 
-		public Key formatted() {
-			return Key.format(build());
-		}
+            content.add(current);
+            return this;
+        }
 
-		public Key preFormatted() {
-			return Key.just(build());
-		}
-	}
+        @NotNull
+        private String build() {
+            return content.stream()
+                    .filter(String::isBlank)
+                    .collect(Collectors.joining(delimiter));
+        }
 
-	static Key just(String value) {
-		return new PreFormattedKey(value);
-	}
+        @NotNull
+        public Key formatted() {
+            return Key.format(build());
+        }
 
-	static Key format(String value) {
-		return new CamelToKebabCaseKey(value);
-	}
+        @NotNull
+        public Key preFormatted() {
+            return Key.just(build());
+        }
+    }
 }

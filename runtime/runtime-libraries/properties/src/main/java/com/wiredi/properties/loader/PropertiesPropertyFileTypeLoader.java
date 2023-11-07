@@ -4,14 +4,15 @@ import com.google.auto.service.AutoService;
 import com.wiredi.properties.exceptions.PropertyLoadingException;
 import com.wiredi.properties.keys.Key;
 import com.wiredi.resources.Resource;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
 
 @AutoService(PropertyFileTypeLoader.class)
-public class PropertiesPropertyFileTypeLoader implements PropertyFileTypeLoader {
+public final class PropertiesPropertyFileTypeLoader implements PropertyFileTypeLoader {
 	@Override
-	public Map<Key, String> extract(Resource resource) {
+	public @NotNull Map<Key, String> extract(Resource resource) {
 		Properties properties = new Properties();
 		try {
 			properties.load(resource.getInputStream());
@@ -27,7 +28,7 @@ public class PropertiesPropertyFileTypeLoader implements PropertyFileTypeLoader 
 	}
 
 	@Override
-	public List<String> supportedFileTypes() {
+	public @NotNull List<String> supportedFileTypes() {
 		return List.of("properties");
 	}
 }

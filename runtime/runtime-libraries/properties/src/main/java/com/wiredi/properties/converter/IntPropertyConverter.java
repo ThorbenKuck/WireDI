@@ -4,6 +4,9 @@ import com.wiredi.properties.exceptions.InvalidPropertyTypeException;
 import org.jetbrains.annotations.NotNull;
 
 public class IntPropertyConverter implements PropertyConverter<Integer> {
+
+	public static final IntPropertyConverter INSTANCE = new IntPropertyConverter();
+
 	@Override
 	public @NotNull Integer apply(@NotNull String key, @NotNull String value) {
 		try {
