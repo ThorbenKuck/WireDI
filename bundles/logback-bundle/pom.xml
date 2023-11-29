@@ -23,7 +23,7 @@
     </developers>
 
     <properties>
-        <logback.version>1.4.8</logback.version>
+        <logback.version>1.4.12</logback.version>
     </properties>
 
     <dependencies>
