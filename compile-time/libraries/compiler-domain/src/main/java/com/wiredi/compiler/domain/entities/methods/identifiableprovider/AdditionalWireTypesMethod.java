@@ -1,18 +1,15 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
 import com.squareup.javapoet.*;
-import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.TypeIdentifiers;
-import com.wiredi.compiler.domain.entities.methods.MethodFactory;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
-import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 

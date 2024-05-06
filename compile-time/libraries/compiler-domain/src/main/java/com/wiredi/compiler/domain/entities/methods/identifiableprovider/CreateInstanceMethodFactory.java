@@ -12,10 +12,13 @@ import com.wiredi.compiler.domain.injection.PostConstructInjectionPoint;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
-import com.wiredi.lang.ReflectionsHelper;
-import com.wiredi.lang.values.FutureValue;
+import com.wiredi.runtime.async.AsyncLoader;
+import com.wiredi.runtime.lang.ReflectionsHelper;
+import com.wiredi.runtime.values.FutureValue;
 
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +88,7 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 		CodeBlock.Builder codeBlockBuilder = CodeBlock.builder().add("\n// Now let us inform the class about its construction\n");
 		injectionPoints.forEach(injectionPoint -> {
 			if (injectionPoint.supportsAsyncInvocation()) {
-				codeBlockBuilder.add("$T.run(() -> {\n", ParameterizedTypeName.get(FutureValue.class)).indent();
+				codeBlockBuilder.add("$T.run(() -> {\n", ParameterizedTypeName.get(AsyncLoader.class)).indent();
 			}
 			codeBlockBuilder.add(callMethod(injectionPoint, entity, variableContext));
 			if (injectionPoint.supportsAsyncInvocation()) {
@@ -136,6 +139,14 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 		});
 
 		return String.join(", ", fetchVariables);
+	}
+
+	protected Elements elements() {
+		return this.compilerRepository.getElements();
+	}
+
+	public Types types() {
+		return this.compilerRepository.getTypes();
 	}
 
 	@Override

@@ -8,7 +8,8 @@ public enum LogLevel implements LogLevelType {
 	DEBUG(10, Diagnostic.Kind.NOTE),
 	INFO(20, Diagnostic.Kind.NOTE),
 	WARN(30, Diagnostic.Kind.WARNING),
-	ERROR(40, Diagnostic.Kind.ERROR);
+	ERROR(40, Diagnostic.Kind.ERROR),
+	DISABLED(Integer.MAX_VALUE, null);
 
 	private final int level;
 	private final Diagnostic.Kind diagnosticKind;

@@ -3,9 +3,9 @@ package com.wiredi.processor.lang;
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
-import com.wiredi.processor.business.AspectAwareProxyService;
-import com.wiredi.processor.business.InjectionPointService;
-import com.wiredi.processor.lang.processors.WireBaseProcessor;
+import com.wiredi.compiler.processor.business.AspectAwareProxyService;
+import com.wiredi.compiler.processor.business.InjectionPointService;
+import com.wiredi.compiler.processor.lang.processors.WireBaseProcessor;
 import jakarta.inject.Inject;
 
 import javax.lang.model.element.Element;

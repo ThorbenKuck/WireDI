@@ -1,17 +1,16 @@
 package com.wiredi.runtime;
 
-import com.wiredi.domain.WireRepositoryContextCallbacks;
-import com.wiredi.lang.ReflectionsHelper;
-import com.wiredi.lang.SingletonSupplier;
-import com.wiredi.lang.collections.TypeMap;
+import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.lang.ReflectionsHelper;
+import com.wiredi.runtime.lang.SingletonSupplier;
+import com.wiredi.runtime.collections.TypeMap;
+import com.wiredi.runtime.beans.Bean;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,6 +52,7 @@ public class OnDemandInjector {
     public void clear() {
         clearCache();
         typeTranslations.clear();
+        constructors.clear();
     }
 
     public <T> T get(Class<T> type) {
@@ -72,6 +72,9 @@ public class OnDemandInjector {
     }
 
     private <T> T createNewInstance(Class<T> type) {
+        if (IdentifiableProvider.class.equals(type)) {
+            return (T) wireRepository.getNativeProvider(type);
+        }
         return (T) findTargetConstructor(type)
                 .map(this::invokeConstructor)
                 .orElseGet(() -> newInstanceFromDefaultConstructor(type));
@@ -128,7 +131,7 @@ public class OnDemandInjector {
         var fields = ReflectionsHelper.findAllAnnotatedFields(instance, Inject.class);
 
         for (Field field : fields) {
-            Object fieldInstance = getFromWireRepositoryOrCreate(field.getType());
+            Object fieldInstance = getFromWireRepositoryOrCreate(field.getGenericType());
             field.trySetAccessible();
             try {
                 field.set(instance, fieldInstance);
@@ -159,8 +162,26 @@ public class OnDemandInjector {
         return new BindStage<>(type, this);
     }
 
-    private <T> T getFromWireRepositoryOrCreate(Class<T> type) {
-        return wireRepository.tryGet(type).orElseGet(() -> this.get(type));
+    private <T> T getFromWireRepositoryOrCreate(Type type) {
+        if (type instanceof ParameterizedType parameterizedType) {
+            if (parameterizedType.getRawType().equals(IdentifiableProvider.class)) {
+                Class<?> genericType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+                return (T) wireRepository.getNativeProvider(genericType);
+            }
+            if (parameterizedType.getRawType().equals(Bean.class)) {
+                Class<?> genericType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
+                return (T) wireRepository.getBean(genericType);
+            }
+
+            Class<T> genericType = (Class<T>) type;
+            return wireRepository.tryGet(genericType).orElseGet(() -> this.get(genericType));
+        }
+
+        if (type instanceof Class<?>) {
+            Class<T> genericType = (Class<T>) type;
+            return (T) wireRepository.tryGet(genericType).orElseGet(() -> this.get(genericType));
+        }
+        throw new IllegalStateException("Unsupported type " + type);
     }
 
     public record BindStage<T>(Class<T> type, OnDemandInjector injector) {

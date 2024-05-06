@@ -6,8 +6,9 @@ import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import java.util.List;
+import java.util.Set;
 
-public record ProxyMethod(ExecutableElement value, List<AnnotationMirror> proxyAnnotations) {
+public record ProxyMethod(ExecutableElement value, Set<AnnotationMirror> proxyAnnotations) {
 
 	public TypeMirror returnType() {
 		return value.getReturnType();

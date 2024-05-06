@@ -1,24 +1,40 @@
 package com.wiredi.runtime.beans;
 
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.exceptions.DiLoadingException;
 import com.wiredi.runtime.exceptions.MultiplePrimaryProvidersRegisteredException;
 import com.wiredi.runtime.exceptions.MultipleSameQualifierProviderRegisteredExceptions;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public class ModifiableBean<T> extends AbstractBean<T> {
-
-    public static final ModifiableBean<?> EMPTY = new ModifiableBean<>(TypeIdentifier.of(Void.class));
 
     public ModifiableBean(TypeIdentifier<T> typeIdentifier) {
         super(typeIdentifier);
     }
 
     public static <T> ModifiableBean<T> empty() {
-        return (ModifiableBean<T>) EMPTY;
+        return (ModifiableBean<T>) EmptyModifiableBean.INSTANCE;
+    }
+
+    public ModifiableBean<T> orElseGet(Supplier<ModifiableBean<T>> other) {
+        if (isEmpty()) {
+            return other.get();
+        } else {
+            return this;
+        }
+    }
+
+    public ModifiableBean<T> orElse(ModifiableBean<T> modifiableBean) {
+        if (isEmpty()) {
+            return modifiableBean;
+        } else {
+            return this;
+        }
     }
 
     /**
@@ -58,7 +74,9 @@ public class ModifiableBean<T> extends AbstractBean<T> {
      */
     public void registerPrimaryProvider(TypeIdentifier<T> concreteType, IdentifiableProvider<T> identifiableProvider) {
         if (concreteType.willErase()) {
-            typedUnqualifiedProviders.computeIfAbsent(concreteType, t -> new TypedProviderState<>(identifiableProvider, concreteType)).trySetAsPrimary(identifiableProvider);
+            typedUnqualifiedProviders.computeIfAbsent(concreteType, t -> new TypedProviderState<>(concreteType))
+                    .add(identifiableProvider)
+                    .trySetAsPrimary(identifiableProvider);
         } else {
             if (primary != null) {
                 throw new MultiplePrimaryProvidersRegisteredException(concreteType, primary, identifiableProvider);
@@ -75,9 +93,9 @@ public class ModifiableBean<T> extends AbstractBean<T> {
      *
      * @param identifiableProvider the provider to set as the primary
      */
-    public void addUnqualifiedProvider(TypeIdentifier<T> typeIdentifier, IdentifiableProvider<T> identifiableProvider) {
-        if (typeIdentifier.willErase()) {
-            typedUnqualifiedProviders.computeIfAbsent(typeIdentifier, t -> new TypedProviderState<>(identifiableProvider, typeIdentifier));
+    public void addUnqualifiedProvider(TypeIdentifier<T> concreteType, IdentifiableProvider<T> identifiableProvider) {
+        if (concreteType.willErase()) {
+            typedUnqualifiedProviders.computeIfAbsent(concreteType, t -> new TypedProviderState<>(concreteType)).add(identifiableProvider);
         } else {
             unqualifiedProviders.add(identifiableProvider);
         }
@@ -103,5 +121,20 @@ public class ModifiableBean<T> extends AbstractBean<T> {
 
             qualifiedProviders.put(qualifier, newProvider);
         }
+    }
+
+    public List<IdentifiableProvider<T>> clear() {
+        List<IdentifiableProvider<T>> contents = new ArrayList<>();
+        if (primary != null) {
+            contents.add(primary);
+            primary = null;
+        }
+        contents.addAll(unqualifiedProviders);
+        unqualifiedProviders.clear();
+        typedUnqualifiedProviders.clear();
+        contents.addAll(qualifiedProviders.values());
+        qualifiedProviders.clear();
+
+        return contents;
     }
 }

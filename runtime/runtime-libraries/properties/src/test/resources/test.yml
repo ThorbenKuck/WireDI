@@ -1,7 +1,3 @@
-my:
-  - test: property1
-    bar:
-      buf: bim
-  - test: property2
-    bar:
-      buf: bam
+foo.bar:
+  baz: bam
+  buz.buy: buf

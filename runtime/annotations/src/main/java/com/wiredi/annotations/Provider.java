@@ -1,5 +1,7 @@
 package com.wiredi.annotations;
 
+import com.wiredi.annotations.aspects.Pure;
+
 import java.lang.annotation.*;
 
 /**

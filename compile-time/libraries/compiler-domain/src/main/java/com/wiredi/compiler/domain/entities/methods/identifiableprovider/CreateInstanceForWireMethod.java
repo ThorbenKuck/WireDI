@@ -1,16 +1,14 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.WireRepositories;
-import com.wiredi.compiler.domain.injection.ConstructorInjectionPoint;
+import com.wiredi.compiler.domain.injection.constructor.ConstructorInjectionPoint;
 import com.wiredi.compiler.domain.injection.InjectionPoints;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,6 +45,7 @@ public class CreateInstanceForWireMethod extends CreateInstanceMethodFactory {
         builder.returns(TypeName.get(entity.rootType()))
                 .addModifiers(Modifier.PRIVATE)
                 .addParameter(WireRepository.class, "wireRepository", Modifier.FINAL)
+                .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(constructorInvocationStep(injectionPoints.constructorInjectionPoint(), entity, variableContext))
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))
                 .addCode(methodInjectionStep(injectionPoints.methodInjections(), entity, variableContext))
@@ -66,7 +65,7 @@ public class CreateInstanceForWireMethod extends CreateInstanceMethodFactory {
         if (constructorInjectionPoint != null) {
             int parameterCount = constructorInjectionPoint.constructor().getParameters().size();
             if (parameterCount > 0) {
-                codeBlockBuilder.add("// We will relativeStart by Fetching all $L constructor parameters\n", parameterCount);
+                codeBlockBuilder.add("// We will start by Fetching all $L constructor parameters\n", parameterCount);
                 constructorInjectionPoint.constructor().getParameters().forEach(parameter -> {
                     String varName = context.instantiateVariableIfRequired(parameter, wireRepositories, codeBlockBuilder);
                     parameters.add(varName);

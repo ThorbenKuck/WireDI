@@ -1,5 +1,7 @@
 package com.wiredi.compiler.domain.injection;
 
+import com.wiredi.compiler.domain.injection.constructor.ConstructorInjectionPoint;
+
 import java.util.List;
 
 public record InjectionPoints(

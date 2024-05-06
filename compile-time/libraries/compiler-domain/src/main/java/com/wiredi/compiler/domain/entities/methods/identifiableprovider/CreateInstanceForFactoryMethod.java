@@ -1,15 +1,13 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
-import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.MethodSpec;
-import com.squareup.javapoet.TypeName;
-import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.injection.InjectionPoints;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.domain.values.FactoryMethod;
 import com.wiredi.compiler.repository.CompilerRepository;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.WireRepository;
 
 import javax.lang.model.element.Modifier;
@@ -46,8 +44,15 @@ public class CreateInstanceForFactoryMethod extends CreateInstanceMethodFactory 
         factoryMethod.method()
                 .getParameters()
                 .forEach(parameter -> {
-                    String variableName = variableContext.instantiateVariableIfRequired(parameter, wireRepositories, methodBody);
-                    params.add(variableName);
+                    if (parameter.asType().toString().startsWith(TypeIdentifier.class.getName())) {
+                        // TODO: This check currently only validates, that the class is an identifiable provider.
+                        // We need additional security checks,
+                        // to make sure that the identifiable provider actually is assignable
+                        params.add("concreteType");
+                    } else {
+                        String variableName = variableContext.instantiateVariableIfRequired(parameter, wireRepositories, methodBody);
+                        params.add(variableName);
+                    }
                 });
 
         methodBody.addStatement("$T instance = builder.$L($L)", entity.rootType(), factoryMethod.name(), String.join(", ", params));
@@ -55,6 +60,7 @@ public class CreateInstanceForFactoryMethod extends CreateInstanceMethodFactory 
         builder.returns(TypeName.get(factoryMethod.returnType()))
                 .addModifiers(Modifier.PRIVATE)
                 .addParameter(WireRepository.class, "wireRepository", Modifier.FINAL)
+                .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(methodBody.build())
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))
                 .addCode(methodInjectionStep(injectionPoints.methodInjections(), entity, variableContext))

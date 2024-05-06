@@ -8,12 +8,10 @@ import com.wiredi.compiler.domain.injection.FieldInjectionPoint;
 import com.wiredi.compiler.domain.injection.MethodInjectionPoint;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.injection.VariableContext;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 
-import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;

@@ -5,12 +5,13 @@
     <version>${revision}</version>
     <name>WireDI Annotations</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
 
     <parent>
         <groupId>com.wiredi</groupId>
         <artifactId>runtime</artifactId>
         <version>${revision}</version>
+
     </parent>
 
     <dependencies>
@@ -23,25 +24,10 @@
             <artifactId>jakarta.annotation-api</artifactId>
         </dependency>
         <dependency>
-            <groupId>net.pwall.yaml</groupId>
-            <artifactId>yaml-simple</artifactId>
-            <version>1.14</version>
-        </dependency>
-        <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service-annotations</artifactId>
-            <version>${google-auto-service.version}</version>
-            <optional>true</optional>
         </dependency>
     </dependencies>
-
-    <developers>
-        <developer>
-            <id>thorbenkuck</id>
-            <name>Thorben Kuck</name>
-            <email>thorben.kuck@gmail.com</email>
-        </developer>
-    </developers>
 
     <distributionManagement>
         <snapshotRepository>

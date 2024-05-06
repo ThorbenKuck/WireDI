@@ -10,8 +10,7 @@ public class ExtensionCache {
 
 	private static final Map<ExtensionContext, WireRepository> cache = new HashMap<>();
 
-	public static WireRepository require(ExtensionContext extensionContext) {
+	public static WireRepository getOrCreate(ExtensionContext extensionContext) {
 		return cache.computeIfAbsent(extensionContext.getRoot(), c -> WireRepository.open());
 	}
-
 }

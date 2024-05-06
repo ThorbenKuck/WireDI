@@ -1,0 +1,209 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>bom</artifactId>
+    <version>${revision}</version>
+    <packaging>pom</packaging>
+    <name>WireDI BOM</name>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
+
+    <parent>
+        <groupId>com.wiredi</groupId>
+        <artifactId>dependencies</artifactId>
+        <version>${revision}</version>
+    </parent>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Runtime dependencies -->
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>annotations</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>logging</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>async</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>cache</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>messaging</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>collections</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>lang</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>properties</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>resources</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>retry</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>time</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>value</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>runtime-environment</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Test dependencies -->
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>test-utils</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Compile time dependencies -->
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>compiler-tests</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>compile-time-injector</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>compile-time-logger</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>compiler-domain</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>compiler-errors</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>processor-development-kit</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>processors</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>processor-plugin-qualifiers</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>processor-plugin-conditional</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Integrations -->
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>cache-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>messaging-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>jackson-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>retry-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+
+            <!-- Bundles -->
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>test-bundle</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>logback-bundle</artifactId>
+                <version>${revision}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <developers>
+        <developer>
+            <id>thorbenkuck</id>
+            <name>Thorben Kuck</name>
+            <email>thorben.kuck@gmail.com</email>
+        </developer>
+    </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+        <repository>
+            <id>ossrh</id>
+            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+        </repository>
+    </distributionManagement>
+
+    <scm>
+        <connection>scm:git:git@github.com:ThorbenKuck/WireDI.git</connection>
+        <url>scm:git:git@github.com:ThorbenKuck/WireDI.git</url>
+        <developerConnection>scm:git:git@github.com:ThorbenKuck/WireDI.git</developerConnection>
+        <tag>wire-di-0.1</tag>
+    </scm>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+</project>

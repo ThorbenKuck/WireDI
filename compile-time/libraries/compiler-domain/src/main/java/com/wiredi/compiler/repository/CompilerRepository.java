@@ -16,113 +16,123 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 
 public class CompilerRepository {
 
-	private static final Logger logger = Logger.get(CompilerRepository.class);
+    private static final Logger logger = Logger.get(CompilerRepository.class);
 
-	private final Set<ClassEntity> classEntries = new HashSet<>();
+    private final Set<ClassEntity> classEntries = new HashSet<>();
 
-	private final Map<String, WireBridgeEntity> wireBridgeEntities = new HashMap<>();
+    private final Map<String, WireBridgeEntity> wireBridgeEntities = new ConcurrentHashMap<>();
 
-	private final Set<CompilerRepositoryCallback> repositoryCallbacks = new HashSet<>();
+    private final Set<CompilerRepositoryCallback> repositoryCallbacks = new HashSet<>();
 
-	@Inject
-	private Filer filer;
+    @Inject
+    private Filer filer;
 
-	@Inject
-	private Elements elements;
+    @Inject
+    private Elements elements;
+    @Inject
+    private Types types;
+    @Inject
+    private WireRepositories wireRepositories;
+    @Inject
+    private TypeIdentifiers typeIdentifiers;
 
-	@Inject
-	private Types types;
+    public Elements getElements() {
+        return elements;
+    }
 
-	@Inject
-	private WireRepositories wireRepositories;
+    public Types getTypes() {
+        return types;
+    }
 
-	@Inject
-	private TypeIdentifiers typeIdentifiers;
+    public void flush() {
+        synchronized (classEntries) {
+            logger.info(() -> "Flushing compiler repository with " + classEntries.size() + " classes in " + this);
+            classEntries.forEach(entry -> {
+                if (!entry.isValid()) {
+                    return;
+                }
+                repositoryCallbacks.forEach(it -> it.finalize(entry));
+                TypeSpec typeSpec = entry.compile();
+                var rootType = types.asElement(entry.rootType());
+                PackageElement packageElement = (PackageElement) entry.packageElement().orElseGet(() -> elements.getPackageOf(rootType));
 
-	public void flush() {
-		synchronized (classEntries) {
-			classEntries.forEach(entry -> {
-				if(!entry.isValid()) {
-					return;
-				}
-				repositoryCallbacks.forEach(it -> it.finalize(entry));
-				TypeSpec typeSpec = entry.compile();
-				var rootType = types.asElement(entry.rootType());
-				PackageElement packageElement = (PackageElement) entry.packageElement().orElseGet(() -> elements.getPackageOf(rootType));
+                logger.debug(() -> "Writing the file " + entry.className());
+                try {
+                    JavaFile.builder(packageElement.getQualifiedName().toString(), typeSpec)
+                            .indent("    ")
+                            .build()
+                            .writeTo(filer);
+                } catch (Exception e) {
+                    throw new ProcessingException(rootType, "Failed to write the java file " + entry.className(), e);
+                }
+            });
+            classEntries.clear();
+        }
+    }
 
-				logger.debug(() -> "Writing the file " + entry.className());
-				try {
-					JavaFile.builder(packageElement.getQualifiedName().toString(), typeSpec)
-							.indent("    ")
-							.build()
-							.writeTo(filer);
-				} catch (Exception e) {
-					throw new ProcessingException(rootType, "Failed to write the java file " + entry.className(), e);
-				}
-			});
-			classEntries.clear();
-		}
-	}
+    public void registerCallback(CompilerRepositoryCallback callback) {
+        this.repositoryCallbacks.add(callback);
+    }
 
-	public void registerCallback(CompilerRepositoryCallback callback) {
-		this.repositoryCallbacks.add(callback);
-	}
+    public EnvironmentConfigurationEntity newEnvironmentConfiguration(TypeElement typeElement) {
+        return save(new EnvironmentConfigurationEntity(typeElement), entity -> attach(entity, typeElement));
+    }
 
-	public EnvironmentConfigurationEntity newEnvironmentConfiguration(TypeElement typeElement) {
-		return save(new EnvironmentConfigurationEntity(typeElement), entity -> attach(entity, typeElement));
-	}
+    public AspectHandlerEntity newAspectHandlerInstance(TypeElement typeElement, ExecutableElement executableElement) {
+        return save(new AspectHandlerEntity(executableElement), entity -> attach(entity, typeElement).addSource(executableElement));
+    }
 
-	public AspectHandlerEntity newAspectHandlerInstance(TypeElement typeElement, ExecutableElement executableElement) {
-		return save(new AspectHandlerEntity(executableElement), entity -> attach(entity, typeElement).addSource(executableElement));
-	}
+    public IdentifiableProviderEntity newIdentifiableProvider(Element source, String name, TypeMirror typeMirror) {
+        Element element = types.asElement(typeMirror);
+        return save(new IdentifiableProviderEntity(source, typeMirror, name), entity -> attach(entity, element));
+    }
 
-	public IdentifiableProviderEntity newIdentifiableProvider(Element source, String name, TypeMirror typeMirror) {
-		Element element = types.asElement(typeMirror);
-		return save(create(source, typeMirror, name), entity -> attach(entity, element));
-	}
+    public IdentifiableProviderEntity newIdentifiableProvider(TypeElement typeElement) {
+        return save(new IdentifiableProviderEntity(typeElement), entity -> attach(entity, typeElement).setPackageOf(typeElement));
+    }
 
-	public IdentifiableProviderEntity newIdentifiableProvider(TypeElement typeElement) {
-		return save(create(typeElement), entity -> attach(entity, typeElement).setPackageOf(typeElement));
-	}
+    public WireBridgeEntity newWireBridgeEntity(String caller, TypeElement typeElement) {
+        synchronized (wireBridgeEntities) {
+            return wireBridgeEntities.computeIfAbsent(caller + "$" + typeElement.getSimpleName() + "$WireBridge", name -> save(new WireBridgeEntity(typeElement, name, wireRepositories), entity -> attach(entity, typeElement).setPackageOf(typeElement)));
+        }
+    }
 
-	public WireBridgeEntity newWireBridgeEntity(String caller, TypeElement typeElement) {
-		synchronized (wireBridgeEntities) {
-			return wireBridgeEntities.computeIfAbsent(caller + "$" + typeElement.getSimpleName() + "$WireBridge", name -> save(new WireBridgeEntity(typeElement, name, wireRepositories), entity -> attach(entity, typeElement).setPackageOf(typeElement)));
-		}
-	}
+    public AspectAwareProxyEntity newAspectAwareProxy(TypeElement typeElement) {
+        // TODO move asyncExecutionChainConstruction to properties
+        return save(new AspectAwareProxyEntity(typeElement, typeIdentifiers, true), it -> attach(it, typeElement).setPackageOf(typeElement));
+    }
 
-	public AspectAwareProxyEntity newAspectAwareProxy(TypeElement typeElement) {
-		// TODO move asyncExecutionChainConstruction to properties
-		return save(new AspectAwareProxyEntity(typeElement, typeIdentifiers, true), it -> attach(it, typeElement).setPackageOf(typeElement));
-	}
+    public <T extends ClassEntity<T>> T save(T entity, Consumer<T> consumer) {
+        logger.info("Saving " + entity + " to " + this);
+        synchronized (classEntries) {
+            this.classEntries.add(entity);
+            consumer.accept(entity);
+            repositoryCallbacks.forEach(it -> it.saved(entity));
+        }
+        return entity;
+    }
 
-	public <T extends ClassEntity<T>> T save(T entity, Consumer<T> consumer) {
-		logger.debug("Saving " + entity);
-		synchronized (classEntries) {
-			this.classEntries.add(entity);
-			consumer.accept(entity);
-			repositoryCallbacks.forEach(it -> it.saved(entity));
-		}
-		logger.debug("Saved " + entity);
-		return entity;
-	}
+    public <T extends ClassEntity<T>> T save(T entity) {
+        logger.info("Saving " + entity + " to " + this);
+        synchronized (classEntries) {
+            this.classEntries.add(entity);
+            repositoryCallbacks.forEach(it -> it.saved(entity));
+        }
+        return entity;
+    }
 
-	private <T extends AbstractClassEntity<T>> T attach(T entity, Element typeElement) {
-		logger.debug(() -> "Attaching " + entity);
-		return entity.setPackage(TypeUtils.packageOf(typeElement))
-				.addSource(typeElement);
-	}
-
-	private IdentifiableProviderEntity create(TypeElement typeElement) {
-		return new IdentifiableProviderEntity(typeElement);
-	}
-
-	private IdentifiableProviderEntity create(Element source, TypeMirror mirror, String name) {
-		return new IdentifiableProviderEntity(source, mirror, name);
-	}
+    private <T extends AbstractClassEntity<T>> T attach(T entity, Element typeElement) {
+        logger.debug(() -> "Attaching " + entity);
+        return entity.setPackage(TypeUtils.packageOf(typeElement))
+                .addSource(typeElement);
+    }
 }

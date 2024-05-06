@@ -6,7 +6,7 @@ import java.lang.annotation.*;
  * This annotation is used to signal a processor that the annotated class is wired automatically.
  * <p>
  * In certain configurations, such as with an annotation processor, there might be certain static analyze steps enabled.
- * One example might be, that an annotation processor might print a warning or even an error, when a wire candidate has
+ * One example might be that an annotation processor might print a warning or even an error, when a wire candidate has
  * an injection point of a non-wire candidate. For example, let us imagine we have class A, which looks like this:
  *
  * <pre><code>

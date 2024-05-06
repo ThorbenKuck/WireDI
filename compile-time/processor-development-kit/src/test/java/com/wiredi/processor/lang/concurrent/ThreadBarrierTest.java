@@ -1,11 +1,12 @@
 package com.wiredi.processor.lang.concurrent;
 
+import com.wiredi.compiler.processor.lang.concurrent.ContextRunnable;
+import com.wiredi.compiler.processor.lang.concurrent.ThreadBarrier;
 import org.junit.jupiter.api.Test;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import static org.junit.jupiter.api.Assertions.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class ThreadBarrierTest {

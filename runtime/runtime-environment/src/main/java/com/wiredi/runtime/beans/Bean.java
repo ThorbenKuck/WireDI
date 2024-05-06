@@ -1,32 +1,56 @@
 package com.wiredi.runtime.beans;
 
-import com.wiredi.domain.WireConflictResolver;
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.beans.value.BeanValue;
+import com.wiredi.runtime.domain.WireConflictResolver;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.qualifier.QualifierType;
 
-import java.util.*;
+import java.util.List;
 import java.util.function.Supplier;
 
 public interface Bean<T> {
 
-	static <T> Bean<T> empty() {
-		return UnmodifiableBean.empty();
-	}
+    static <T> Bean<T> empty() {
+        return UnmodifiableBean.empty();
+    }
 
-	List<IdentifiableProvider<T>> getAll();
+    int size();
 
-	List<IdentifiableProvider<T>> getAllUnqualified();
+    TypeIdentifier<T> rootType();
 
-	List<IdentifiableProvider<T>> getAllQualified();
+    List<IdentifiableProvider<T>> getAll();
 
-	Optional<IdentifiableProvider<T>> get(QualifierType qualifierType);
+    List<IdentifiableProvider<T>> getAll(TypeIdentifier<T> concreteType);
 
-	Optional<IdentifiableProvider<T>> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver);
+    List<IdentifiableProvider<T>> getAllUnqualified();
 
-	boolean isEmpty();
+    List<IdentifiableProvider<T>> getAllUnqualified(TypeIdentifier<T> concreteType);
 
-	default boolean isNotEmpty() {
-		return !isEmpty();
-	}
+    List<IdentifiableProvider<T>> getAllQualified();
+
+    List<IdentifiableProvider<T>> getAllQualified(TypeIdentifier<T> typeIdentifier);
+
+    BeanValue<T> get(QualifierType qualifierType);
+
+    BeanValue<T> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver);
+
+    /**
+     * Returns the value of the Bean.
+     * <p>
+     * It follows a similar algorithm as {@link #get(TypeIdentifier, Supplier)}.
+     * <p>
+     * If a primary bean can be found, return it.
+     * If no primary bean is found, this will only return a value if exactly one instance is maintained in this bean.
+     *
+     * @param conflictResolver
+     * @return
+     */
+    BeanValue<T> get(Supplier<WireConflictResolver> conflictResolver);
+
+    boolean isEmpty();
+
+    default boolean isNotEmpty() {
+        return !isEmpty();
+    }
 }

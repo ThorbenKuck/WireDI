@@ -1,10 +1,7 @@
 package com.wiredi.compiler.logger;
 import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.dispatcher.LogDispatcher;
-import com.wiredi.compiler.logger.dispatcher.WorkerThreadLogDispatcher;
-import com.wiredi.compiler.logger.writer.MessagerLogWriter;
-import com.wiredi.compiler.logger.writer.SystemOutLogWriter;
-import com.wiredi.lang.SingletonSupplier;
+import com.wiredi.runtime.lang.SingletonSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,18 +9,12 @@ import javax.lang.model.element.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.annotation.Annotation;
-import java.util.*;
 import java.util.function.Supplier;
 
 public class Logger {
 
 	private static final ThreadLocal<Element> localRootElement = new ThreadLocal<>();
 	private static final ThreadLocal<Class<? extends Annotation>> localCurrentAnnotation = new ThreadLocal<>();
-	private static final Supplier<LogDispatcher> DEFAULT_DISPATCHER = () -> new WorkerThreadLogDispatcher(
-			new SystemOutLogWriter(LogPattern.DEFAULT),
-			new MessagerLogWriter()
-	);
-	private static final LoggerCache loggerCache = new LoggerCache();
 
 	private final LogDispatcher logDispatcher;
 	private final Class<?> type;
@@ -50,7 +41,7 @@ public class Logger {
 	}
 
 	public static Logger get(Class<?> type) {
-		return loggerCache.getOrSet(type, () -> new Logger(type));
+		return LoggerCache.getOrSet(type, (properties, dispatcher) -> new Logger(type, properties, dispatcher));
 	}
 
 	public Logger(Class<?> type, LoggerProperties loggerProperties, LogDispatcher logDispatcher) {
@@ -60,11 +51,11 @@ public class Logger {
 	}
 
 	public Logger(Class<?> type, LoggerProperties loggerProperties) {
-		this(type, loggerProperties, DEFAULT_DISPATCHER.get());
+		this(type, loggerProperties, LoggerCache.getDefaultLogDispatcher());
 	}
 
 	public Logger(Class<?> type) {
-		this(type, new LoggerProperties());
+		this(type, LoggerCache.getDefaultLoggerProperties());
 	}
 
 	public void log(

@@ -9,11 +9,9 @@ import jakarta.annotation.Generated;
 import jakarta.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
 
-import javax.lang.model.element.Element;
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
+import java.lang.annotation.Annotation;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.List;
@@ -49,12 +47,26 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
         this.source = source;
         this.className = className;
         this.builder = createBuilder(rootElement)
-                .addAnnotation(generatedAnnotation());
+                .addAnnotation(generatedAnnotation())
+                .addOriginatingElement(source);
 
         List<Class<?>> autoServiceType = autoServiceTypes();
         if (!autoServiceType.isEmpty()) {
             builder.addAnnotation(autoServiceAnnotation(autoServiceType));
         }
+    }
+
+    @Override
+    public <A extends Annotation> List<Annotations.Result<A>> findAnnotations(Class<A> type) {
+        List<Annotations.Result<A>> annotations = Annotations.findAll(type, source);
+        if (source instanceof ExecutableElement) {
+            Element element = source;
+            while(!(element instanceof TypeElement)) {
+                element = element.getEnclosingElement();
+            }
+            annotations.addAll(Annotations.findAll(type, element));
+        }
+        return annotations;
     }
 
     @Override
@@ -149,9 +161,17 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     }
 
     private AnnotationSpec generatedAnnotation() {
+        String generationTime = System.getProperty("wire-di.generation-time");
+        OffsetDateTime offsetDateTime;
+        if (generationTime != null) {
+            offsetDateTime = OffsetDateTime.parse(generationTime);
+        } else {
+            offsetDateTime = OffsetDateTime.now();
+        }
+
         AnnotationSpec.Builder generatedBuilder = AnnotationSpec.builder(Generated.class)
                 .addMember("value", "$S", getClass().getName())
-                .addMember("date", "$S", OffsetDateTime.now().toString());
+                .addMember("date", "$S", offsetDateTime.toString());
 
         String comments = comments();
         if (comments != null) {
@@ -216,7 +236,10 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
         if (element.getModifiers().contains(Modifier.PUBLIC)) {
             return false;
         }
+        if (element.getModifiers().contains(Modifier.PRIVATE)) {
+            return true;
+        }
 
-        return packageElement().map(it -> it.equals(packageElementOf(element))).orElse(true);
+        return packageElement().map(it -> !it.equals(packageElementOf(element))).orElse(true);
     }
 }

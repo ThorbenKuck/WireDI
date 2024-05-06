@@ -5,7 +5,7 @@
     <version>${revision}</version>
     <name>WireDI Processor plugins</name>
     <description>Build in processor plugins</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
     <packaging>pom</packaging>
 
     <parent>
@@ -18,14 +18,6 @@
         <module>qualifiers</module>
         <module>conditional</module>
     </modules>
-
-    <developers>
-        <developer>
-            <id>thorbenkuck</id>
-            <name>Thorben Kuck</name>
-            <email>thorben.kuck@gmail.com</email>
-        </developer>
-    </developers>
 
     <distributionManagement>
         <snapshotRepository>

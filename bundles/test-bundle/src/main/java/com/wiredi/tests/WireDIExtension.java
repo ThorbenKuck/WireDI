@@ -1,9 +1,8 @@
 package com.wiredi.tests;
 
-import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.WireRepository;
 import org.junit.jupiter.api.extension.*;
-import org.junit.platform.commons.PreconditionViolationException;
 
 public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 
@@ -12,9 +11,10 @@ public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 			TestInstanceFactoryContext factoryContext,
 			ExtensionContext extensionContext
 	) throws TestInstantiationException {
-		return ExtensionCache.require(extensionContext)
-				.tryGet(factoryContext.getTestClass())
-				.orElseThrow(() -> new PreconditionViolationException("Could not create the class " + factoryContext.getTestClass()));
+		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
+
+		return repository.tryGet((Class<Object>) factoryContext.getTestClass())
+				.orElseGet(() -> repository.onDemandInjector().get(factoryContext.getTestClass()));
 	}
 
 	@Override
@@ -23,8 +23,9 @@ public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 			ExtensionContext extensionContext
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
-		WireRepository repository = ExtensionCache.require(extensionContext);
-		return repository.supports(typeIdentifier);
+		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
+
+		return repository.contains(typeIdentifier);
 	}
 
 	@Override
@@ -33,12 +34,12 @@ public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 			ExtensionContext extensionContext
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
-		WireRepository repository = ExtensionCache.require(extensionContext);
+		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
 
 		if (typeIdentifier.isNativeProvider()) {
-			return repository.getNativeProvider(typeIdentifier.getGenericTypes().get(0));
+			return repository.getNativeProvider(typeIdentifier.getGenericTypes().getFirst());
 		} else if(typeIdentifier.isBean()) {
-			return repository.getBean(typeIdentifier.getGenericTypes().get(0));
+			return repository.getBean(typeIdentifier.getGenericTypes().getFirst());
 		} else {
 			return repository.get(typeIdentifier);
 		}

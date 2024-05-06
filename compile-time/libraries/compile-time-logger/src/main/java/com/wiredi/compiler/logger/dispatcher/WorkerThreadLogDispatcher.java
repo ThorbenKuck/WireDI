@@ -2,7 +2,7 @@ package com.wiredi.compiler.logger.dispatcher;
 
 import com.wiredi.compiler.logger.LogEntry;
 import com.wiredi.compiler.logger.writer.LogWriter;
-import com.wiredi.lang.DataAccess;
+import com.wiredi.runtime.async.DataAccess;
 
 import java.util.ArrayList;
 import java.util.Arrays;

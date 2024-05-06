@@ -7,8 +7,11 @@ import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
@@ -26,6 +29,8 @@ public interface ClassEntity<T extends ClassEntity<?>> {
      * We then create a different class entity and annotate it with @Wire, so that this is picked up later instead.
      */
     void invalidate();
+
+    <A extends Annotation> List<Annotations.Result<A>> findAnnotations(Class<A> type);
 
     boolean isValid();
 

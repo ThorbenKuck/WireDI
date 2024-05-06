@@ -1,8 +1,7 @@
 package com.wiredi.processor.tck.domain.generics;
 
 import com.wiredi.annotations.Wire;
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.processor.tck.infrastructure.TckTestCase;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.beans.Bean;
@@ -10,7 +9,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Provider;
 import org.junit.jupiter.api.DynamicNode;
 
-import java.io.Serializable;
 import java.util.Collection;
 import java.util.List;
 
@@ -28,44 +26,39 @@ public class GenericTestCase implements TckTestCase {
     private final Bean<GenericBase<Double>> doubleBean;
     private final Provider<GenericBase<Double>> doubleProvider;
     private final IdentifiableProvider<GenericBase<Double>> nativeDoubleProvider;
-    private final DoubleConfiguration doubleConfiguration;
+    @Inject
+    GenericBase<String> stringBase;
 
     @Inject
-    private GenericBase<String> stringBase;
+    GenericBase<Long> longBase;
 
     @Inject
-    private GenericBase<Long> longBase;
-
-    @Inject
-    private GenericBase<Double> doubleBase;
+    GenericBase<Double> doubleBase;
 
     private final WireRepository wireRepository;
 
     public GenericTestCase(
-            List<GenericBase<?>> generics,
+            List<GenericBase<?>> generics, // Todo: Support wildcard generics. Should be the same as no generics
             DoubleImpl doubleimpl,
             PrimaryDoubleImpl primaryDoubleImpl,
             Bean<GenericBase<Double>> doubleBean,
             Provider<GenericBase<Double>> doubleProvider,
             IdentifiableProvider<GenericBase<Double>> nativeDoubleProvider,
-            DoubleConfiguration doubleConfiguration,
-            WireRepository wireRepository) {
+            WireRepository wireRepository
+    ) {
         this.generics = generics;
         this.doubleimpl = doubleimpl;
         this.primaryDoubleImpl = primaryDoubleImpl;
         this.doubleBean = doubleBean;
         this.doubleProvider = doubleProvider;
         this.nativeDoubleProvider = nativeDoubleProvider;
-        this.doubleConfiguration = doubleConfiguration;
         this.wireRepository = wireRepository;
-
-        wireRepository.get(TypeIdentifier.of(Serializable.class));
     }
 
     @Override
     public Collection<DynamicNode> dynamicTests() {
         return List.of(
-                dynamicTest("Assert that 3 GenericBases are wired", () -> assertThat(generics).hasSize(3)),
+                dynamicTest("Assert that 5 GenericBases are wired", () -> assertThat(generics).hasSize(5)),
                 dynamicTest("Assert that the generic String implementation is wired correctly", () -> assertThat(stringBase).isNotNull()),
                 dynamicTest("Assert that the generic Long implementation is wired correctly", () -> assertThat(longBase).isNotNull()),
                 dynamicTest("Assert that the generic Double implementation is wired correctly", () -> assertThat(doubleBase).isNotNull()),

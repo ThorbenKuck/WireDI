@@ -1,4 +1,3 @@
-
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
@@ -6,47 +5,47 @@
     <version>${revision}</version>
     <name>WireDI Properties</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
 
     <parent>
         <groupId>com.wiredi</groupId>
         <artifactId>runtime-libraries</artifactId>
         <version>${revision}</version>
-    </parent>
 
-    <developers>
-        <developer>
-            <id>thorbenkuck</id>
-            <name>Thorben Kuck</name>
-            <email>thorben.kuck@gmail.com</email>
-        </developer>
-    </developers>
+    </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>lang</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>resources</artifactId>
-            <version>${revision}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>collections</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>value</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>time</artifactId>
         </dependency>
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
-            <version>2.0</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service-annotations</artifactId>
-            <version>${google-auto-service.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${google-auto-service.version}</version>
             <optional>true</optional>
         </dependency>
     </dependencies>
@@ -62,9 +61,3 @@
         </repository>
     </distributionManagement>
 </project>
-
-
-        <!-- mvn -DperformRelease=true release:clean release:prepare release:perform -->
-        <!-- mvn release:prepare-->
-        <!-- mvn release:perform-->
-        <!-- mvn -DperformRelease=true-->

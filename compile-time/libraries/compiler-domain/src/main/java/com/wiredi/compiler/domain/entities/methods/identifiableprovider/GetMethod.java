@@ -1,11 +1,11 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
 import com.squareup.javapoet.*;
-import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
-import com.wiredi.lang.values.SafeReference;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -29,16 +29,16 @@ public class GetMethod implements StandaloneMethodFactory {
 
         CodeBlock.Builder getCodeBlock = CodeBlock.builder();
         if (singleton) {
-            getCodeBlock.addStatement("return instance.getOrSet(() -> createInstance(wireRepository))");
+            getCodeBlock.addStatement("return instance.getOrSet(() -> createInstance(wireRepository, concreteType))");
 
-            entity.addField(ParameterizedTypeName.get(ClassName.get(SafeReference.class), TypeName.get(entity.rootType())), "instance", (field) ->
+            entity.addField(ParameterizedTypeName.get(ClassName.get(Value.class), TypeName.get(entity.rootType())), "instance", (field) ->
                     field.addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                            .initializer("$T.empty()", SafeReference.class)
+                            .initializer("$T.empty()", Value.class)
                             .build()
             );
             getMethodModifier.add(Modifier.SYNCHRONIZED);
         } else {
-            getCodeBlock.addStatement("return createInstance(wireRepository)");
+            getCodeBlock.addStatement("return createInstance(wireRepository, concreteType)");
         }
 
 
@@ -48,7 +48,13 @@ public class GetMethod implements StandaloneMethodFactory {
                         ParameterSpec.builder(WireRepository.class, "wireRepository", Modifier.FINAL)
                                 .addAnnotation(NotNull.class)
                                 .build()
-                ).addCode(getCodeBlock.build())
+                )
+                .addParameter(
+                        ParameterSpec.builder(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), ClassName.get(returnType)), "concreteType", Modifier.FINAL)
+                                .addAnnotation(NotNull.class)
+                                .build()
+                )
+                .addCode(getCodeBlock.build())
                 .returns(TypeName.get(returnType))
                 .build();
     }

@@ -1,8 +1,8 @@
 package com.wiredi.runtime.beans;
 
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

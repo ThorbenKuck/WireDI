@@ -4,7 +4,7 @@ import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.LogLevel;
 import com.wiredi.compiler.logger.Logger;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.qualifier.QualifierType;
 import jakarta.inject.Qualifier;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +12,6 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ExecutableElement;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Qualifiers {
 

@@ -5,12 +5,13 @@
     <version>${revision}</version>
     <name>WireDI Compiler Annotation Processor</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
 
     <parent>
         <groupId>com.wiredi</groupId>
         <artifactId>compile-time</artifactId>
         <version>${revision}</version>
+
     </parent>
 
     <developers>
@@ -25,39 +26,39 @@
         <dependency>
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service</artifactId>
-            <version>${google-auto-service.version}</version>
             <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>com.squareup</groupId>
             <artifactId>javapoet</artifactId>
-            <version>${java-poet.version}</version>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>processor-development-kit</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>runtime-environment</artifactId>
-            <version>${revision}</version>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
-            <artifactId>logback-bundle</artifactId>
-            <version>${revision}</version>
+            <artifactId>processor-plugin-conditional</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>processor-plugin-qualifiers</artifactId>
+        </dependency>
+
+        <!-- Tests -->
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>compiler-tests</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
-            <artifactId>conditional-processor-plugin</artifactId>
-            <version>${revision}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.wiredi</groupId>
-            <artifactId>qualifiers-processor-plugin</artifactId>
-            <version>${revision}</version>
+            <artifactId>logback-bundle</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

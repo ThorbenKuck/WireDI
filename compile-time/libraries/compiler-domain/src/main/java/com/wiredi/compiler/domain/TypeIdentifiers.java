@@ -2,8 +2,8 @@ package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.logger.Logger;
-import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.lang.values.Value;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.values.Value;
 import jakarta.inject.Inject;
 
 import javax.lang.model.element.TypeElement;

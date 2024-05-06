@@ -2,9 +2,8 @@ package com.wiredi.compiler.domain.entities.methods.aspecthandler;
 
 import com.squareup.javapoet.*;
 import com.wiredi.annotations.aspects.Aspect;
-import com.wiredi.aspects.AspectHandler;
-import com.wiredi.aspects.ExecutionContext;
-import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.runtime.aspects.AspectHandler;
+import com.wiredi.runtime.aspects.ExecutionContext;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.compiler.logger.Logger;

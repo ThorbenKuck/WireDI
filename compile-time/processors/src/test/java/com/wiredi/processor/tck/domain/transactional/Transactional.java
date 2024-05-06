@@ -10,4 +10,7 @@ import java.lang.annotation.*;
 @Documented
 @AspectTarget
 public @interface Transactional {
+
+    boolean preventNested() default false;
+
 }

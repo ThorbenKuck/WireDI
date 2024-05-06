@@ -1,8 +1,7 @@
 package com.wiredi.runtime.exceptions;
 
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.qualifier.QualifierType;
-import org.jetbrains.annotations.NotNull;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.qualifier.QualifierType;
 
 public class MultipleSameQualifierProviderRegisteredExceptions extends DiLoadingException {
     public MultipleSameQualifierProviderRegisteredExceptions(QualifierType qualifierType, IdentifiableProvider<?> first, IdentifiableProvider<?> second) {

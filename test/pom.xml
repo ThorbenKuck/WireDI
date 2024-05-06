@@ -7,10 +7,9 @@
     <packaging>jar</packaging>
 
     <parent>
-        <artifactId>bootstrap</artifactId>
         <groupId>com.wiredi</groupId>
+        <artifactId>bootstrap</artifactId>
         <version>1.0.0-beta-SNAPSHOT</version>
-        <relativePath/>
     </parent>
 
     <developers>

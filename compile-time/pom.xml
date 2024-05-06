@@ -5,36 +5,39 @@
     <version>${revision}</version>
     <name>WireDI Compile Time Parent</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
     <packaging>pom</packaging>
 
     <parent>
         <groupId>com.wiredi</groupId>
-        <artifactId>development-root</artifactId>
+        <artifactId>dependencies</artifactId>
         <version>${revision}</version>
+
     </parent>
+
+    <properties>
+        <java-poet.version>1.13.0</java-poet.version>
+    </properties>
 
     <modules>
         <module>libraries</module>
         <module>processor-development-kit</module>
         <module>processor-plugins</module>
         <module>processors</module>
+        <module>compiler-tests</module>
     </modules>
 
-    <developers>
-        <developer>
-            <id>thorbenkuck</id>
-            <name>Thorben Kuck</name>
-            <email>thorben.kuck@gmail.com</email>
-        </developer>
-    </developers>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-        </dependency>
-    </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>bom</artifactId>
+                <version>${revision}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <distributionManagement>
         <snapshotRepository>

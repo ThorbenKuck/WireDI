@@ -5,13 +5,14 @@
     <version>${revision}</version>
     <name>WireDI Bundles - Test</name>
     <description>Easy and simple di using annotation processors</description>
-    <url>https://github.com/ThorbenKuck/SimpleDI</url>
+    <url>https://github.com/ThorbenKuck/WireDI</url>
     <packaging>jar</packaging>
 
     <parent>
         <groupId>com.wiredi</groupId>
         <artifactId>bundles</artifactId>
         <version>${revision}</version>
+
     </parent>
 
     <developers>
@@ -22,31 +23,14 @@
         </developer>
     </developers>
 
-    <properties>
-        <junit.version>5.9.3</junit.version>
-    </properties>
-
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>org.junit</groupId>
-                <artifactId>junit-bom</artifactId>
-                <version>${junit.version}</version>
-                <type>pom</type>
-                <scope>import</scope>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <build>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.1</version>
+                <version>${maven-compiler-plugin.version}</version>
                 <configuration>
-                    <source>${java.version}</source>
-                    <target>${java.version}</target>
+                    <parameters>true</parameters>
                     <annotationProcessorPaths>
                         <processorPath>
                             <groupId>com.wiredi</groupId>
@@ -77,6 +61,10 @@
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>runtime-environment</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>test-utils</artifactId>
         </dependency>
     </dependencies>
 

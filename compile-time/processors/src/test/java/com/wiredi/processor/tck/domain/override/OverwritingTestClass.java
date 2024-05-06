@@ -4,7 +4,7 @@ import com.wiredi.annotations.Wire;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 
-@Wire
+@Wire(proxy = false)
 public class OverwritingTestClass extends OverwrittenTestClass {
 
 	@Override
@@ -32,6 +32,11 @@ public class OverwritingTestClass extends OverwrittenTestClass {
 	@Inject
 	public void injectInOverwritingOnly() {
 		overwritingMethodEnablesInjection.success();
+	}
+
+	@Inject
+	public void injectWithoutParameter() {
+		injectWithoutParameterIsInvoked.success();
 	}
 
 	@Override

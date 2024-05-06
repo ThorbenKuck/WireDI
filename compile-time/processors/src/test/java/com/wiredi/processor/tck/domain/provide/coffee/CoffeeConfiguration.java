@@ -3,8 +3,9 @@ package com.wiredi.processor.tck.domain.provide.coffee;
 import com.wiredi.annotations.Primary;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.Wire;
+import com.wiredi.annotations.stereotypes.Configuration;
 
-@Wire
+@Configuration
 public class CoffeeConfiguration {
 
 	@Fruity

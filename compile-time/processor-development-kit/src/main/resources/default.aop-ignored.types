@@ -1,0 +1,19 @@
+# This file contains the default ignored annotations for aspects.
+# If the annotation processor is configured to automatically proxy all methods with an annotation,
+# this file describes which annotation should not be used for proxying.
+# It can also be understood as a "blacklist" for annotations that should not result in a proxied
+# method.
+
+# All java lang annotations (Deprecated, FunctionalInterface, Override, SafeVarargs, ...)
+p:java.lang.[a-zA-Z]+
+
+# PreDestroy and PostConstruct annotation, as they are introspective only.
+# They are picked up by the annotation processor and should not be included in the annotation processor
+p:[jakrtvx]+.annotation.PostConstruct
+p:[jakrtvx]+.annotation.PreDestroy
+
+# All Jakarta/JavaX annotations for jsr-330 compatibility
+# They are supposed to influence the annotation processor, and not support runtime configurations.
+# This goes against the standard, as it is mostly designed for runtime introspection, but you can
+# still implement runtime introspection, just not provide aspects for them.
+p:[jakrtvx]+.inject.[a-zA-Z]+

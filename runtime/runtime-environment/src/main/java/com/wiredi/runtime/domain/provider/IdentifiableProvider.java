@@ -1,0 +1,148 @@
+package com.wiredi.runtime.domain.provider;
+
+import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.domain.StandardWireConflictResolver;
+import com.wiredi.runtime.domain.WireConflictResolver;
+import com.wiredi.runtime.domain.provider.condition.LoadCondition;
+import com.wiredi.runtime.qualifier.QualifierType;
+import jakarta.annotation.ManagedBean;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
+
+public interface IdentifiableProvider<T> extends Ordered {
+
+    // ########################################################################
+    // ### Static methods, to wrap non-instances into Identifiable Provider ###
+    // ########################################################################
+
+    static <T> SingletonInstanceIdentifiableProvider<T> singleton(T t) {
+        return singleton(t, TypeIdentifier.resolve(t));
+    }
+
+    static <T, S extends T> SingletonInstanceIdentifiableProvider<T> singleton(S instance, Class<T> type) {
+        return singleton(instance, TypeIdentifier.of(type));
+    }
+
+    static <T, S extends T> SingletonInstanceIdentifiableProvider<T> singleton(S instance, TypeIdentifier<T> type) {
+        return SingletonInstanceIdentifiableProvider.of(instance, type);
+    }
+
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Supplier<T> supplier, TypeIdentifier<T> type) {
+        return wrap(supplier, type, List.of(type));
+    }
+
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Supplier<T> supplier, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+        return wrap((r) -> supplier.get(), type, wireTypes);
+    }
+
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireRepository, T> function, TypeIdentifier<T> type) {
+        return wrap(function, type, List.of(type));
+    }
+
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireRepository, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+        return new MultiTonGenericIdentifiableProvider<>(function, wireTypes, type);
+    }
+
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Supplier<T> supplier, TypeIdentifier<T> type) {
+        return wrapSingleton(supplier, type, List.of(type));
+    }
+
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Supplier<T> supplier, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+        return wrapSingleton((r) -> supplier.get(), type, wireTypes);
+    }
+
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, TypeIdentifier<T> type) {
+        return wrapSingleton(function, type, List.of(type));
+    }
+
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+        return new LazySingletonIdentifiableProvider<>(function, wireTypes, type);
+    }
+
+    // #################################
+    // ### Concrete member functions ###
+    // #################################
+
+    /**
+     * Defines the type, this IdentifiableProvider will produce.
+     * <p>
+     * This type returned right here must be assignable from the type the {@link #get(WireRepository) get method}
+     * returns.
+     *
+     * @return the type this IdentifiableProvider produces
+     */
+    @NotNull
+    TypeIdentifier<? super T> type();
+
+    @NotNull
+    default List<TypeIdentifier<?>> additionalWireTypes() {
+        return Collections.emptyList();
+    }
+
+    /**
+     * Returns, whether the type produced by this IdentifiableProvider is singleton or produced on request.
+     *
+     * @return true, if the same instance is returned with ever call of the {@link #get(WireRepository) get method}
+     */
+    default boolean isSingleton() {
+        return true;
+    }
+
+    /**
+     * If this provider is the primary provider of its {@link #type()} and {@link #additionalWireTypes()}.
+     * <p>
+     * If true, it will override other existing providers when injection qualifiers are resolved.
+     *
+     * @return true, if {@link #get(WireRepository)} should return the primary instance for the {@link #type()} and {@link #additionalWireTypes()}.
+     */
+    default boolean primary() {
+        return false;
+    }
+
+    /**
+     * This method produces the instance associated with the {@link #type() type method}.
+     * <p>
+     * If the method {@link #isSingleton()} returns true, it is expected that this method returns the same instance
+     * every time. If not, it is expected that calling this method creates a new instance every time it is called.
+     * <p>
+     * To resolve dependencies, the WireRepository instance this IdentifiableProvider is created through is passed
+     * into this method.
+     *
+     * @param wireRepository the {@link WireRepository wireRepository} instance this Provider is created through
+     * @param concreteType the type that was requested
+     * @return the instance, which might be null
+     */
+    @Nullable
+    T get(@NotNull final WireRepository wireRepository, @NotNull final TypeIdentifier<T> concreteType);
+
+    default T get(@NotNull final WireRepository wireRepository) {
+        return get(wireRepository, (TypeIdentifier<T>) type());
+    }
+
+    /**
+     * The priority of this IdentifiableProvider, which might be used in the {@link WireConflictResolver}
+     * and is used in {@link StandardWireConflictResolver#BEST_MATCH}
+     *
+     * @return the priority of this IdentifiableProvider
+     */
+    @Override
+    default int getOrder() {
+        return DEFAULT;
+    }
+
+    @NotNull
+    default List<QualifierType> qualifiers() {
+        return Collections.emptyList();
+    }
+
+    @Nullable
+    default LoadCondition condition() {
+        return null;
+    }
+}

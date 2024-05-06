@@ -1,6 +1,6 @@
 package com.wiredi.processor.lang;
 
-import com.wiredi.Injector;
+import com.wiredi.compiler.Injector;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 

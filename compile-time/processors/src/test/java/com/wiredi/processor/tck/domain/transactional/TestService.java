@@ -11,7 +11,17 @@ public class TestService {
 	}
 
 	@Transactional
-	public void handler(String input) {
+	public String handler(String input) {
+		return execute(input);
+	}
 
+	@Transactional(preventNested = true)
+	public String executeNotNested(String input) {
+		return "Processed: " + input;
+	}
+
+	@Transactional(preventNested = true)
+	public String handlerNotNested(String input) {
+		return executeNotNested(input);
 	}
 }

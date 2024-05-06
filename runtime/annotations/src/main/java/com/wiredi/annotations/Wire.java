@@ -12,7 +12,7 @@ import java.lang.annotation.*;
  * IdentifiableProvider is generated. Additionally, annotated classes might result in generated proxy classes, which
  * are used in place of the annotated class
  */
-@Retention(RetentionPolicy.CLASS)
+@Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
 @Inherited
@@ -21,7 +21,7 @@ public @interface Wire {
 	/**
 	 * Defines which classes identify this wire type, overriding the default behaviour.
 	 * <p>
-	 * If this field is not set, the wire will be assigned to the class annotated as well as any Interface and/or
+	 * If this field is not set, the wire will be assigned to all Interface and/or
 	 * parent classes the annotated class inherits from.
 	 * <p>
 	 * <b>NOTE:</b> The annotated class has to be assignable to all classes provided in this field here.

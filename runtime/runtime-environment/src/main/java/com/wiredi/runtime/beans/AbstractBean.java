@@ -1,15 +1,17 @@
 package com.wiredi.runtime.beans;
 
-import com.wiredi.domain.WireConflictResolver;
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.beans.value.BeanValue;
+import com.wiredi.runtime.domain.WireConflictResolver;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.exceptions.MultiplePrimaryProvidersRegisteredException;
+import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public abstract class AbstractBean<T> implements Bean<T> {
 
@@ -33,24 +35,48 @@ public abstract class AbstractBean<T> implements Bean<T> {
     ) {
         this.qualifiedProviders = qualifiedProviders;
         this.typedUnqualifiedProviders = typedUnqualifiedProviders;
-        this.rootType = rootType;
+        this.rootType = rootType.erasure();
         this.unqualifiedProviders = unqualifiedProviders;
     }
 
     @Override
+    public TypeIdentifier<T> rootType() {
+        return this.rootType;
+    }
+
+    @Override
     public List<IdentifiableProvider<T>> getAll() {
-        List<IdentifiableProvider<T>> result = getAllUnqualified();
-        result.addAll(qualifiedProviders.values());
-        if (primary != null && !result.contains(primary)) {
+        Set<IdentifiableProvider<T>> result = join(getAllUnqualified(), getAllQualified());
+        if (primary != null) {
             result.add(primary);
         }
-        return result;
+        return new ArrayList<>(result);
+    }
+
+    @Override
+    public List<IdentifiableProvider<T>> getAll(TypeIdentifier<T> concreteType) {
+        return new ArrayList<>(join(getAllQualified(concreteType), getAllUnqualified(concreteType)));
     }
 
     @Override
     public List<IdentifiableProvider<T>> getAllUnqualified() {
         List<IdentifiableProvider<T>> result = new ArrayList<>(unqualifiedProviders);
-        result.addAll(typedUnqualifiedProviders.values().stream().map(TypedProviderState::determine).toList());
+        result.addAll(typedUnqualifiedProviders.values().stream().flatMap(it -> it.all().stream()).toList());
+        return result;
+    }
+
+    @Override
+    public List<IdentifiableProvider<T>> getAllUnqualified(TypeIdentifier<T> concreteType) {
+        List<IdentifiableProvider<T>> result = new ArrayList<>(unqualifiedProviders.stream()
+                .filter(it -> concreteType.isInstanceOf(it.type()))
+                .toList());
+        result.addAll(
+                typedUnqualifiedProviders.entrySet()
+                        .stream()
+                        .filter(entry -> entry.getKey().isInstanceOf(concreteType))
+                        .flatMap(it -> it.getValue().all().stream())
+                        .toList()
+        );
         return result;
     }
 
@@ -60,47 +86,93 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public Optional<IdentifiableProvider<T>> get(QualifierType qualifierType) {
-        return Optional.ofNullable(qualifiedProviders.get(qualifierType));
+    public List<IdentifiableProvider<T>> getAllQualified(TypeIdentifier<T> typeIdentifier) {
+        return qualifiedProviders.values()
+                .stream()
+                .filter(it -> typeIdentifier.isInstanceOf(it.type()))
+                .toList();
+    }
+
+    @Override
+    public BeanValue<T> get(QualifierType qualifierType) {
+        return BeanValue.of(qualifiedProviders.get(qualifierType));
     }
 
     @Override
     public boolean isEmpty() {
-        return primary == null || typedUnqualifiedProviders.isEmpty() || qualifiedProviders.isEmpty();
+        return !hasPrimary()
+                && !hasUnqualifiedProviders()
+                && !hasQualifiedProviders();
+    }
+
+    public boolean hasQualifiedProviders() {
+        return !qualifiedProviders.isEmpty();
+    }
+
+    public boolean hasUnqualifiedProviders() {
+        return !unqualifiedProviders.isEmpty();
+    }
+
+    public boolean hasPrimary() {
+        return primary != null;
     }
 
     @Override
-    public Optional<IdentifiableProvider<T>> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
+    public int size() {
+        return (primary != null ? 1 : 0) + unqualifiedProviders.size() + qualifiedProviders.size();
+    }
+
+    @Override
+    public BeanValue<T> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
         if (primary != null) {
-            return Optional.of(primary);
+            return BeanValue.of(primary);
         }
         if (concreteType.willErase()) {
             TypedProviderState<T> state = typedUnqualifiedProviders.get(concreteType);
             if (state != null) {
-                return Optional.of(state.determine());
+                return BeanValue.of(state.determine(conflictResolver));
             }
-        } if (unqualifiedProviders.size() == 1) {
-            return Optional.ofNullable(unqualifiedProviders.iterator().next());
+        }
+        if (unqualifiedProviders.size() == 1) {
+            return BeanValue.of(unqualifiedProviders.iterator().next());
         }
 
         return fallback(concreteType, conflictResolver);
     }
 
-    private Optional<IdentifiableProvider<T>> fallback(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
+    @Override
+    public BeanValue<T> get(Supplier<WireConflictResolver> conflictResolver) {
+        if (primary != null) {
+            return BeanValue.of(primary);
+        }
+
+        if (unqualifiedProviders.size() == 1) {
+            Iterator<IdentifiableProvider<T>> iterator = unqualifiedProviders.iterator();
+            IdentifiableProvider<T> result = iterator.next();
+            if (iterator.hasNext()) {
+                throw new ConcurrentModificationException("Bean was updated while fetching Identifiable Providers of " + rootType);
+            }
+            return BeanValue.of(result);
+        }
+
+        return fallback(rootType, conflictResolver);
+    }
+
+    private BeanValue<T> fallback(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
         List<IdentifiableProvider<T>> all = getAll();
         if (all.isEmpty()) {
-            return Optional.empty();
+            return BeanValue.empty();
         }
         if (all.size() > 1) {
             IdentifiableProvider<T> provider = conflictResolver.get().find(all, concreteType);
-            return Optional.of(provider);
+            return BeanValue.of(provider);
         }
-        return Optional.of(all.get(0));
+        return BeanValue.of(all.getFirst());
     }
 
     public static class TypedProviderState<T> {
         @NotNull
-        private final IdentifiableProvider<T> provider;
+        private final List<IdentifiableProvider<T>> providers = new ArrayList<>();
 
         @NotNull
         private final TypeIdentifier<T> concreteType;
@@ -108,19 +180,45 @@ public abstract class AbstractBean<T> implements Bean<T> {
         @Nullable
         private IdentifiableProvider<T> primary = null;
 
-        public TypedProviderState(@NotNull IdentifiableProvider<T> provider, @NotNull TypeIdentifier<T> concreteType) {
-            this.provider = provider;
+        public TypedProviderState(@NotNull TypeIdentifier<T> concreteType) {
             this.concreteType = concreteType;
         }
 
-        @NotNull
-        public IdentifiableProvider<T> determine() {
-            return Objects.requireNonNullElse(primary, provider);
+        @Nullable
+        public IdentifiableProvider<T> determine(Supplier<WireConflictResolver> conflictResolver) {
+            if (primary != null) {
+                return primary;
+            }
+            if (providers.isEmpty()) {
+                return null;
+            }
+            if (providers.size() == 1) {
+                return providers.getFirst();
+            }
+
+            return conflictResolver.get().find(providers, concreteType);
         }
 
-        public void trySetAsPrimary(IdentifiableProvider<T> identifiableProvider) {
+        @NotNull
+        public List<IdentifiableProvider<T>> all() {
+            return providers;
+        }
+
+        @NotNull
+        public List<IdentifiableProvider<T>> all(TypeIdentifier<T> typeIdentifier) {
+            return providers.stream()
+                    .filter(it -> typeIdentifier.isInstanceOf(it.type()))
+                    .toList();
+        }
+
+        public TypedProviderState<T> add(IdentifiableProvider<T> identifiableProvider) {
+            this.providers.add(identifiableProvider);
+            return this;
+        }
+
+        public TypedProviderState<T> trySetAsPrimary(IdentifiableProvider<T> identifiableProvider) {
             if (!identifiableProvider.primary()) {
-                return;
+                return this;
             }
 
             if (primary != null) {
@@ -128,6 +226,15 @@ public abstract class AbstractBean<T> implements Bean<T> {
             }
 
             primary = identifiableProvider;
+
+            return this;
         }
+    }
+
+    private <S> Set<S> join(Collection<S> a, Collection<S> b) {
+        HashSet<S> result = new HashSet<>();
+        result.addAll(a);
+        result.addAll(b);
+        return result;
     }
 }

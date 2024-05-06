@@ -1,8 +1,7 @@
 package com.wiredi.runtime.exceptions;
 
-import com.wiredi.domain.provider.IdentifiableProvider;
-import com.wiredi.domain.provider.TypeIdentifier;
-import org.jetbrains.annotations.NotNull;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 
 public class MultiplePrimaryProvidersRegisteredException extends DiLoadingException {
     public MultiplePrimaryProvidersRegisteredException(TypeIdentifier<?> typeIdentifier, IdentifiableProvider<?> first, IdentifiableProvider<?> second) {

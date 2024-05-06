@@ -4,11 +4,13 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.logger.Logger;
-import com.wiredi.environment.Environment;
-import com.wiredi.properties.keys.Key;
-import com.wiredi.resources.Resource;
-import com.wiredi.environment.EnvironmentConfiguration;
-import com.wiredi.resources.ResourceLoader;
+import com.wiredi.runtime.Environment;
+import com.wiredi.runtime.properties.Key;
+import com.wiredi.runtime.resources.Resource;
+import com.wiredi.runtime.environment.EnvironmentConfiguration;
+import com.wiredi.runtime.resources.ResourceLoader;
+import com.wiredi.runtime.resources.builtin.ClassPathResourceProtocolResolver;
+import com.wiredi.runtime.resources.builtin.FileSystemResourceProtocolResolver;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -22,7 +24,7 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 
 	private final List<String> propertiesToLoad = new ArrayList<>();
 	private final List<Entry> entries = new ArrayList<>();
-	private final ResourceLoader resourceLoader = ResourceLoader.open();
+	private final ResourceLoader resourceLoader = ResourceLoader.open(ClassPathResourceProtocolResolver.INSTANCE, FileSystemResourceProtocolResolver.INSTANCE);
 	private final TypeElement typeElement;
 	private static final Logger logger = Logger.get(EnvironmentConfigurationEntity.class);
 
@@ -51,6 +53,11 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 				logger.warn(typeElement, () -> "The defined resource \"" + path + "\" appears to not exist");
 			}
 		}
+		return this;
+	}
+
+	public EnvironmentConfigurationEntity appendEntry(Entry entry) {
+		this.entries.add(entry);
 		return this;
 	}
 

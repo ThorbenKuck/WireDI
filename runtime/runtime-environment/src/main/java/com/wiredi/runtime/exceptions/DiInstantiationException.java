@@ -1,6 +1,6 @@
 package com.wiredi.runtime.exceptions;
 
-import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 public class DiInstantiationException extends RuntimeException {
@@ -14,6 +14,11 @@ public class DiInstantiationException extends RuntimeException {
 
 	public DiInstantiationException(@NotNull final String message, @NotNull TypeIdentifier<?> wireType) {
 		super(message);
+		this.wireType = wireType;
+	}
+
+	public DiInstantiationException(@NotNull final Throwable cause, @NotNull TypeIdentifier<?> wireType) {
+		super(cause);
 		this.wireType = wireType;
 	}
 

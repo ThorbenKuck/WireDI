@@ -1,8 +1,8 @@
 package com.wiredi.processor.tck.domain.properties;
 
 import com.wiredi.annotations.Wire;
-import com.wiredi.annotations.properties.Resolve;
-import com.wiredi.domain.Eager;
+import com.wiredi.annotations.environment.Resolve;
+import com.wiredi.runtime.domain.Eager;
 import com.wiredi.runtime.WireRepository;
 
 @Wire

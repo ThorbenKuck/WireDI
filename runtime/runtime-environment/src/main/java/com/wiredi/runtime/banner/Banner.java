@@ -1,87 +1,74 @@
 package com.wiredi.runtime.banner;
 
-import com.wiredi.environment.Environment;
-import com.wiredi.properties.keys.Key;
-import com.wiredi.resources.Resource;
-import com.wiredi.resources.builtin.ClassPathResource;
+import com.wiredi.logging.Logging;
+import com.wiredi.runtime.Environment;
+import com.wiredi.runtime.properties.Key;
+import com.wiredi.runtime.resources.Resource;
+import com.wiredi.runtime.resources.builtin.ClassPathResource;
+import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.List;
 
-public class Banner {
+public final class Banner {
 
-	public static final String BANNER_LOCATION = "banner.txt";
-	public static final String DEFAULT_BANNER_LOCATION = "banner.default.txt";
 	public static final Key BANNER_ENRICHMENT_PROPERTY = Key.just("banner.enrich");
-	public static final Key SHOW_BANNER_PROPERTY = Key.just("show-banner");
-	public static final Resource DEFAULT_BANNER_RESOURCE = new ClassPathResource(DEFAULT_BANNER_LOCATION);
+	public static final Key BANNER_MODE_PROPERTY = Key.just("banner.display-mode");
+	public static final Key BANNER_LOCATION = Key.just("banner.location");
+	public static final String CLASSPATH_BANNER_LOCATION = "classpath:banner.txt";
+	private static final Logging logger = Logging.getInstance(Banner.class);
 
-	@Nullable
 	private final Environment environment;
+	private final Value<List<String>> bannerContent = Value.lazy(this::loadBanner);
 
-	@NotNull
-	private final PrintStream printStream;
-
-	public Banner(@Nullable Environment environment, @NotNull PrintStream out) {
+	public Banner(Environment environment) {
 		this.environment = environment;
-		this.printStream = out;
-	}
-
-	public Banner(@Nullable Environment environment) {
-		this(environment, System.out);
-	}
-
-	public Banner(@NotNull PrintStream out) {
-		this(null, out);
-	}
-
-	public Banner() {
-		this(null, System.out);
-	}
-
-	public String loadBanner() {
-		ClassPathResource classPathResource = new ClassPathResource(BANNER_LOCATION);
-		if (classPathResource.exists()) {
-			try {
-				return enrichWithProperties(classPathResource);
-			} catch (IOException e) {
-				return loadDefaultBanner(e);
-			}
-		} else {
-			return loadDefaultBanner();
-		}
-	}
-
-	public String loadDefaultBanner() {
-		return loadDefaultBanner(null);
-	}
-
-	public String loadDefaultBanner(@Nullable Throwable suppressed) {
-		try {
-			return enrichWithProperties(DEFAULT_BANNER_RESOURCE);
-		} catch (IOException e) {
-			IllegalStateException illegalStateException = new IllegalStateException("Error loading the default banner!", e);
-			if (suppressed != null) {
-				illegalStateException.addSuppressed(suppressed);
-			}
-			throw illegalStateException;
-		}
-	}
-
-	private String enrichWithProperties(Resource resource) throws IOException {
-		String banner = resource.getContentAsString();
-		if (environment != null && environment.properties().getBoolean(BANNER_ENRICHMENT_PROPERTY, true)) {
-			return environment.resolve(banner);
-		}
-
-		return banner;
 	}
 
 	public void print() {
-		if (environment != null && environment.properties().getBoolean(SHOW_BANNER_PROPERTY, true)) {
-			printStream.print(loadBanner());
+		BannerMode bannerMode = environment.getProperty(BANNER_MODE_PROPERTY, BannerMode.class, BannerMode.CONSOLE);
+
+		if (bannerMode == BannerMode.CONSOLE) {
+			System.out.print(String.join("", bannerContent.get()));
 		}
+		if (bannerMode == BannerMode.LOGGER) {
+			bannerContent.get().forEach(logger::info);
+		}
+	}
+
+	private List<String> loadBanner() {
+		String property = environment.getProperty(BANNER_LOCATION, CLASSPATH_BANNER_LOCATION);
+		Resource resource = environment.loadResource(property);
+		if (resource.doesNotExist()) {
+			throw new ExceptionInInitializerError("Unable to load banner from " + resource);
+		}
+
+		try {
+			return enrichWithProperties(resource);
+		} catch (final IOException e) {
+			ExceptionInInitializerError error = new ExceptionInInitializerError("Unable to load banner from " + resource);
+			error.addSuppressed(e);
+			throw error;
+		}
+	}
+
+	private List<String> enrichWithProperties(
+			@NotNull final Resource resource
+	) throws IOException {
+		Boolean enrich = environment.getProperty(BANNER_ENRICHMENT_PROPERTY, true);
+		List<String> result = new ArrayList<>();
+		try (BufferedReader bufferedInputStream = new BufferedReader(resource.openReader())) {
+			while (bufferedInputStream.ready()) {
+				String line = bufferedInputStream.readLine();
+				if (enrich) {
+					line = environment.resolve(line);
+				}
+				result.add(line + System.lineSeparator());
+			}
+		}
+
+		return result;
 	}
 }

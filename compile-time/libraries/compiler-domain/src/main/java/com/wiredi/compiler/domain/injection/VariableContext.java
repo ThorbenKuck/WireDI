@@ -1,23 +1,20 @@
 package com.wiredi.compiler.domain.injection;
 
 import com.squareup.javapoet.CodeBlock;
-import com.squareup.javapoet.TypeName;
-import com.wiredi.annotations.properties.Resolve;
+import com.wiredi.annotations.environment.Resolve;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.WireRepositories;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.Element;
-import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public class VariableContext {
 

@@ -2,7 +2,7 @@ package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.logger.Logger;
-import com.wiredi.qualifier.QualifierType;
+import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.Element;
@@ -143,10 +143,10 @@ public class WireRepositories {
 	}
 
 	private TypeMirror getGenericTypeOf(TypeMirror typeMirror) {
-		if (!(typeMirror instanceof DeclaredType declared)) {
-			throw new IllegalArgumentException("Only declared types are allowed");
+		if (typeMirror instanceof DeclaredType declared) {
+			return declared.getTypeArguments().get(0);
 		}
-		return declared.getTypeArguments().get(0);
+		throw new IllegalArgumentException("Only declared types are allowed");
 	}
 
 	public boolean isNullable(Element element) {

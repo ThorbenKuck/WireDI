@@ -29,7 +29,8 @@ public class CoffeeMachine implements TckTestCase {
 			@Earthy Coffee earthyCoffee,
 			Robusta robusta,
 			Coffee primaryCoffee,
-			WireRepository wireRepository) {
+			WireRepository wireRepository
+	) {
 		this.fruityCoffee = fruityCoffee;
 		this.arabica = arabica;
 		this.earthyCoffee = earthyCoffee;

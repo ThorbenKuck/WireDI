@@ -5,10 +5,10 @@ import java.lang.annotation.*;
 /**
  * Marks either a class or provider function, as a primary wire type.
  * <p>
- * Primary means, that if the context contains multiple unqualified injection beans,
- * the primary classes.
+ * Primary means that if the context contains multiple unqualified beans,
+ * the primary instance will be injected if requested.
  * <p>
- * There can only be one "Primary" bean in the WireRepository.
+ * If multiple beans are marked as primary, the injector should fail on injection.
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target({ElementType.METHOD, ElementType.TYPE})

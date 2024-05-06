@@ -4,11 +4,10 @@ import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeName;
-import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.TypeIdentifiers;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
-import com.wiredi.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;

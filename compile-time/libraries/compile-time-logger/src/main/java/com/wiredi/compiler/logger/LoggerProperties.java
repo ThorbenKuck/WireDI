@@ -18,7 +18,7 @@ public class LoggerProperties {
 		return warnReflectionUsage;
 	}
 
-	public void setLogToSystemOut(boolean logToSystemOut) {
+	public void logToSystemOut(boolean logToSystemOut) {
 		this.logToSystemOut = logToSystemOut;
 	}
 

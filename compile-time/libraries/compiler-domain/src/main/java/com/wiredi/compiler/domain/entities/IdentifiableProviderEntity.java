@@ -2,9 +2,7 @@ package com.wiredi.compiler.domain.entities;
 
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
-import com.wiredi.compiler.domain.entities.methods.MethodFactory;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.*;
