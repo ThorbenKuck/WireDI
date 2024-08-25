@@ -5,25 +5,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SequenceErrorHandlingResult<T extends Throwable> implements ErrorHandlingResult<T> {
+public class SequenceErrorHandlingResult<T extends Throwable> implements ExceptionHandlingResult<T> {
 
-    private final List<@NotNull ErrorHandlingResult<T>> results = new ArrayList<>();
+    private final List<@NotNull ExceptionHandlingResult<T>> results = new ArrayList<>();
 
     @NotNull
-    public SequenceErrorHandlingResult<T> append(@NotNull ErrorHandlingResult<T> error) {
+    public SequenceErrorHandlingResult<T> append(@NotNull ExceptionHandlingResult<T> error) {
         this.results.add(error);
         return this;
     }
 
     @Override
     @NotNull
-    public ErrorHandlingResult<T> then(@NotNull ErrorHandlingResult<T> error) {
+    public ExceptionHandlingResult<T> then(@NotNull ExceptionHandlingResult<T> error) {
         return append(error);
     }
 
     @Override
     public boolean apply() throws Throwable {
-        for (ErrorHandlingResult<T> result : results) {
+        for (ExceptionHandlingResult<T> result : results) {
             if (!result.apply()) {
                 return false;
             }

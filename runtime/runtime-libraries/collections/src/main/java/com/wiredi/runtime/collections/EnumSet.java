@@ -37,10 +37,15 @@ public final class EnumSet<T extends Enum<T>> {
         @NotNull final Map<String, T> targetContents = new HashMap<>();
         for (@NotNull final T constant : type.getEnumConstants()) {
             targetContents.put(constant.name(), constant);
+            targetContents.put(simplifyEnumName(constant.name()), constant);
         }
 
         this.content = Collections.unmodifiableMap(targetContents);
         this.type = type;
+    }
+
+    public static String simplifyEnumName(String name) {
+        return name.replace('_', '-').toLowerCase();
     }
 
     @NotNull
@@ -55,8 +60,18 @@ public final class EnumSet<T extends Enum<T>> {
     }
 
     @NotNull
+    public Optional<T> getIgnoreCase(@NotNull final String name) {
+        return Optional.ofNullable(content.get(simplifyEnumName(name)));
+    }
+
+    @NotNull
     public T require(@NotNull String name) {
         return isNotNull(content.get(name), () -> "The enum of type " + type + " has no enum with the name " + name);
+    }
+
+    @NotNull
+    public T requireIgnoreCase(@NotNull String name) {
+        return isNotNull(content.get(simplifyEnumName(name)), () -> "The enum of type " + type + " has no enum with the name " + name);
     }
 
     public void forEach(Consumer<@NotNull T> consumer) {

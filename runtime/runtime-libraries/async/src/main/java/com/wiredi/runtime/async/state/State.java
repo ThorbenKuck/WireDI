@@ -184,5 +184,9 @@ public interface State<T> {
      *
      * @param consumer the consumer to invoke with the states' value
      */
-    void onSet(Consumer<T> consumer);
+    StateOnSetSubscription onSet(Consumer<T> consumer);
+
+    default StateOnSetSubscription sinkTo(ModifiableState<? super T> other) {
+        return onSet(other::set);
+    }
 }

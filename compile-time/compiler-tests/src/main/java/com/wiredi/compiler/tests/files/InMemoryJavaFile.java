@@ -9,7 +9,7 @@ public class InMemoryJavaFile extends SimpleJavaFileObject {
 
     private final long timestamp = Instant.now().toEpochMilli();
     private String content;
-
+    private String name;
 
     /**
      * Construct a SimpleJavaFileObject of the given kind and with the
@@ -18,11 +18,11 @@ public class InMemoryJavaFile extends SimpleJavaFileObject {
      * @param uri  the URI for this file object
      * @param kind the kind of this file object
      */
-    public InMemoryJavaFile(URI uri, Kind kind, byte[] bytes) {
+    public InMemoryJavaFile(URI uri, Kind kind, byte[] bytes, String name) {
         super(uri, kind);
         this.content = new String(bytes);
+        this.name = name;
     }
-
 
     /**
      * Construct a SimpleJavaFileObject of the given kind and with the
@@ -31,13 +31,20 @@ public class InMemoryJavaFile extends SimpleJavaFileObject {
      * @param uri  the URI for this file object
      * @param kind the kind of this file object
      */
-    public InMemoryJavaFile(URI uri, Kind kind, String content) {
+    public InMemoryJavaFile(URI uri, Kind kind, String content, String name) {
         super(uri, kind);
         this.content = content;
+        this.name = name;
     }
 
-    public InMemoryJavaFile(URI uri) {
+    public InMemoryJavaFile(URI uri, String name) {
         super(uri, URIs.deduceJavaFileKind(uri));
+        this.name = name;
+    }
+
+    @Override
+    public String getName() {
+        return name;
     }
 
     @Override

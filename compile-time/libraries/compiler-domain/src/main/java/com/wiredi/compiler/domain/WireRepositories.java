@@ -1,8 +1,13 @@
 package com.wiredi.compiler.domain;
 
+import com.google.common.base.Strings;
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.logger.Logger;
+import com.wiredi.runtime.properties.Key;
+import com.wiredi.runtime.properties.exceptions.PropertyNotFoundException;
 import com.wiredi.runtime.qualifier.QualifierType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.Element;
@@ -155,5 +160,26 @@ public class WireRepositories {
 		}
 
 		return false;
+	}
+
+	public CodeBlock fetchFromProperties(@NotNull VariableElement element, String name, String defaultValue) {
+		Key propertyName;
+		if (name.isBlank()) {
+			propertyName = Key.format(element.getSimpleName().toString());
+		} else {
+			propertyName = Key.format(name);
+		}
+		CodeBlock.Builder builder = CodeBlock.builder()
+				.add("wireRepository.environment()\n")
+				.indent();
+
+		if (defaultValue.isBlank()) {
+			builder.add(".getProperty($T.just($S), $T.class)\n", Key.class, propertyName.value(), ClassName.get(element.asType()))
+					.add(".orElseThrow(() -> new $T($S))", PropertyNotFoundException.class, propertyName.value());
+		} else {
+			builder.add(".getPropertyOrResolve($T.just($S), $T.class, $S)", Key.class, propertyName.value(), ClassName.get(element.asType()), defaultValue);
+		}
+
+		return builder.unindent().build();
 	}
 }

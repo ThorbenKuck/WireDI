@@ -1,5 +1,6 @@
 package com.wiredi.runtime.async.state;
 
+import com.wiredi.runtime.async.DataAccess;
 import com.wiredi.runtime.lang.ThrowingConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,6 +17,7 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractState<T> implements State<T> {
 
+    private final DataAccess callbacksLock = new DataAccess();
     private final List<Consumer<T>> callbacks = new ArrayList<>();
     @Nullable
     protected Throwable error;
@@ -34,12 +36,14 @@ public abstract class AbstractState<T> implements State<T> {
      * {@inheritDoc}
      */
     @Override
-    public void onSet(Consumer<T> consumer) {
-        callbacks.add(consumer);
+    public StateOnSetSubscription onSet(Consumer<T> consumer) {
+        callbacksLock.write(() -> callbacks.add(consumer));
         T current = value;
         if (current != null) {
             consumer.accept(current);
         }
+
+        return () -> callbacksLock.write(() -> callbacks.remove(consumer));
     }
 
     /**
@@ -147,7 +151,7 @@ public abstract class AbstractState<T> implements State<T> {
      * @param t the value to notify about
      */
     protected void notifyCallbacks(T t) {
-        this.callbacks.forEach(c -> c.accept(t));
+        this.callbacksLock.read(() -> this.callbacks.forEach(c -> c.accept(t)));
     }
 
     protected void doMarkAsDirty(@NotNull Throwable throwable) {

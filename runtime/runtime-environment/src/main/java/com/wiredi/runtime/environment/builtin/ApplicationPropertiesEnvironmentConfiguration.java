@@ -5,11 +5,10 @@ import com.wiredi.logging.Logging;
 import com.wiredi.runtime.domain.Ordered;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
+import com.wiredi.runtime.properties.TypedProperties;
 import com.wiredi.runtime.resources.builtin.ClassPathResource;
 import com.wiredi.runtime.resources.exceptions.ResourceException;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 import static com.wiredi.runtime.environment.DefaultEnvironmentKeys.*;
 
@@ -22,9 +21,9 @@ public class ApplicationPropertiesEnvironmentConfiguration implements Environmen
 
     @Override
     public void configure(@NotNull Environment environment) {
-        environment.propertyLoader().supportedFileTypes();
+        TypedProperties environmentProperties = environment.properties();
 
-        environment.properties().getAll(DEFAULT_PROPERTIES, () -> environment.propertyLoader()
+        environmentProperties.getAll(DEFAULT_PROPERTIES, () -> environment.propertyLoader()
                         .supportedFileTypes()
                         .stream()
                         .map(fileType -> DEFAULT_PROPERTY_FILE_NAME + "." + fileType)
@@ -35,18 +34,16 @@ public class ApplicationPropertiesEnvironmentConfiguration implements Environmen
                     try {
                         environment.appendPropertiesFrom(resource);
                     } catch (ResourceException ignore) {
-                        LOGGER.debug("");
+                        LOGGER.warn("Failed to load properties from file " + resource.getFilename());
                     }
                 });
 
-        if (!environment.properties().contains(ACTIVE_PROFILES)) {
-            if (Boolean.TRUE.equals(environment.properties().getBoolean(DEFAULT_PROFILE_ON_EMPTY))) {
-                String defaultProfiles = environment.properties()
-                        .get(DEFAULT_PROFILES)
-                        .orElse("default");
+        if (!environmentProperties.contains(ACTIVE_PROFILES)) {
+            String defaultProfiles = environmentProperties
+                    .get(DEFAULT_PROFILE)
+                    .orElse("default");
 
-                environment.setProperty(ACTIVE_PROFILES, defaultProfiles);
-            }
+            environment.setProperty(ACTIVE_PROFILES, defaultProfiles);
         }
     }
 

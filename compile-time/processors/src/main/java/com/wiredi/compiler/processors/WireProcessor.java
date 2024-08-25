@@ -5,9 +5,12 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.annotations.stereotypes.Configuration;
 import com.wiredi.compiler.domain.Annotations;
+import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.processor.lang.processors.WireBaseProcessor;
+import com.wiredi.compiler.processor.plugins.CompilerEntityPlugin;
 import com.wiredi.compiler.processors.adapter.IdentifiableProviderWireAdapter;
+import com.wiredi.compiler.processors.adapter.InterfaceImplementationAdapter;
 import jakarta.inject.Inject;
 
 import javax.annotation.processing.Processor;
@@ -24,7 +27,10 @@ public class WireProcessor extends WireBaseProcessor {
 	private Logger logger;
 
 	@Inject
-	private IdentifiableProviderWireAdapter adapter;
+	private IdentifiableProviderWireAdapter wireAdapter;
+
+	@Inject
+	private InterfaceImplementationAdapter interfaceImplementationAdapter;
 
 	@Override
 	protected List<Class<? extends Annotation>> targetAnnotations() {
@@ -33,17 +39,20 @@ public class WireProcessor extends WireBaseProcessor {
 
 	@Override
 	protected void handle(Element element) {
-		logger.info("Handling " + element);
-		if (!element.getKind().isClass()) {
+		logger.debug("Handling " + element);
+		if (!(element instanceof TypeElement typeElement)) {
 			logger.error(element, "The annotated element of Wire has to be a class!");
 			return;
 		}
-		final TypeElement typeElement = (TypeElement) element;
-		Optional<Wire> wireAnnotation = Annotations.getAnnotation(typeElement, Wire.class);
+        Optional<Wire> wireAnnotation = Annotations.getAnnotation(typeElement, Wire.class);
 		if (wireAnnotation.isEmpty()) {
 			logger.warn(element, "Failed to find a WireAnnotation. This is likely an error with the algorithm to determine inherited annotations.");
 		}
 
-		adapter.handle(typeElement, wireAnnotation.orElse(null));
+		if (element.getKind().isInterface()) {
+			interfaceImplementationAdapter.handle(typeElement, wireAnnotation.orElse(null));
+		} else {
+			wireAdapter.handle(typeElement, wireAnnotation.orElse(null));
+		}
 	}
 }

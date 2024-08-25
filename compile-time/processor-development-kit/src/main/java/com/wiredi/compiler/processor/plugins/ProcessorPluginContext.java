@@ -1,12 +1,12 @@
 package com.wiredi.compiler.processor.plugins;
 
 import com.wiredi.compiler.Injector;
-import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.*;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.compiler.repository.CompilerRepositoryCallback;
+import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.domain.OrderedComparator;
 
 import java.util.List;
@@ -27,7 +27,7 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
 
         wireProcessorPlugins = load(injector, CompilerEntityPlugin.class);
         defaultFinalizeHandler = (type) -> {
-            logger.info(() -> "Unhandled type " + type);
+            logger.debug(() -> "Unhandled type " + type);
             wireProcessorPlugins.forEach(it -> it.handleUnsupported(type));
         };
 
@@ -39,21 +39,17 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
     }
 
     public synchronized static <T extends Plugin> List<T> load(Injector injector, Class<T> type) {
-        return (List<T>) cache.computeIfAbsent(type, () -> {
-                    List<? extends T> content =
-                            ServiceLoader.load(type)
-                                    .stream()
-                                    .map(provider -> injector.get(provider.type()))
-                                    .sorted(OrderedComparator.INSTANCE)
-                                    .peek(it -> {
-                                        it.initialize();
-                                        logger.debug(() -> "Initialized ProcessorPlugin: " + it.getClass().getSimpleName());
-                                    })
-                                    .collect(Collectors.toList());
-                    logger.info(() -> "Loaded " + content.size() + " ProcessorPlugins: " + content.stream().map(it -> it.getClass().getSimpleName()).toList());
-                    return content;
-                }
-        );
+        List<T> content = ServiceLoader.load(type)
+                .stream()
+                .map(provider -> injector.get(provider.type()))
+                .sorted(OrderedComparator.INSTANCE)
+                .peek(it -> {
+                    it.initialize();
+                    logger.debug(() -> "Initialized ProcessorPlugin: " + it.getClass().getSimpleName());
+                })
+                .collect(Collectors.toList());
+        logger.info(() -> "Loaded " + content.size() + " ProcessorPlugins: " + content.stream().map(it -> it.getClass().getSimpleName()).toList());
+        return content;
     }
 
     public <T extends ClassEntity<T>> void registerAttachListener(Class<T> type, Consumer<T> consumer) {
@@ -62,6 +58,10 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
 
     public Consumer<ClassEntity<?>> getAttachListener(Class<?> type) {
         return attachListeners.getOrDefault(type, defaultFinalizeHandler);
+    }
+
+    public void forEach(Consumer<CompilerEntityPlugin> consumer) {
+        wireProcessorPlugins.forEach(consumer);
     }
 
     @Override

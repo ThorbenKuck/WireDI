@@ -55,7 +55,9 @@ public class CompilerRepository {
 
     public void flush() {
         synchronized (classEntries) {
-            logger.info(() -> "Flushing compiler repository with " + classEntries.size() + " classes in " + this);
+            if (!classEntries.isEmpty()) {
+                logger.info(() -> "Flushing compiler repository with " + classEntries.size() + " classes in " + this);
+            }
             classEntries.forEach(entry -> {
                 if (!entry.isValid()) {
                     return;
@@ -112,7 +114,7 @@ public class CompilerRepository {
     }
 
     public <T extends ClassEntity<T>> T save(T entity, Consumer<T> consumer) {
-        logger.info("Saving " + entity + " to " + this);
+        logger.debug("Saving " + entity + " to " + this);
         synchronized (classEntries) {
             this.classEntries.add(entity);
             consumer.accept(entity);
@@ -122,7 +124,7 @@ public class CompilerRepository {
     }
 
     public <T extends ClassEntity<T>> T save(T entity) {
-        logger.info("Saving " + entity + " to " + this);
+        logger.debug("Saving " + entity + " to " + this);
         synchronized (classEntries) {
             this.classEntries.add(entity);
             repositoryCallbacks.forEach(it -> it.saved(entity));
@@ -134,5 +136,12 @@ public class CompilerRepository {
         logger.debug(() -> "Attaching " + entity);
         return entity.setPackage(TypeUtils.packageOf(typeElement))
                 .addSource(typeElement);
+    }
+
+    @Override
+    public String toString() {
+        return "CompilerRepository{" +
+                "classEntries=" + classEntries +
+                '}';
     }
 }

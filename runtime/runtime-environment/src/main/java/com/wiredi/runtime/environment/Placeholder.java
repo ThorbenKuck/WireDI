@@ -6,14 +6,22 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
+/**
+ * This class is representing a resolvable placeholder.
+ * <p>
+ * Placeholders consist of two main parts: expressions and default values in the following format:
+ * <p>
+ * {@code <identifierChar><start><expression><defaultDelimiter><defaultValue><end>}
+ * <p>
+ * One concrete example of this is: {@code ${expression:defaultValue}}
+ */
 public class Placeholder {
 
     @Nullable
     private final Character identifierChar;
     private final String start;
-    private final String content;
-    @Nullable
-    private final Placeholder.Default defaultValue;
+    private final String expression;
+    private final List<Parameter> parameters;
     private final String end;
     private final PlaceholderResolver parent;
     private final int relativeStart;
@@ -22,18 +30,20 @@ public class Placeholder {
     public Placeholder(
             @Nullable Character identifierChar,
             String start,
-            String content,
-            @Nullable Placeholder.Default defaultValue,
+            String expression,
+            List<Parameter> parameters,
             String end,
             PlaceholderResolver parent,
-            int relativeStart, int relativeStop) {
+            int relativeStart,
+            int relativeStop
+    ) {
         this.start = start;
         this.end = end;
         this.parent = parent;
         this.relativeStart = relativeStart;
         this.relativeStop = relativeStop;
-        this.content = content;
-        this.defaultValue = defaultValue;
+        this.expression = expression;
+        this.parameters = parameters;
         this.identifierChar = identifierChar;
     }
 
@@ -41,16 +51,16 @@ public class Placeholder {
         return Optional.ofNullable(identifierChar);
     }
 
-    public Optional<Default> getDefaultValue() {
-        return Optional.ofNullable(defaultValue);
+    public List<Parameter> getParameters() {
+        return parameters;
     }
 
     public String getStart() {
         return start;
     }
 
-    public String getContent() {
-        return content;
+    public String getExpression() {
+        return expression;
     }
 
     public String getEnd() {
@@ -75,13 +85,10 @@ public class Placeholder {
             stringBuilder.append(identifierChar);
         }
 
-        stringBuilder.append(start).append(content);
+        stringBuilder.append(start).append(expression);
 
-        if (defaultValue != null) {
-            stringBuilder.append(defaultValue.delimiter).append(defaultValue.content);
-        }
+        parameters.forEach(parameter -> stringBuilder.append(parameter.delimiter).append(parameter.content));
         return stringBuilder.append(end).toString();
-
     }
 
     public String replaceRelativeIn(String wholeString, String replacement) {
@@ -94,13 +101,6 @@ public class Placeholder {
         return wholeString.replace(compile(), replacement);
     }
 
-    @Nullable
-    public String tryReplacementValueWithDefault(String value) {
-        return Optional.ofNullable(defaultValue)
-                .map(it -> replaceIn(value, it.content))
-                .orElse(null);
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -111,15 +111,15 @@ public class Placeholder {
                 && relativeStop == that.relativeStop
                 && Objects.equals(identifierChar, that.identifierChar)
                 && Objects.equals(start, that.start)
-                && Objects.equals(content, that.content)
+                && Objects.equals(expression, that.expression)
                 && Objects.equals(end, that.end)
-                && Objects.equals(defaultValue, that.defaultValue)
+                && Objects.equals(parameters, that.parameters)
                 && Objects.equals(parent, that.parent);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(identifierChar, start, content, end, defaultValue, parent, relativeStart, relativeStop);
+        return Objects.hash(identifierChar, start, expression, end, parameters, parent, relativeStart, relativeStop);
     }
 
     @Override
@@ -127,7 +127,22 @@ public class Placeholder {
         return compile();
     }
 
-    public record Default(
+    /**
+     * A default value of the expression.
+     * <p>
+     * A default value is present in the expression, like this: {@code <char>{<expression>:<defaultValue>} }.
+     * The {@link #content} is equivalent to {@code <defaultValue>}, whilst {@link #delimiter} is {@code :}.
+     * <p>
+     * The delimiter can be changed when resolving default values, and it can be used during processing.
+     * <p>
+     * The default value itself can again be an expression.
+     * To resolve it, you can use {@link #asPlaceholder()}, which will try to resolve the value from the parent.
+     *
+     * @param content   the content of the default value
+     * @param delimiter the delimiter used for separating the expression from the default value
+     * @param parent    the resolver that resolved the Placeholder plus Default combination.
+     */
+    public record Parameter(
             String content,
             String delimiter,
             PlaceholderResolver parent
@@ -137,11 +152,23 @@ public class Placeholder {
             return delimiter + content;
         }
 
+        /**
+         * Resolves the {@link #content} from the {@link #parent}.
+         * <p>
+         * The default value can again be an expression, for example like this:
+         * <p>
+         * {@code ${expression:${nested-expression:nested-default}}}.
+         * <p>
+         * The default value of the expression will be {@code ${nested-expression:nested-default}}.
+         * This method will evaluate the default value.
+         *
+         * @return a new Placeholder, if any.
+         */
         public Optional<Placeholder> asPlaceholder() {
             List<Placeholder> placeholders = parent.resolveAllIn(content);
 
             if (placeholders.size() == 1) {
-                return Optional.ofNullable(placeholders.get(0));
+                return Optional.ofNullable(placeholders.getFirst());
             }
 
             return Optional.empty();

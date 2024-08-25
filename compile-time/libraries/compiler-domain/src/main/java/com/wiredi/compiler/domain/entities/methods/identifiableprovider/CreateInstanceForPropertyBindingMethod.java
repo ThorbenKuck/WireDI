@@ -53,10 +53,6 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         this.collectionType = elements().getTypeElement(Collection.class.getName()).asType();
     }
 
-    private static CodeBlock getProperty(Key key, Element element) {
-        return CodeBlock.of("$L($T.just($S), $T.class)", Key.class, key.value(), ClassName.get(element.asType()));
-    }
-
     private static Optional<Key> tryFindPropertyName(Element element) {
         return Annotations.getAnnotation(element, Property.class)
                 .map(property -> {
@@ -167,7 +163,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
                 if (isCollection(fieldWithSetter.field.asType())) {
                     builder.add("instance.$L($T.just($L));\n", fieldWithSetter.setter.getSimpleName(), Key.class, constructAll(key, fieldWithSetter.field()));
                 } else if (fieldWithSetter.determineDefaultValue() == null) {
-                    builder.add("properties.get($T.just($S), $T.class).ifPresent(instance::$L);\n", Key.class, key, ClassName.get(fieldWithSetter.field.asType()), fieldWithSetter.setter.getSimpleName());
+                    builder.add("properties.get($T.just($S), $T.class).ifPresent(instance::$L);\n", Key.class, key, classNameOf(fieldWithSetter.field), fieldWithSetter.setter.getSimpleName());
                 } else {
                     builder.add("instance.$L($L);\n", fieldWithSetter.setter.getSimpleName(), getProperty(key, fieldWithSetter.determineDefaultValue(), fieldWithSetter.field(), !fieldWithSetter.hasAnnotation("Nullable")));
                 }
@@ -230,7 +226,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
     private CodeBlock getPropertyWithoutDefaultValue(Key key, Element element, boolean require) {
         if (types().isAssignable(element.asType(), stringType)) {
             if (require) {
-                logger.info(() -> "Requiring " + key + " of type " + element.asType());
+                logger.debug(() -> "Requiring " + key + " of type " + element.asType());
                 return CodeBlock.of("properties.require($T.just($S))", Key.class, key.value());
             } else {
                 return CodeBlock.of("properties.get($T.just($S)).orElse(null)", Key.class, key.value());
@@ -241,9 +237,9 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
             return runtimeConstructorInvocation((TypeElement) types().asElement(element.asType()), key.value());
         } else {
             if (require) {
-                return CodeBlock.of("properties.require($T.just($S), $T.class)", Key.class, key.value(), ClassName.get(element.asType()));
+                return CodeBlock.of("properties.require($T.just($S), $T.class)", Key.class, key.value(), classNameOf(element));
             } else {
-                return CodeBlock.of("properties.get($T.just($S), $T.class).orElse(null)", Key.class, key.value(), ClassName.get(element.asType()));
+                return CodeBlock.of("properties.get($T.just($S), $T.class).orElse(null)", Key.class, key.value(), classNameOf(element));
             }
         }
     }
@@ -256,7 +252,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         } else if (isNestedClass(element)) {
             return runtimeConstructorInvocation((TypeElement) types().asElement(element.asType()), key.value());
         } else {
-            return CodeBlock.of("properties.get($T.just($S), $T.class, $S)", Key.class, key.value(), ClassName.get(element.asType()), defaultValue);
+            return CodeBlock.of("properties.get($T.just($S), $T.class, $S)", Key.class, key.value(), classNameOf(element), defaultValue);
         }
     }
 
@@ -276,7 +272,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         if (types().isAssignable(element.asType(), stringType)) {
             return CodeBlock.of("properties.getAll($T.just($S))", Key.class, key.value());
         } else if (typeMirror.getKind().isPrimitive() || isEnum(typeMirror)) {
-            return CodeBlock.of("properties.getAll($T.just($S), $T.class)", Key.class, key.value(), ClassName.get(typeMirror));
+            return CodeBlock.of("properties.getAll($T.just($S), $T.class)", Key.class, key.value(), classNameOf(typeMirror));
         } else {
             throw new ProcessingException(element, "Cannot construct a list of properties for this type");
         }

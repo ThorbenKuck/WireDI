@@ -51,6 +51,8 @@ public final class Barrier {
     private static final Logging logger = Logging.getInstance(Barrier.class);
     @NotNull
     private final Semaphore semaphore = new Semaphore(0);
+    @NotNull
+    private Supplier<@NotNull AsyncBarrierException> traversingFailedException = () -> new AsyncBarrierException("Could not traverse the barrier");
     private boolean isOpen = false;
 
     @NotNull
@@ -73,6 +75,11 @@ public final class Barrier {
 
     public boolean isClosed() {
         return !isOpen;
+    }
+
+    public Barrier withTraversingFailedMessage(String message) {
+        this.traversingFailedException = () -> new AsyncBarrierException(message);
+        return this;
     }
 
     public void open() {
@@ -163,7 +170,7 @@ public final class Barrier {
         if (!isOpen) {
             try {
                 if (!semaphore.tryAcquire(duration.toNanos(), TimeUnit.NANOSECONDS)) {
-                    throw new AsyncBarrierException("Could not traverse the barrier");
+                    throw traversingFailedException.get();
                 }
                 semaphore.release();
             } catch (@NotNull final InterruptedException e) {

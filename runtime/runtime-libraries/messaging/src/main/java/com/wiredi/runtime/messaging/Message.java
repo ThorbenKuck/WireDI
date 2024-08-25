@@ -2,11 +2,13 @@ package com.wiredi.runtime.messaging;
 
 import com.wiredi.runtime.lang.ThrowingConsumer;
 import com.wiredi.runtime.lang.ThrowingFunction;
+import com.wiredi.runtime.messaging.errors.MissingMessageDetailsException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /**
  * A message is a generic representation of any I/O operation.
@@ -39,6 +41,7 @@ import java.util.List;
  */
 public class Message<T, S extends MessageDetails> {
 
+    public static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
     @NotNull
     private final Headers headers;
     @NotNull
@@ -66,6 +69,17 @@ public class Message<T, S extends MessageDetails> {
      */
     public static <T, S extends MessageDetails> Message.Builder<T, S> of(T body) {
         return new Builder<>(body);
+    }
+
+    /**
+     * Creates a new Builder for a message without any previous details.
+     *
+     * @param <T> the generic type of the body
+     * @param <S> the generic type of the {@link MessageDetails} contained in the Message
+     * @return a new {@link Builder} to construct the Message
+     */
+    public static <T, S extends MessageDetails> Message.Builder<T, S> build() {
+        return new Builder<>(null);
     }
 
     /**
@@ -103,7 +117,7 @@ public class Message<T, S extends MessageDetails> {
      * @see Headers#allValues(String)
      */
     @NotNull
-    public List<Header> getHeaders(@NotNull String headerName) {
+    public List<HeaderEntry> getHeaders(@NotNull String headerName) {
         return headers.allValues(headerName);
     }
 
@@ -115,7 +129,7 @@ public class Message<T, S extends MessageDetails> {
      * @see Headers#lastValue(String)
      */
     @Nullable
-    public Header getLastHeader(@NotNull String headerName) {
+    public HeaderEntry getLastHeader(@NotNull String headerName) {
         return headers.lastValue(headerName);
     }
 
@@ -127,7 +141,7 @@ public class Message<T, S extends MessageDetails> {
      * @see Headers#firstValue(String)
      */
     @Nullable
-    public Header getFirstHeader(@NotNull String headerName) {
+    public HeaderEntry getFirstHeader(@NotNull String headerName) {
         return headers.lastValue(headerName);
     }
 
@@ -146,6 +160,33 @@ public class Message<T, S extends MessageDetails> {
      * @return the details of this message.
      */
     public @Nullable S getDetails() {
+        return messageDetails;
+    }
+
+    /**
+     * Returns the details of this message, or throws an exception if the details are missing.
+     *
+     * @return the details of this message.
+     * @throws MissingMessageDetailsException if this message has no details
+     */
+    public @NotNull S requireDetails() throws MissingMessageDetailsException {
+        if (messageDetails == null) {
+            throw new MissingMessageDetailsException(this);
+        }
+        return messageDetails;
+    }
+
+    /**
+     * Returns the details of this message, or throws an exception if the details are missing.
+     *
+     * @param errorMessageSupplier the error message to pass to the {@link MissingMessageDetailsException} if no details are present
+     * @return the details of this message.
+     * @throws MissingMessageDetailsException if this message has no details
+     */
+    public @NotNull S requireDetails(Supplier<String> errorMessageSupplier) throws MissingMessageDetailsException {
+        if (messageDetails == null) {
+            throw new MissingMessageDetailsException(this, errorMessageSupplier.get());
+        }
         return messageDetails;
     }
 
@@ -195,8 +236,8 @@ public class Message<T, S extends MessageDetails> {
      * The references of the {@code body} and {@link MessageDetails} in the new message will be the same as in this one.
      *
      * @param constructor the consumer to modify the headers
-     * @return a new message containing the mapped body.
      * @param <THROWABLE> (Optional) a generic of any throwable that the mapping function can throw.
+     * @return a new message containing the mapped body.
      * @throws THROWABLE if the {@link ThrowingFunction} throws the provided throwable
      * @see ThrowingConsumer
      */
@@ -228,34 +269,57 @@ public class Message<T, S extends MessageDetails> {
     public static class Builder<T, S extends MessageDetails> {
 
         private final Headers.Builder headers = Headers.builder();
-        @NotNull
-        private final T body;
+        @Nullable
+        private T body;
         @Nullable
         private MessageDetails messageDetails;
 
-        public Builder(@NotNull T body) {
+        public Builder(@Nullable T body) {
             this.body = body;
         }
 
+        @NotNull
+        public T body() {
+            if (body == null) {
+                throw new IllegalStateException("Tried to build a message without a body");
+            }
+            return body;
+        }
+
+        @NotNull
+        public Headers.Builder headers() {
+            return headers;
+        }
+
+        @NotNull
+        public Builder<T, S> withBody(@NotNull T body) {
+            this.body = body;
+            return this;
+        }
+
+        @NotNull
         public Builder<T, S> addHeader(String key, String value) {
             headers.add(key, value);
             return this;
         }
 
+        @NotNull
         public Builder<T, S> addHeaders(Headers headers) {
             this.headers.addAll(headers);
             return this;
         }
 
+        @NotNull
         public <D extends MessageDetails> Builder<T, D> withDetails(@NotNull D details) {
             this.messageDetails = details;
             return (Builder<T, D>) this;
         }
 
+        @NotNull
         public Message<T, S> build() {
             return new Message<>(
                     headers.build(),
-                    body,
+                    body(),
                     (S) messageDetails
             );
         }

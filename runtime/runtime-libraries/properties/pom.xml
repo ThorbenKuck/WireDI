@@ -11,13 +11,16 @@
         <groupId>com.wiredi</groupId>
         <artifactId>runtime-libraries</artifactId>
         <version>${revision}</version>
-
     </parent>
 
     <dependencies>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>lang</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>type-converter</artifactId>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>

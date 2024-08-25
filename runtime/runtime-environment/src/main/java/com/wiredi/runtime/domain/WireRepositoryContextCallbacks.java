@@ -4,7 +4,7 @@ import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.async.StateFull;
 import com.wiredi.runtime.beans.BeanContainer;
-import com.wiredi.runtime.domain.errors.ErrorHandler;
+import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 
@@ -55,7 +55,7 @@ import java.util.List;
  * </p>
  * <p>
  * Any error raised by an instance of this interface will be handled by the
- * default error handling mechanism, using {@link ErrorHandler}
+ * default error handling mechanism, using {@link ExceptionHandler}
  * instances, that can be found in the {@link BeanContainer}. If the
  * {@link BeanContainer} is not yet configured, the exception will
  * simply be delegated.
@@ -73,9 +73,9 @@ import java.util.List;
 public interface WireRepositoryContextCallbacks extends Ordered {
 
     /**
-     * This method is only called once, when a wire repository is constructed.
+     * This method is only called once and only when a wire repository is constructed.
      * <p>
-     * This is the only method, in which it is safe to register additional WireRepositoryContextCallbacks!
+     * This is the only method in which it is safe to register additional WireRepositoryContextCallbacks!
      *
      * @param wireRepository the WireRepository that is being initialized
      */
@@ -158,6 +158,9 @@ public interface WireRepositoryContextCallbacks extends Ordered {
     default void loadedEagerClasses(@NotNull Timed timed, @NotNull WireRepository wireRepository, @NotNull List<? extends Eager> eagerInstances) {
     }
 
+    default void synchronizedOnStates(Timed timed, WireRepository wireRepository, List<StateFull> stateFulls) {
+    }
+
     /**
      * This method will be called, after the loading lifecycle of the {@link WireRepository}
      * has successfully concluded.
@@ -179,8 +182,5 @@ public interface WireRepositoryContextCallbacks extends Ordered {
      * @param wireRepository the WireRepository that is being destroyed
      */
     default void destroyed(@NotNull WireRepository wireRepository) {
-    }
-
-    default void synchronizedOnStates(Timed timed, WireRepository wireRepository, List<StateFull> stateFulls) {
     }
 }

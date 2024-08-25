@@ -17,7 +17,7 @@ import java.util.Arrays;
  * Integrations of any kind should use this class exclusively and not rely on the underlying {@link MessageConverter}
  * instances directly.
  *
- * @see CompositeMessageEngine
+ * @see CompositeMessagingEngine
  * @see MessageConverter
  * @see Message
  */
@@ -28,10 +28,10 @@ public interface MessagingEngine {
      *
      * @param converters all converters to be used in the CompositeMessageConverters
      * @return a new CompositeMessageConverters instance
-     * @see CompositeMessageEngine
+     * @see CompositeMessagingEngine
      */
-    static CompositeMessageEngine of(MessageConverter<?, ?>... converters) {
-        return new CompositeMessageEngine(Arrays.asList(converters));
+    static CompositeMessagingEngine of(MessageConverter<?, ?>... converters) {
+        return new CompositeMessagingEngine(Arrays.asList(converters));
     }
 
     /**
@@ -52,6 +52,27 @@ public interface MessagingEngine {
             @NotNull Message<byte[], S> rawMessage,
             @NotNull Class<T> targetType
     ) throws MissingMessageConverterException;
+
+    /**
+     * Deserialize the provided {@code messageBuilder} to a concrete {@link Message} of type {@code targetType}.
+     * <p>
+     * Implementation should never return non-null instances.
+     * Instead, they should consider throwing an Exception corresponding to the error that prevented message conversion.
+     *
+     * @param messageBuilder the raw message that should be deserialized
+     * @param targetType the type that the deserialized message should contain
+     * @param <T>        the generic type of the Message, based on the {@code targetType}
+     * @param <S>        the generic MessageDetails, already contained in the {@code messageBuilder}
+     * @return a new, deserialized {@link Message} with the type {@code targetType}
+     * @throws MissingMessageConverterException if no {@link MessageConverter} was found to deserialize the {@code messageBuilder} to the {@code targetType}
+     */
+    @NotNull
+    default <T, S extends MessageDetails> Message<T, S> deserialize(
+            @NotNull Message.Builder<byte[], S> messageBuilder,
+            @NotNull Class<T> targetType
+    ) throws MissingMessageConverterException {
+        return deserialize(messageBuilder.build(), targetType);
+    }
 
     /**
      * Serialize the provided {@code message} to a raw message.

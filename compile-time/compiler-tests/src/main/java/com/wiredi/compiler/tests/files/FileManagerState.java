@@ -53,7 +53,7 @@ public class FileManagerState {
 
     @NotNull
     public JavaFileObject getOrCreateInputJavaFile(JavaFileManager.Location location, String className, JavaFileObject.Kind kind) {
-        return inputJavaFiles.computeIfAbsent(uriOf(location, className, kind), InMemoryJavaFile::new);
+        return inputJavaFiles.computeIfAbsent(uriOf(location, className, kind), uri -> new InMemoryJavaFile(uri, className));
     }
 
     @NotNull
@@ -63,7 +63,7 @@ public class FileManagerState {
 
     @NotNull
     public JavaFileObject getOrCreateOutputJavaFile(JavaFileManager.Location location, String className, JavaFileObject.Kind kind) {
-        return outputJavaFiles.computeIfAbsent(uriOf(location, className, kind), InMemoryJavaFile::new);
+        return outputJavaFiles.computeIfAbsent(uriOf(location, className, kind), uri -> new InMemoryJavaFile(uri, className));
     }
 
     @NotNull

@@ -23,6 +23,12 @@ public class ProxyWireAnnotationProcessorTest extends AbstractProcessorTest {
                 .hasNoErrors()
                 .hasNoWarnings();
 
+//        assertThat(state)
+//                .containsGeneratedFile(javaFiles.load("ProxyTarget$$AspectAwareProxy"));
+        assertThat(state)
+                .containsGeneratedFile(javaFiles.load("TransactionalHandler$handle$AspectHandlerIdentifiableProvider"));
+        assertThat(state)
+                .containsGeneratedFile(javaFiles.load("ProxyTarget$$AspectAwareProxyIdentifiableProvider"));
         assertThat(state)
                 .containsExactlyAllGeneratedFiles(
                         javaFiles.load("ProxyTarget$$AspectAwareProxy"),
@@ -31,5 +37,6 @@ public class ProxyWireAnnotationProcessorTest extends AbstractProcessorTest {
                         javaFiles.load("TransactionalHandler$handle$AspectHandler"),
                         javaFiles.load("ProxyTarget$$AspectAwareProxyIdentifiableProvider")
                 );
+
     }
 }

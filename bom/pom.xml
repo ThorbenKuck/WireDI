@@ -24,17 +24,22 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
-                <artifactId>logging</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.wiredi</groupId>
                 <artifactId>async</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
                 <artifactId>cache</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>flow</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>logging</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -50,6 +55,11 @@
             <dependency>
                 <groupId>com.wiredi</groupId>
                 <artifactId>lang</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>type-converter</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

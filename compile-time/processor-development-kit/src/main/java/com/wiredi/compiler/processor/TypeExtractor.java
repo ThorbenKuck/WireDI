@@ -2,14 +2,18 @@ package com.wiredi.compiler.processor;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.Annotations;
+import com.wiredi.compiler.logger.Logger;
+import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static com.wiredi.compiler.processor.PropertyKeys.ADDITIONAL_WIRE_TYPES_SUPPORT_INHERITANCE;
@@ -17,9 +21,11 @@ import static com.wiredi.compiler.processor.PropertyKeys.ADDITIONAL_WIRE_TYPES_S
 public class TypeExtractor {
 
     private static final List<TypeKind> NON_SUPER_TYPES = List.of(TypeKind.NONE, TypeKind.NULL, TypeKind.VOID);
+    private static final Logger logger = Logger.get(TypeExtractor.class);
     private final Types types;
     private final Annotations annotations;
     private final ProcessorProperties properties;
+    private final ConcurrentHashMap<TypeElement, List<TypeMirror>> superTypeCache = new ConcurrentHashMap<>();
 
     public TypeExtractor(Types types, Annotations annotations, ProcessorProperties properties) {
         this.types = types;
@@ -40,17 +46,28 @@ public class TypeExtractor {
         }
     }
 
-    public List<TypeMirror> getAllSuperTypes(TypeElement typeElement) {
-        List<TypeMirror> superTypes = new ArrayList<>(getDeclaredSuperTypes(typeElement));
+    public List<TypeMirror> getAllSuperTypes(@Nullable TypeElement typeElement) {
+        if (typeElement == null) {
+            return Collections.emptyList();
+        }
 
-        var nestedTypes = superTypes.stream()
-                .flatMap(it -> getAllSuperTypes((TypeElement) types.asElement(it)).stream())
-                .filter(Objects::nonNull)
-                .filter(it -> !NON_SUPER_TYPES.contains(it.getKind()))
-                .toList();
-        superTypes.addAll(nestedTypes);
+        synchronized (superTypeCache) {
+            if (superTypeCache.containsKey(typeElement)) {
+                return superTypeCache.get(typeElement);
+            }
 
-        return superTypes;
+            List<TypeMirror> superTypes = new ArrayList<>(getDeclaredSuperTypes(typeElement));
+
+            var nestedTypes = superTypes.stream()
+                    .flatMap(it -> getAllSuperTypes((TypeElement) types.asElement(it)).stream())
+                    .filter(Objects::nonNull)
+                    .filter(it -> !NON_SUPER_TYPES.contains(it.getKind()))
+                    .toList();
+            superTypes.addAll(nestedTypes);
+
+            superTypeCache.put(typeElement, superTypes);
+            return superTypes;
+        }
     }
 
     public List<TypeMirror> getDeclaredSuperTypes(TypeElement typeElement) {

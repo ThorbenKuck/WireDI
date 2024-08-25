@@ -165,7 +165,7 @@ public class Annotations {
     }
 
     public static <A extends Annotation> List<AnnotatedElement<A, VariableElement>> findAllAnnotatedParameters(ExecutableElement typeElement, Class<A> annotationType) {
-        return typeElement.getEnclosedElements()
+        return typeElement.getParameters()
                 .stream()
                 .filter(it -> it.getKind() == ElementKind.PARAMETER && isAnnotatedWith(it, annotationType))
                 .map(method -> getAnnotation(method, annotationType).map(annotation -> new AnnotatedElement<>(annotation, (VariableElement) method)))

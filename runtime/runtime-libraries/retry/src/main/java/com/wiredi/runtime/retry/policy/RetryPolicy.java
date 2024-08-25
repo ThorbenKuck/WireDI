@@ -2,6 +2,7 @@ package com.wiredi.runtime.retry.policy;
 
 import com.wiredi.runtime.retry.RetryState;
 import com.wiredi.runtime.retry.RetryTemplate;
+import com.wiredi.runtime.retry.backoff.BackOffStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,8 +50,8 @@ public class RetryPolicy {
     }
 
     @NotNull
-    public RetryState newRetryState() {
-        return new RetryState(maxAttempts, delay);
+    public RetryState newRetryState(BackOffStrategy<?> backOffStrategy) {
+        return new RetryState(maxAttempts, delay, backOffStrategy);
     }
 
     @Nullable

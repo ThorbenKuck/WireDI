@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.errors.results;
 
-public class RethrowingErrorHandlingResult<T extends Throwable> implements ErrorHandlingResult<T> {
+public class RethrowingErrorHandlingResult<T extends Throwable> implements ExceptionHandlingResult<T> {
 
     private final Throwable rethrow;
 

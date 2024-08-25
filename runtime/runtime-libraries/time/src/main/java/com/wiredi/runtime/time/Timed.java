@@ -99,9 +99,29 @@ public class Timed {
      */
     @NotNull
     public static <E extends Throwable> Timed of(@NotNull final ThrowingRunnable<E> runnable) throws E {
-        final long startNanoseconds = System.nanoTime();
+        return of(runnable, TimePrecision.NANOS);
+    }
+
+    /**
+     * Constructs a new Timed instance, measuring the time the runnable required to execute.
+     * <p>
+     * The returned timed value holds the nano time that was elapsed while the runnable was executed.
+     * <p>
+     * Any exception thrown by the provided supplier will be directly forwarded, as specified by the
+     * {@link ThrowingRunnable} interface.
+     *
+     * @param runnable the runnable for which the execution time should be measured
+     * @param precision the precision used to measure the execution time.
+     * @param <E>      a generic for potentially thrown Exception (can be inferred by the runnable)
+     * @return a new Timed instance with the elapsed nanoseconds
+     * @throws E if the supplier throws the specified exception
+     * @see ThrowingRunnable
+     */
+    @NotNull
+    public static <E extends Throwable> Timed of(@NotNull final ThrowingRunnable<E> runnable, TimePrecision precision) throws E {
+        final long startNanoseconds = precision.now();
         runnable.run();
-        return new Timed(System.nanoTime() - startNanoseconds);
+        return new Timed(precision.calculateElapsedNanos(startNanoseconds));
     }
 
     /**
@@ -121,6 +141,26 @@ public class Timed {
     @NotNull
     public static <T, E extends Throwable> TimedValue<T> of(@NotNull ThrowingSupplier<T, E> supplier) throws E {
         return TimedValue.get(supplier);
+    }
+
+    /**
+     * Constructs a new {@link TimedValue} based on the time the supplier required to construct the value.
+     * <p>
+     * This method delegates to the {@link TimedValue#get(ThrowingSupplier)} and exists for ease of use.
+     * For detailed explanations, please see {@link TimedValue#get(ThrowingSupplier)}.
+     *
+     * @param supplier the supplier for which the time execution should be measured.
+     * @param precision the precision used to measure the execution time.
+     * @param <T>      the type for the constructed value (can be inferred by the supplier)
+     * @param <E>      a generic for potentially thrown Exception (can be inferred by the supplier)
+     * @return a new TimedValue, holding the constructed value and the required nano execution.
+     * @throws E if the supplier throws the specified exception
+     * @see TimedValue#get(ThrowingSupplier)
+     * @see TimedValue
+     */
+    @NotNull
+    public static <T, E extends Throwable> TimedValue<T> of(@NotNull ThrowingSupplier<T, E> supplier, TimePrecision precision) throws E {
+        return TimedValue.get(supplier, precision);
     }
 
     /**

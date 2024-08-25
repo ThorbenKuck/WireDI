@@ -145,7 +145,7 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
                 });
             });
         }
-        logger.info(() -> "Writing all created classes in " + repository);
+        logger.debug(() -> "Writing all created classes in " + repository);
         repository.flush();
         return true;
     }

@@ -34,10 +34,31 @@ public record TimedValue<T>(@NotNull T value, @NotNull Timed time) {
      */
     @NotNull
     public static <T, E extends Throwable> TimedValue<T> get(@NotNull final ThrowingSupplier<T, E> supplier) throws E {
-        final long start = System.nanoTime();
+        return get(supplier, TimePrecision.NANOS);
+    }
+
+
+    /**
+     * Constructs a new TimedValue from the provided supplier.
+     * <p>
+     * This method calculates the time based on the System.nano time.
+     *
+     * @param supplier the supplier to construct the value
+     * @param precision the precision used to measure the execution time.
+     * @param <T>      the generic type of the value (can be inferred by the supplier)
+     * @param <E>      any potential exception that might be raised (can be inferred by the supplier)
+     * @return a new TimedValue instance that holds value and construction time
+     * @throws E any potential exception
+     * @see Timed
+     * @see Timed#of(ThrowingSupplier)
+     * @see Timed#of(ThrowingRunnable)
+     */
+    @NotNull
+    public static <T, E extends Throwable> TimedValue<T> get(@NotNull final ThrowingSupplier<T, E> supplier, TimePrecision precision) throws E {
+        final long start = precision.now();
         final T result = supplier.get();
-        final long stop = System.nanoTime();
-        return new TimedValue<>(result, new Timed(stop - start));
+        final long elapsed = precision.calculateElapsedNanos(start);
+        return new TimedValue<>(result, new Timed(elapsed));
     }
 
     /**

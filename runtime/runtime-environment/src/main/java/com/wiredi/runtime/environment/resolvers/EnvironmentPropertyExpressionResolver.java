@@ -6,17 +6,28 @@ import com.wiredi.runtime.environment.Placeholder;
 import com.wiredi.runtime.properties.Key;
 
 import java.util.Optional;
-import java.util.concurrent.ThreadLocalRandom;
 
 @AutoService(EnvironmentExpressionResolver.class)
 public class EnvironmentPropertyExpressionResolver implements EnvironmentExpressionResolver {
-	@Override
-	public Optional<String> resolve(Placeholder placeholder, Environment environment) {
-		return Optional.ofNullable(environment.getProperty(Key.format(placeholder.getContent())));
-	}
+    @Override
+    public Optional<String> resolve(Placeholder placeholder, Environment environment) {
+        return Optional.ofNullable(environment.getProperty(Key.format(placeholder.getExpression())))
+                .or(() -> propertyFromParameters(placeholder));
+    }
 
-	@Override
-	public char expressionIdentifier() {
-		return '$';
-	}
+    private Optional<String> propertyFromParameters(Placeholder placeholder) {
+        for (Placeholder.Parameter parameter : placeholder.getParameters()) {
+            Optional<Placeholder> resolvedParameter = parameter.asPlaceholder();
+            if (resolvedParameter.isPresent()) {
+                return resolvedParameter.map(Placeholder::compile);
+            }
+        }
+
+        return Optional.empty();
+    }
+
+    @Override
+    public char expressionIdentifier() {
+        return '$';
+    }
 }

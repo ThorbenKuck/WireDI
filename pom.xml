@@ -59,6 +59,7 @@
         <module>compile-time</module>
         <module>bundles</module>
         <module>integrations</module>
+        <module>integration-parent</module>
     </modules>
 
     <url>https://github.com/ThorbenKuck/WireDI</url>
@@ -294,7 +295,7 @@
     <profiles>
         <profile>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <id>deploy</id>
             <build>

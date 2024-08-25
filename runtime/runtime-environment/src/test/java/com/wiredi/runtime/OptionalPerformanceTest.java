@@ -1,6 +1,6 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.properties.TypeMapper;
+import com.wiredi.runtime.types.TypeMapper;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +75,7 @@ public class OptionalPerformanceTest {
         public Integer getNullable(int key) {
             String s = properties.getProperty("test-" + key);
             if (s != null) {
-                return typeMapper.parse(int.class, s);
+                return typeMapper.convert(s, int.class);
             } else {
                 return null;
             }
@@ -84,7 +84,7 @@ public class OptionalPerformanceTest {
         @NotNull
         public Optional<Integer> tryGet(int key) {
             return Optional.ofNullable(properties.getProperty("test-" + key))
-                    .map(value -> typeMapper.parse(int.class, value));
+                    .map(value -> typeMapper.convert(value, int.class));
         }
     }
 }

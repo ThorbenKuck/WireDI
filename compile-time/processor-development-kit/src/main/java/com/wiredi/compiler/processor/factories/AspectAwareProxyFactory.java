@@ -10,6 +10,7 @@ import com.wiredi.compiler.processor.TypeExtractor;
 import com.wiredi.compiler.processor.business.AspectAwareProxyService;
 
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import java.util.List;
 
@@ -44,10 +45,8 @@ public class AspectAwareProxyFactory implements Factory<AspectAwareProxyEntity> 
 		final NameContext nameContext = new NameContext();
 
 		eligibleMethods.forEach(proxyMethod -> entity.proxyMethod(proxyMethod, nameContext));
-		entity.addWiredAnnotationFor(typeExtractor.getAllSuperTypes(typeElement).stream().map(types::erasure).toList())
+
+		return entity.addWiredAnnotationFor(typeExtractor.getAllSuperTypes(typeElement).stream().map(types::erasure).toList())
 				.addConstructorInvocation(TypeUtils.findPrimaryConstructor(typeElement).orElse(null));
-
-		return entity;
 	}
-
 }

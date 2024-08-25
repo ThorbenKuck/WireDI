@@ -3,13 +3,20 @@ package com.wiredi.runtime;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.domain.OrderedComparator;
 import com.wiredi.runtime.environment.DefaultEnvironmentKeys;
+import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.environment.Placeholder;
 import com.wiredi.runtime.environment.PlaceholderResolver;
 import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
-import com.wiredi.runtime.properties.*;
+import com.wiredi.runtime.properties.Key;
+import com.wiredi.runtime.properties.PropertyLoader;
+import com.wiredi.runtime.properties.TypedProperties;
+import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.resources.ResourceLoader;
 import com.wiredi.runtime.time.Timed;
+import com.wiredi.runtime.types.TypeConverter;
+import com.wiredi.runtime.types.TypeMapper;
+import com.wiredi.runtime.types.exceptions.InvalidPropertyTypeException;
 import com.wiredi.runtime.values.SafeReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,9 +26,28 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * An Environment is maintaining a state of meta-data for the WireRepository and the runtime context.
+ * <p>
+ * Its main purpose is to maintain file-access and properties and is deeply connected into the WireRepository.
+ * To access the Environment, call {@link WireRepository#environment()}.
+ * <p>
+ * You can modify the Environment by providing {@link EnvironmentConfiguration}.
+ * For details see the {@link EnvironmentConfiguration} configuration.
+ * <p>
+ * Notes: In general, it is not recommended to manually construct an Environment, but if you really have to,
+ * make sure to call {@link #autoconfigure()}.
+ * Otherwise, try to confine the usages to instances maintained in the {@link WireRepository}.
+ *
+ * The environment can be used generically, by using {@link #resolve(String)}
+ *
+ * @see WireRepository
+ * @see EnvironmentExpressionResolver
+ * @see EnvironmentConfiguration
+ */
 public class Environment {
 
-    public static final Logging LOGGER = Logging.getInstance(Environment.class);
+    public static final Logging logger = Logging.getInstance(Environment.class);
     private static final String PLACE_HOLDER_START = "{";
     private static final String PLACE_HOLDER_END = "}";
     private static final PlaceholderResolver placeholderResolver = new PlaceholderResolver(PLACE_HOLDER_START, PLACE_HOLDER_END);
@@ -55,36 +81,105 @@ public class Environment {
         this(Collections.emptyList());
     }
 
+    /**
+     * Constructs a new, autonomous and autoconfigured {@link Environment}.
+     *
+     * @return a new instance of the environment.
+     */
     public static Environment build() {
         Environment environment = new Environment();
         environment.autoconfigure();
         return environment;
     }
 
+    /**
+     * The properties maintained in this Environment.
+     * <p>
+     * You can use this method if you need to access the properties in a way that is not provided by the environment itself.
+     *
+     * @return the maintained {@link TypedProperties} instance
+     * @see TypedProperties
+     */
     public TypedProperties properties() {
         return properties;
     }
 
+    /**
+     * The {@link ResourceLoader} that is configured by and maintained in this Environment.
+     * <p>
+     * A {@link ResourceLoader} can be used to dynamically load resources,
+     * by providing a string that follows this schema {@code <protocol>:<source>}.
+     * For example, if you want to access a class path resource: {@code classpath:my-resource.txt}.
+     * For details consult the documentation of the {@link ResourceLoader}.
+     *
+     * @see ResourceLoader
+     */
     public ResourceLoader resourceLoader() {
         return resourceLoader;
     }
 
+    /**
+     * Returns the {@link PropertyLoader} configured and maintained by the Environment instance.
+     * <p>
+     * A {@link PropertyLoader} can be used to load a {@link Resource} into a new {@link TypedProperties} instance.
+     * It knows how to interpret different file-types based on {@link PropertyFileTypeLoader} instances.
+     * <p>
+     * For further details see the documentation of the {@link PropertyLoader}
+     *
+     * @return the maintained property loader
+     * @see PropertyLoader
+     * @see TypedProperties
+     * @see PropertyFileTypeLoader
+     */
     public PropertyLoader propertyLoader() {
         return propertyLoader;
     }
 
+    /**
+     * Returns the {@link TypeMapper} configured and maintained by the Environment instance.
+     * <p>
+     * A {@link TypeMapper} is responsible for converting simple types.
+     * For example, it defines how to convert a {@link String} to a {@link Boolean} or any other primitives.
+     * <p>
+     * Though it is possible to define more complex, non-primitive mappings in the {@link TypeMapper}, for more complex
+     * mappings it is recommended to use the messaging module instead.
+     * <p>
+     * For further details see the documentation of the {@link TypeMapper}
+     *
+     * @return the maintained {@link TypeMapper}
+     * @see TypeMapper
+     * @see TypeConverter
+     */
     public TypeMapper typeMapper() {
         return typeMapper;
     }
 
+    /**
+     * Clears the state of this environment.
+     * <p>
+     * Subsequent interactions with the environment would yield no results.
+     */
     public void clear() {
         expressionResolvers.clear();
         resourceLoader.clear();
         propertyLoader.clear();
         properties.clear();
-        typeMapper.setTypeConverters(TypeMapper.getInstance());
+        typeMapper.takeTypeConvertersFrom(TypeMapper.getInstance());
     }
 
+    /**
+     * This method configures this Environment instance based on the {@link java.util.ServiceLoader}.
+     * <p>
+     * It will attempt to load:
+     * <ul>
+     *     <li>{@link EnvironmentExpressionResolver}</li>
+     *     <li>{@link com.wiredi.runtime.resources.ResourceProtocolResolver}</li>
+     *     <li>{@link PropertyFileTypeLoader}</li>
+     *     <li>{@link EnvironmentConfiguration}</li>
+     * </ul>
+     *
+     * @return How long the autoconfiguration took.
+     */
     public Timed autoconfigure() {
         return Timed.of(() -> {
             addExpressionResolvers(loader.environmentExpressionResolvers());
@@ -96,29 +191,63 @@ public class Environment {
                     .forEach(config -> config.configure(this));
 
             if (properties.getBoolean(TAKE_ENVIRONMENT_PROPERTIES, true)) {
-                LOGGER.debug("Appending all JVM environment variables to the environment");
+                logger.debug("Appending all JVM environment variables to the environment");
                 System.getenv().forEach((key, value) -> {
                     properties.set(Key.format(key), resolve(value));
                 });
             }
 
             if (properties.getBoolean(TAKE_SYSTEM_PROPERTIES, true)) {
-                LOGGER.debug("Adding all system variables to the environment");
+                logger.debug("Adding all system variables to the environment");
                 System.getProperties()
                         .stringPropertyNames().forEach(property -> {
                             properties.set(Key.format(property), resolve(System.getProperty(property)));
                         });
             }
-        }).then(time -> LOGGER.debug("Environment autoconfigured in " + time));
+        }).then(time -> logger.debug("Environment autoconfigured in " + time));
     }
 
+    /**
+     * Loads the properties from the provided path.
+     * <p>
+     * This is done by converting the path into a {@link Resource} through the {@link ResourceLoader}
+     * and then delegating this to the {@link PropertyLoader}
+     *
+     * @param path the path to load
+     * @return A new instance of {@link TypedProperties} containing the properties found in the resource.
+     * @see ResourceLoader
+     * @see PropertyLoader
+     */
     public TypedProperties loadProperties(String path) {
         Resource resource = loadResource(path);
         return propertyLoader.load(resource);
     }
 
+    /**
+     * Loads a new TypedProperties instance based on the resource.
+     *
+     * @param resource the resource to load
+     * @return a new TypedProperties instance containing the properties located in the {@link Resource}
+     */
     public TypedProperties loadProperties(Resource resource) {
         return propertyLoader.load(resource);
+    }
+
+    /**
+     * Converts the {@code input} into the requested {@code type}
+     *
+     * @param input The object to convert
+     * @param type The type to convert the input into
+     * @return A new instance of the {@code type}
+     * @param <T> a generic of the target type
+     * @throws InvalidPropertyTypeException when the property could not be converted
+     */
+    @NotNull
+    public <T> T convert(
+            @NotNull Object input,
+            @NotNull Class<T> type
+    ) throws InvalidPropertyTypeException {
+        return typeMapper.convert(input, type);
     }
 
     public void addExpressionResolvers(Collection<? extends EnvironmentExpressionResolver> resolver) {
@@ -140,7 +269,10 @@ public class Environment {
         return resourceLoader.load(resolve(path), defaultProtocol);
     }
 
+    // ### Properties operations ###
+
     public void appendPropertiesFrom(Resource resource) {
+        logger.debug(() -> "Appending properties from " + resource.getPath());
         try (TypedProperties source = this.propertyLoader.load(resource)) {
             properties.setAll(source);
         }
@@ -152,6 +284,14 @@ public class Environment {
 
     public void setProperty(Key key, String value) {
         properties.set(key, resolve(value));
+    }
+
+    public void setProperties(Map<Key, String> properties) {
+        this.properties.setAll(properties);
+    }
+
+    public void setProperties(Properties properties) {
+        this.properties.setAll(properties);
     }
 
     /**
@@ -190,6 +330,11 @@ public class Environment {
     }
 
     @NotNull
+    public <T, S extends T> T getPropertyOrResolve(@NotNull Key key, @NotNull Class<T> type, String defaultValue) {
+        return properties.get(key, type, defaultValue);
+    }
+
+    @NotNull
     public <T, S extends T> T getProperty(@NotNull Key key, @NotNull Class<T> type, Supplier<S> defaultValue) {
         return properties.get(key, type, defaultValue);
     }
@@ -201,7 +346,7 @@ public class Environment {
 
     @NotNull
     public <T> List<T> getAllProperties(Key key, Class<T> type) {
-        return properties.getAll(key, raw -> typeMapper.parse(type, raw));
+        return properties.getAll(key, raw -> typeMapper.convert(raw, type));
     }
 
     /**
@@ -243,30 +388,23 @@ public class Environment {
     public String resolve(String content) {
         List<Placeholder> placeholders = placeholderResolver.resolveAllIn(content);
         SafeReference<String> target = new SafeReference<>(content);
-        placeholders.forEach(placeholder -> {
-            final EnvironmentExpressionResolver resolver = getExpressionResolverFor(placeholder);
-
-            if (resolver != null) {
-                Optional<String> replacement = resolver.resolve(placeholder, this);
-                if (replacement.isPresent()) {
-                    target.update(value -> placeholder.replaceIn(value, replacement.get()));
-                } else {
-                    target.updateIfPresent(placeholder::tryReplacementValueWithDefault);
-                }
-            }
-        });
-
+        placeholders.forEach(placeholder -> resolvePlaceholder(placeholder, target));
         return target.getOrThrow(() -> new IllegalStateException("Could not resolve the key " + content));
     }
 
-    @Nullable
-    private EnvironmentExpressionResolver getExpressionResolverFor(Placeholder placeholder) {
+    private void resolvePlaceholder(Placeholder placeholder, SafeReference<String> target) {
+        getExpressionResolverFor(placeholder)
+                .flatMap(resolver -> resolver.resolve(placeholder, this))
+                .ifPresent(resolved -> target.update(value -> placeholder.replaceIn(value, resolved)));
+    }
+
+    @NotNull
+    private Optional<EnvironmentExpressionResolver> getExpressionResolverFor(Placeholder placeholder) {
         if (placeholder.getIdentifierChar().isPresent()) {
             return placeholder.getIdentifierChar()
-                    .map(expressionResolvers::get)
-                    .orElse(null);
+                    .map(expressionResolvers::get);
         } else {
-            return null;
+            return Optional.empty();
         }
     }
 
@@ -280,12 +418,12 @@ public class Environment {
             @NotNull String key, Class<T> type
     ) {
         return resolveList(key).stream()
-                .map(it -> typeMapper.parse(type, Key.just(key), it))
+                .map(it -> typeMapper.convert(it, type))
                 .toList();
     }
 
     public <T> T resolveTyped(String key, Class<T> type) {
-        return typeMapper.parse(type, Key.just(key), resolve(key));
+        return typeMapper.convert(resolve(key), type);
     }
 
     public <T> Optional<T> map(Key key, Function<String, T> function) {
@@ -299,7 +437,7 @@ public class Environment {
 
     public void printProfiles() {
         List<String> activeProfiles = activeProfiles();
-        LOGGER.info(() -> {
+        logger.info(() -> {
             if (activeProfiles.isEmpty()) {
                 return "No active profiles have been set";
             } else if (activeProfiles.size() == 1) {

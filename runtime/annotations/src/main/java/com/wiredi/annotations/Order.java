@@ -70,8 +70,8 @@ public @interface Order {
      * In this example, the order of the annotated class will be resolved to 6.
      * If before and after do not have a difference of at least 2,
      * no concrete order of the annotated class can be resolved!
-     *
-     * <h2>Note</h2>
+     * <p>
+     * <b>Note</b>
      * This field only takes effect in annotation processors.
      * It is not used in the related {@code OrderedComparator}, as we want to remove reflection checks at runtime.
      *
@@ -96,8 +96,8 @@ public @interface Order {
      * In this example, the order of the annotated class will be resolved to 6.
      * If before and after do not have a difference of at least 2,
      * no concrete order of the annotated class can be resolved!
-     *
-     * <h2>Note</h2>
+     * <p>
+     * <b>Note</b>
      * This field only takes effect in annotation processors.
      * It is not used in the related {@code OrderedComparator}, as we want to remove reflection checks at runtime.
      *

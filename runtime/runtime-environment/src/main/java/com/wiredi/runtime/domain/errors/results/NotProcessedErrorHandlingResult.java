@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.errors.results;
 
-public class NotProcessedErrorHandlingResult<T extends Throwable> implements ErrorHandlingResult<T> {
+public class NotProcessedErrorHandlingResult<T extends Throwable> implements ExceptionHandlingResult<T> {
 
     public static final NotProcessedErrorHandlingResult<Throwable> INSTANCE = new NotProcessedErrorHandlingResult<>();
 

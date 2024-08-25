@@ -1,6 +1,7 @@
 package com.wiredi.runtime.properties;
 
 import com.wiredi.runtime.properties.exceptions.PropertyNotFoundException;
+import com.wiredi.runtime.types.TypeMapper;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,10 +33,6 @@ public final class TypedProperties implements AutoCloseable {
         this.typeMapper = typeMapper;
     }
 
-    public TypeMapper typeMapper() {
-        return typeMapper;
-    }
-
     @NotNull
     public static TypedProperties from(@NotNull final Map<Key, String> rawProperties) {
         final TypedProperties result = new TypedProperties();
@@ -59,6 +56,10 @@ public final class TypedProperties implements AutoCloseable {
 
     private static Supplier<PropertyNotFoundException> notFound(Key key) {
         return () -> new PropertyNotFoundException(key.value());
+    }
+
+    public TypeMapper typeMapper() {
+        return typeMapper;
     }
 
     /* Modifying options */
@@ -86,7 +87,7 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final Key key,
             @NotNull final Object value
     ) {
-        return add(key, typeMapper.stringify(value));
+        return add(key, typeMapper.convert(value, String.class));
     }
 
     @NotNull
@@ -103,7 +104,7 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final Key key,
             final Object value
     ) {
-        return set(key, typeMapper.stringify(value));
+        return set(key, typeMapper.convert(value, String.class));
     }
 
     @NotNull
@@ -111,7 +112,7 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final Key key,
             final String value
     ) {
-        properties.put(key, typeMapper.stringify(value));
+        properties.put(key, typeMapper.convert(value, String.class));
         return this;
     }
 
@@ -163,7 +164,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             throw notFound(key).get();
         }
-        return typeMapper.parse(type, key, raw);
+        return typeMapper.convert(raw, type);
     }
 
     @NotNull
@@ -171,7 +172,7 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final Key key,
             @NotNull final Class<T> type
     ) {
-        return doGetOptional(key).map(it -> typeMapper.parse(type, key, it));
+        return doGetOptional(key).map(it -> typeMapper.convert(it, type));
     }
 
     @NotNull
@@ -184,7 +185,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue.get();
         } else {
-            return typeMapper.parse(type, key, raw);
+            return typeMapper.convert(raw, type);
         }
     }
 
@@ -195,11 +196,11 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final String rawDefault
     ) {
         String raw = doGetNullable(key);
-        return typeMapper.parse(type, key, Objects.requireNonNullElse(raw, rawDefault));
+        return typeMapper.convert(Objects.requireNonNullElse(raw, rawDefault), type);
     }
 
     public <T> Optional<T> get(Key key, @NotNull final Class<T> type) {
-        return doGetOptional(key).map(it -> typeMapper.parse(type, key, it));
+        return doGetOptional(key).map(it -> typeMapper.convert(it, type));
     }
 
     @NotNull
@@ -212,7 +213,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue;
         } else {
-            return typeMapper.parse(type, key, raw);
+            return typeMapper.convert(raw, type);
         }
     }
 
@@ -235,7 +236,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue;
         }
-        return typeMapper.parse(int.class, raw);
+        return typeMapper.convert(raw, int.class);
     }
 
     @Nullable
@@ -256,7 +257,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue;
         }
-        return typeMapper.parse(float.class, raw);
+        return typeMapper.convert(raw, float.class);
     }
 
     @Nullable
@@ -278,7 +279,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue;
         }
-        return typeMapper.parse(double.class, raw);
+        return typeMapper.convert(raw, double.class);
     }
 
     @Nullable
@@ -300,7 +301,7 @@ public final class TypedProperties implements AutoCloseable {
         if (raw == null) {
             return defaultValue;
         }
-        return typeMapper.parse(boolean.class, raw);
+        return typeMapper.convert(raw, boolean.class);
     }
 
     @NotNull
@@ -358,7 +359,7 @@ public final class TypedProperties implements AutoCloseable {
 
     @NotNull
     public <T> List<T> getAll(@NotNull final Key key, @NotNull final Class<T> type) {
-        return getAll(key, value -> typeMapper.parse(type, key, value));
+        return getAll(key, value -> typeMapper.convert(value, type));
     }
 
     @NotNull
@@ -368,7 +369,7 @@ public final class TypedProperties implements AutoCloseable {
             return defaultValue;
         }
 
-        return getAll(key, value -> typeMapper.parse(type, key, value));
+        return getAll(key, value -> typeMapper.convert(value, type));
     }
 
     @NotNull

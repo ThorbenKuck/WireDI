@@ -1,7 +1,5 @@
 package com.wiredi.runtime.environment;
 
-import com.wiredi.runtime.environment.Placeholder;
-import com.wiredi.runtime.environment.PlaceholderResolver;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -22,6 +20,24 @@ class PlaceholderResolverTest {
 
         // Assert
         assertThat(placeholders).hasSize(1);
+        assertThat(placeholders.getFirst().getParameters()).containsExactly(new Placeholder.Parameter("default", ":", placeholderResolver));
+    }
+
+    @Test
+    public void testThatMultipleParametersAreSupported() {
+        // Arrange
+        String wholeString = "${some.value:default1:default2}";
+
+        // Act
+        List<Placeholder> placeholders = placeholderResolver.resolveAllIn(wholeString);
+
+        // Assert
+        assertThat(placeholders).hasSize(1);
+        assertThat(placeholders.getFirst().getParameters())
+                .containsExactly(
+                        new Placeholder.Parameter("default1", ":", placeholderResolver),
+                        new Placeholder.Parameter("default2", ":", placeholderResolver)
+                );
     }
 
     @Test
@@ -34,7 +50,7 @@ class PlaceholderResolverTest {
 
         // Assert
         assertThat(placeholders).hasSize(1);
-        assertThat(placeholders.get(0).getDefaultValue()).isNotEmpty().hasValue(new Placeholder.Default("${some.other.value}", ":", placeholderResolver));
+        assertThat(placeholders.getFirst().getParameters()).containsExactly(new Placeholder.Parameter("${some.other.value}", ":", placeholderResolver));
     }
 
     @Test
@@ -47,18 +63,18 @@ class PlaceholderResolverTest {
 
         // Assert
         assertThat(placeholders).hasSize(1);
-        Placeholder first = placeholders.get(0);
-        assertThat(first.getContent()).isEqualTo("first.value");
+        Placeholder first = placeholders.getFirst();
+        assertThat(first.getExpression()).isEqualTo("first.value");
         assertThat(first.getIdentifierChar()).hasValue('$');
-        Placeholder.Default firstDefault = first.getDefaultValue().get();
+        Placeholder.Parameter firstDefault = first.getParameters().getFirst();
         Placeholder secondValue = firstDefault.asPlaceholder().get();
-        assertThat(secondValue.getContent()).isEqualTo("second.value");
+        assertThat(secondValue.getExpression()).isEqualTo("second.value");
         assertThat(secondValue.getIdentifierChar()).hasValue('%');
-        Placeholder.Default secondDefault = secondValue.getDefaultValue().get();
+        Placeholder.Parameter secondDefault = secondValue.getParameters().getFirst();
         Placeholder thirdValue = secondDefault.asPlaceholder().get();
-        assertThat(thirdValue.getContent()).isEqualTo("third.value");
+        assertThat(thirdValue.getExpression()).isEqualTo("third.value");
         assertThat(thirdValue.getIdentifierChar()).hasValue('#');
-        assertThat(thirdValue.getDefaultValue()).isEmpty();
+        assertThat(thirdValue.getParameters()).isEmpty();
     }
 
     @Test
@@ -72,14 +88,14 @@ class PlaceholderResolverTest {
 
         // Assert
         assertThat(placeholders).hasSize(1);
-        assertThat(placeholders.get(0).toString()).isEqualTo(rawPlaceHolder);
+        assertThat(placeholders.getFirst().toString()).isEqualTo(rawPlaceHolder);
     }
 
     @Test
     public void testThatTwoRawPlaceholdersAreExtractedCorrectly() {
         // Arrange
         String rawPlaceHolder = "${some.value:${some.other.value}}";
-        String wholeString = "}This Variable " + rawPlaceHolder + " Is Only " + rawPlaceHolder + "For A Test {";
+        String wholeString = "}This Variable " + rawPlaceHolder + " Is {} Only " + rawPlaceHolder + "For A Test {";
 
         // Act
         List<Placeholder> placeholders = placeholderResolver.resolveAllIn(wholeString);

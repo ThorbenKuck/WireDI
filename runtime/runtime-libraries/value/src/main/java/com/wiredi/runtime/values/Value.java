@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -232,5 +233,9 @@ public interface Value<T> {
     @NotNull
     default Supplier<@Nullable T> asSupplier() {
         return this::get;
+    }
+
+    default <S> S map(Function<T, S> mappingFunction) {
+        return mappingFunction.apply(get());
     }
 }

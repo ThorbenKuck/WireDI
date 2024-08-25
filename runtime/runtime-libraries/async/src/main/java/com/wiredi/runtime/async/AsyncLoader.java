@@ -14,7 +14,6 @@ import java.util.function.Consumer;
 public class AsyncLoader {
 
     private static final Logging logger = Logging.getInstance(AsyncLoader.class);
-
     private static final String THREAD_KEY = "wiredi.eager-loading.max-threads";
     private static final String IS_VIRTUAL_KEY = "wiredi.eager-loading.virtual-threads";
     private static final int threads;

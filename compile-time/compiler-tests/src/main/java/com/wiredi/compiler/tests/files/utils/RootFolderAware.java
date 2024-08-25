@@ -52,4 +52,8 @@ public class RootFolderAware {
 
         return url;
     }
+
+    protected String resolveConcreteName(String fileName) {
+        return resolvePath(fileName);
+    }
 }

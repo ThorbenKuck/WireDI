@@ -98,16 +98,10 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
             NameContext nameContext
     ) {
         TypeName returnType = ClassName.get(proxyMethod.returnType());
-        MethodSpec.Builder methodBuilder = MethodSpec.overriding(proxyMethod.value())
+        MethodSpec.Builder methodBuilder = MethodSpecs.override(proxyMethod.value())
                 .addModifiers(Modifier.FINAL)
-                .returns(returnType)
-                .addAnnotations(
-                        proxyMethod.proxyAnnotations()
-                                .stream()
-                                .filter(it -> !it.getAnnotationType().toString().equals(Override.class.getName()))
-                                .map(AnnotationSpec::get)
-                                .toList()
-                );
+                .returns(returnType);
+
         if (proxyMethod.proxyAnnotations().isEmpty()) {
             builder.addMethod(
                     methodBuilder.addCode(
@@ -184,6 +178,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
     public AspectAwareProxyEntity addWiredAnnotationFor(List<TypeMirror> types) {
         List<CodeBlock> wireValues = new ArrayList<>();
         types.forEach(type -> wireValues.add(CodeBlock.of("$T.class", TypeName.get(type))));
+        wireValues.add(CodeBlock.of("$T.class", compileFinalClassName()));
 
         builder.addAnnotation(
                 AnnotationSpec.builder(Wire.class)

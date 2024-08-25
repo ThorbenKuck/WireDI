@@ -9,7 +9,7 @@ import java.util.List;
 
 import static com.wiredi.runtime.lang.Preconditions.is;
 
-public class CorrectiveActionsErrorHandlingResult<T extends Throwable> implements ErrorHandlingResult<T> {
+public class CorrectiveActionsErrorHandlingResult<T extends Throwable> implements ExceptionHandlingResult<T> {
 
     private final @NotNull T cause;
     private final @NotNull List<String> correctiveActions;

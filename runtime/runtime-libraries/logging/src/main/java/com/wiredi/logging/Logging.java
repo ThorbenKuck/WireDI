@@ -6,6 +6,11 @@ import org.slf4j.event.Level;
 
 import java.util.function.Supplier;
 
+/**
+ * A functional wrapper around the slf4j Logger.
+ * <p>
+ * It's main task is to provide functions that take lambdas when logging, to make logging more convenient.
+ */
 public class Logging {
 
     private final Logger logger;

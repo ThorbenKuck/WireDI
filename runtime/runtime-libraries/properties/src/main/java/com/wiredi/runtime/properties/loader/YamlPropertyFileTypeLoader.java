@@ -1,9 +1,9 @@
 package com.wiredi.runtime.properties.loader;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.properties.TypeMapper;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.resources.Resource;
+import com.wiredi.runtime.types.TypeMapper;
 import org.jetbrains.annotations.NotNull;
 import org.yaml.snakeyaml.Yaml;
 
@@ -24,7 +24,26 @@ import java.util.stream.Collectors;
 public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader {
 
     @NotNull
-    private static final Yaml yaml = new Yaml();
+    private static final Yaml DEFAULT_YAML = new Yaml();
+    private Yaml yaml;
+    private TypeMapper typeMapper;
+
+    public YamlPropertyFileTypeLoader() {
+        this(DEFAULT_YAML, TypeMapper.getInstance());
+    }
+
+    public YamlPropertyFileTypeLoader(Yaml yaml) {
+        this(yaml, TypeMapper.getInstance());
+    }
+
+    public YamlPropertyFileTypeLoader(TypeMapper typeMapper) {
+        this(DEFAULT_YAML, typeMapper);
+    }
+
+    public YamlPropertyFileTypeLoader(Yaml yaml, TypeMapper typeMapper) {
+        this.yaml = yaml;
+        this.typeMapper = typeMapper;
+    }
 
     @Override
     public @NotNull Map<Key, String> extract(@NotNull final Resource resource) {
@@ -64,7 +83,7 @@ public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader 
         switch (instance) {
             case Map<?, ?> map -> flatten((Map<String, Object>) map, context);
             case List<?> list -> list.forEach(entry -> flattenEntry(entry, context));
-            default -> context.appendValue(TypeMapper.getInstance().stringify(instance));
+            default -> context.appendValue(typeMapper.convert(instance, String.class));
         }
     }
 

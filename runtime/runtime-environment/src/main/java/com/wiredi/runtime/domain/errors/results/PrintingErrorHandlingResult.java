@@ -2,7 +2,7 @@ package com.wiredi.runtime.domain.errors.results;
 
 import com.wiredi.runtime.domain.errors.results.printer.ErrorHandlingResultPrinter;
 
-public class PrintingErrorHandlingResult<T extends Throwable> implements ErrorHandlingResult<T> {
+public class PrintingErrorHandlingResult<T extends Throwable> implements ExceptionHandlingResult<T> {
 
     private final T throwable;
     private final ErrorHandlingResultPrinter printer;

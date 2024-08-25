@@ -20,16 +20,16 @@ import java.util.List;
  * If multiple Ordered instances have the same order, the original order is preserved.
  * <p>
  * If any element in the collection does not implement this interface, it is considered to be a {@link Order#FIRST}.
- *
- * <h3>Relative orders</h3>
+ * <p>
+ * <b>Relative orders</b>
  * <p>
  * You can use orders "absolute", i.e., you can return any number in the {@link Ordered#getOrder()} method.
  * However, sometimes you want to make sure that a certain element is ordered before or after another one.
  * For that you can use the {@link Ordered#before(Integer)} and {@link Ordered#after(Integer)} methods.
  * <p>
  * These methods neatly tie in with {@link Order#before()} and {@link Order#after()}.
- *
- * <h3>Special Orders</h3>
+ * <p>
+ * <b>Special Orders</b>
  * <p>
  * By default, all Ordered instances have order 0.
  * This allows other Orders to append or prepend themselves.

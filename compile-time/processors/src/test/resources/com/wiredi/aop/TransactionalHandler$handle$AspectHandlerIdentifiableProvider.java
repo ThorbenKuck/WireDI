@@ -28,9 +28,9 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
     private TransactionalHandler$handle$AspectHandler createInstance(
             final WireRepository wireRepository,
             final TypeIdentifier<TransactionalHandler$handle$AspectHandler> concreteType) {
-// We will start by Fetching all 1 constructor parameters
-        TransactionalHandler variable0 = wireRepository.get(TypeIdentifier.of(TransactionalHandler.class));
-        TransactionalHandler$handle$AspectHandler instance = new TransactionalHandler$handle$AspectHandler(variable0);
+        // We will start by Fetching all 1 constructor parameters
+        TransactionalHandler variable = wireRepository.get(TypeIdentifier.of(TransactionalHandler.class));
+        TransactionalHandler$handle$AspectHandler instance = new TransactionalHandler$handle$AspectHandler(variable);
         return instance;
     }
 

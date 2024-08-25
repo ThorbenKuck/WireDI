@@ -61,9 +61,9 @@ public abstract class AsyncResult<T> {
     }
 
     public T get(Duration timeout) {
-        checkErrors();
+        checkErrors(false);
         traverse(timeout);
-        checkErrors();
+        checkErrors(true);
         T result = value;
         if (result == null) {
             Assertions.fail("AsyncResult was not filled");
@@ -111,7 +111,7 @@ public abstract class AsyncResult<T> {
 
     private void traverse(Duration timeout) {
         try {
-            if (!barrier.tryAcquire(timeout.getNano(), TimeUnit.NANOSECONDS)) {
+            if (!barrier.tryAcquire(timeout.toMillis(), TimeUnit.MILLISECONDS)) {
                 throw new AssertionFailedError("AsyncResultList was expected to be invoked " + expectedInvocations + " but was only invoked " + barrier.availablePermits());
             }
             barrier.release();
@@ -120,20 +120,22 @@ public abstract class AsyncResult<T> {
         }
     }
 
-    private void checkErrors() {
+    private void checkErrors(boolean checkPermits) {
         if (errors.size() == 1) {
             throw errors.getFirst();
         } else if (errors.size() > 1) {
             throw new MultipleFailuresError(errors.size() + " invocations to many.", errors);
         }
 
-        int permits = barrier.availablePermits();
-        if (permits < 1) {
-            throw new AssertionFailedError("Async result was not invoked " + expectedInvocations + " times");
-        }
+        if (checkPermits) {
+            int permits = barrier.availablePermits();
+            if (permits < 1) {
+                throw new AssertionFailedError("Async result was not invoked " + expectedInvocations + " times");
+            }
 
-        if (permits > 1) {
-            throw new AssertionFailedError("Async result was invoked " + (permits - 1) + " too many times");
+            if (permits > 1) {
+                throw new AssertionFailedError("Async result was invoked " + (permits - 1) + " too many times");
+            }
         }
     }
 }

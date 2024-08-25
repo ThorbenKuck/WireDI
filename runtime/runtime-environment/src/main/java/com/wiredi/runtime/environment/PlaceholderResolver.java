@@ -13,47 +13,46 @@ public class PlaceholderResolver {
     private final String stop;
     private final String parameterDelimiter;
 
-    public PlaceholderResolver(String start, String stop) {
+    public PlaceholderResolver(
+            String start,
+            String stop
+    ) {
         this(start, stop, DEFAULT_PARAMETER_DELIMITER);
     }
 
-    public PlaceholderResolver(String start, String stop, String parameterDelimiter) {
+    public PlaceholderResolver(
+            String start,
+            String stop,
+            String parameterDelimiter
+    ) {
         this.start = start;
         this.stop = stop;
         this.parameterDelimiter = parameterDelimiter;
     }
 
     public final List<Placeholder> resolveAllIn(String input) {
-        int i = 0;
+        int index = 0;
         final PlaceholderBuilder builder = new PlaceholderBuilder(this);
         final List<Placeholder> placeholders = new ArrayList<>();
+        final int startLength = start.length();
+        final int stopLength = stop.length();
 
-        while (i < input.length()) {
-            if (input.startsWith(start, i)) {
-                builder.noteStart();
-
-                if (builder.depth() == 1) {
-                    // First found start
-                    if (i > 0 && input.charAt(i - 1) != ' ') {
-                        builder.withIdentifier(input.charAt(i - 1))
-                                .withRelativeStart(i - 1);
-                    } else {
-                        builder.withRelativeStart(i);
-                    }
-
-                    builder.appendToStart(start);
-                } else {
+        while (index < input.length()) {
+            if (input.startsWith(start, index)) {
+                int relativeStart =  index - 1;
+                if (index > 0 && input.charAt(relativeStart) != ' ') {
+                    builder.noteStart(start, input.charAt(relativeStart), relativeStart);
+                } else if(builder.isActive()) {
                     builder.appendToInnerContent(start);
                 }
-
-                i += start.length();
-            } else if (input.startsWith(stop, i)) {
-                int finalI = i;
-                builder.noteEnd((depth) -> {
+                index += startLength;
+            } else if (builder.isActive()) {
+                if (input.startsWith(stop, index)) {
+                    final int finalI = index;
+                    builder.noteEnd((depth) -> {
                         if (depth == 0) {
                             placeholders.add(
-                                    builder.appendToEnd(stop)
-                                            .withRelativeEnd(finalI + stop.length())
+                                    builder.appendToEnd(stop , finalI + stopLength)
                                             .build()
                             );
                             builder.reset();
@@ -62,21 +61,25 @@ public class PlaceholderResolver {
                         }
                     });
 
-                i += stop.length();
-            } else {
-                if (builder.depth() == 0) {
-                    i += start.length();
+                    index += stopLength;
                 } else {
-                    if (input.startsWith(parameterDelimiter, i)) {
-                        builder.startOfDefaultValue(parameterDelimiter);
-                        i += parameterDelimiter.length();
+                    if (input.startsWith(parameterDelimiter, index)) {
+                        builder.startOfParametersValue(parameterDelimiter);
+                        index += parameterDelimiter.length();
                     } else {
-                        builder.appendToInnerContent(input.charAt(i));
-                        i++;
+                        builder.appendToInnerContent(input.charAt(index));
+                        index++;
                     }
                 }
+            } else if (input.startsWith(start, index)) {
+                int relativeStart =  index - 1;
+                if (index > 0 && input.charAt(relativeStart) != ' ') {
+                    builder.noteStart(start, input.charAt(relativeStart), relativeStart);
+                }
+                index += startLength;
+            } else {
+                index += 1;
             }
-
         }
 
         builder.clear();

@@ -1,7 +1,9 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
+import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.ParameterizedTypeName;
+import com.squareup.javapoet.TypeName;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.entities.WireBridgeEntity;
@@ -16,7 +18,9 @@ import com.wiredi.runtime.async.AsyncLoader;
 import com.wiredi.runtime.lang.ReflectionsHelper;
 import com.wiredi.runtime.values.FutureValue;
 
+import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.util.ArrayList;
@@ -147,6 +151,14 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 
 	public Types types() {
 		return this.compilerRepository.getTypes();
+	}
+
+	public TypeName classNameOf(TypeMirror typeMirror) {
+		return ClassName.get(types().erasure(typeMirror));
+	}
+
+	public TypeName classNameOf(Element element) {
+		return classNameOf(element.asType());
 	}
 
 	@Override

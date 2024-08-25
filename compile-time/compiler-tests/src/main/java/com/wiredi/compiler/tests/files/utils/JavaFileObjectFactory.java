@@ -28,19 +28,19 @@ public class JavaFileObjectFactory extends RootFolderAware {
     }
 
     public JavaFileObject ofLines(String fullyQualifiedName, String... lines) {
-        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, String.join(System.lineSeparator(), lines));
+        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, String.join(System.lineSeparator(), lines), fullyQualifiedName);
     }
 
     public JavaFileObject ofLines(String fullyQualifiedName, Iterable<String> lines) {
-        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, String.join(System.lineSeparator(), lines));
+        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, String.join(System.lineSeparator(), lines), fullyQualifiedName);
     }
 
     public JavaFileObject ofLines(String fullyQualifiedName, String source) {
-        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, source);
+        return new InMemoryJavaFile(resolveUri(fullyQualifiedName), SOURCE, source, fullyQualifiedName);
     }
 
     public JavaFileObject load(String fullyQualifiedName) {
-        return load(resolveUri(fullyQualifiedName));
+        return load(resolveUri(fullyQualifiedName), resolveConcreteName(fullyQualifiedName));
     }
 
     public List<JavaFileObject> loadFromFolder(String fullyQualifiedName) {
@@ -59,7 +59,7 @@ public class JavaFileObjectFactory extends RootFolderAware {
                 if (Files.isDirectory(sub) && recursive) {
                     result.addAll(loadFromFolder(fullyQualifiedName, true));
                 } else if (Files.isRegularFile(sub) && sub.getFileName().toString().endsWith(SOURCE.extension)) {
-                    result.add(load(sub.toUri()));
+                    result.add(load(sub.toUri(), fullyQualifiedName));
                 }
             });
         } catch (IOException e) {
@@ -69,18 +69,18 @@ public class JavaFileObjectFactory extends RootFolderAware {
         return result;
     }
 
-    public JavaFileObject load(URI resource) {
+    public JavaFileObject load(URI resource, String name) {
         try {
-            return load(resource.toURL());
+            return load(resource.toURL(), name);
         } catch (MalformedURLException e) {
             throw new IllegalStateException(e);
         }
     }
 
-    private JavaFileObject load(URL resource) {
+    private JavaFileObject load(URL resource, String name) {
         try (var stream = resource.openStream()) {
             var uri = URIs.create(resource);
-            return new InMemoryJavaFile(uri, URIs.deduceJavaFileKind(uri), stream.readAllBytes());
+            return new InMemoryJavaFile(uri, URIs.deduceJavaFileKind(uri), stream.readAllBytes(), name);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

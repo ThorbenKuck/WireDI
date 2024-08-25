@@ -89,22 +89,20 @@ public class RetryTemplate {
 
     @Nullable
     private <T, E extends Throwable> T doExecute(@NotNull final ThrowingSupplier<@Nullable T, E> supplier) {
-        final RetryState retryState = retryPolicy.newRetryState();
+        final RetryState retryState = retryPolicy.newRetryState(backOffStrategy);
         final RetryExceptionBarrier retryExceptionBarrier = retryPolicy.exceptionBarrier();
 
         retryState.start();
         while (retryState.isActive()) {
-            retryState.sleep();
             try {
                 return supplier.get();
             } catch (@NotNull final Throwable throwable) {
                 if (retryExceptionBarrier.passes(throwable)) {
-                    final Duration nextTimeout = backOffStrategy.next(retryState.timeout());
-                    retryState.setNextTimeout(nextTimeout);
                     retryState.addError(throwable);
+                    retryState.sleepAndAdvance();
                 } else {
+                    retryState.addError(new UnsupportedRetryException(throwable));
                     retryState.abort();
-                    throwable.addSuppressed(new UnsupportedRetryException(throwable));
                 }
             }
         }

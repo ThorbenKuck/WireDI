@@ -70,7 +70,8 @@ class RetryTemplateTest {
                 .withRetryPolicy(
                         RetryPolicy.newInstance()
                                 .configureExceptionBarrier(barrier -> barrier.retryIf()
-                                        .throwableHasType(RetryTestException.class))
+                                        .throwableHasType(RetryTestException.class)
+                                )
                                 .withMaxRetries(3)
                                 .build()
                 )
@@ -78,7 +79,9 @@ class RetryTemplateTest {
                 .build();
 
         // Act
-        AbstractThrowableAssert<?, ? extends Throwable> exception = assertThatCode(() -> retryTemplate.execute(testCode)).isInstanceOf(RetryFailedException.class);
+        AbstractThrowableAssert<?, ? extends Throwable> exception = assertThatCode(
+                () -> retryTemplate.execute(testCode)
+        ).isInstanceOf(RetryFailedException.class);
 
         // Assert
         exception.satisfies(t -> {

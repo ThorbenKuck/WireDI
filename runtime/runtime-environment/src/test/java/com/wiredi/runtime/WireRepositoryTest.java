@@ -2,8 +2,8 @@ package com.wiredi.runtime;
 
 import com.wiredi.runtime.domain.Disposable;
 import com.wiredi.runtime.domain.Eager;
-import com.wiredi.runtime.domain.errors.ErrorHandler;
-import com.wiredi.runtime.domain.errors.results.ErrorHandlingResult;
+import com.wiredi.runtime.domain.errors.ExceptionHandler;
+import com.wiredi.runtime.domain.errors.results.ExceptionHandlingResult;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.infrastructure.GenericBase;
@@ -405,13 +405,13 @@ public class WireRepositoryTest {
         public void handlingASpecificExceptionIsPossible() {
             // Arrange
             WireRepository wireRepository = WireRepository.create();
-            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ErrorHandler.class).withGeneric(IllegalArgumentException.class)));
-            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ErrorHandler.class).withGeneric(IllegalStateException.class)));
+            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
+            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
             wireRepository.load();
 
             // Act
             try {
-                wireRepository.exceptionHandler().handleError(new IllegalArgumentException());
+                wireRepository.exceptionHandler().handle(new IllegalArgumentException());
             } catch (Throwable e) {
                 fail("Error handling did not work correctly", e);
             }
@@ -426,13 +426,13 @@ public class WireRepositoryTest {
         public void handlingASpecificSecondExceptionIsPossible() {
             // Arrange
             WireRepository wireRepository = WireRepository.create();
-            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ErrorHandler.class).withGeneric(IllegalArgumentException.class)));
-            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ErrorHandler.class).withGeneric(IllegalStateException.class)));
+            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
+            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
             wireRepository.load();
 
             // Act
             try {
-                wireRepository.exceptionHandler().handleError(new IllegalStateException("This is an IllegalStateException"));
+                wireRepository.exceptionHandler().handle(new IllegalStateException("This is an IllegalStateException"));
                 fail("IllegalStateException should have been rethrown");
             } catch (AssertionError t) {
                 throw t;
@@ -445,25 +445,25 @@ public class WireRepositoryTest {
 
         }
 
-        class IllegalArgumentErrorHandler implements ErrorHandler<IllegalArgumentException> {
+        class IllegalArgumentErrorHandler implements ExceptionHandler<IllegalArgumentException> {
 
             private final Counter invocations = new Counter(0);
 
             @Override
-            public @NotNull ErrorHandlingResult<IllegalArgumentException> handle(@NotNull IllegalArgumentException error) {
+            public @NotNull ExceptionHandlingResult<IllegalArgumentException> handle(@NotNull IllegalArgumentException error) {
                 invocations.increment();
-                return ErrorHandlingResult.doNothing();
+                return ExceptionHandlingResult.doNothing();
             }
         }
 
-        class IllegalStateErrorHandler implements ErrorHandler<IllegalStateException> {
+        class IllegalStateErrorHandler implements ExceptionHandler<IllegalStateException> {
 
             private final Counter invocations = new Counter(0);
 
             @Override
-            public @NotNull ErrorHandlingResult<IllegalStateException> handle(@NotNull IllegalStateException error) {
+            public @NotNull ExceptionHandlingResult<IllegalStateException> handle(@NotNull IllegalStateException error) {
                 invocations.increment();
-                return ErrorHandlingResult.rethrow(error);
+                return ExceptionHandlingResult.rethrow(error);
             }
         }
     }

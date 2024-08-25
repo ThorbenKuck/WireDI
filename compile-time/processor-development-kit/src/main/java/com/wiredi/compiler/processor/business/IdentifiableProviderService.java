@@ -44,7 +44,6 @@ public class IdentifiableProviderService {
 	}
 
 	public TypeMirror getPrimaryWireType(TypeMirror input) {
-		Logger.get(IdentifiableProviderService.class).info("Trying to find @PrimaryWireType on " + input + " => " + input.getAnnotation(PrimaryWireType.class));
 		return annotations.findClassFieldFromAnnotation(elements.getTypeElement(input.toString()), PrimaryWireType.class, "value")
 				.orElse(input);
 	}

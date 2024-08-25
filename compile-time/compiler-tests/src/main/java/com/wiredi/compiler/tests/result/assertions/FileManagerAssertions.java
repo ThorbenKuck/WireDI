@@ -38,11 +38,11 @@ public class FileManagerAssertions extends ErrorMessageAware<FileManagerAssertio
 
         List<JavaFileObject> sources = fileManagerState.generatedSources()
                 .stream()
-                .filter(it -> it.getName().equals(name))
+                .filter(it -> it.getName().equals(expectedSource.getName()))
                 .toList();
 
         if (sources.size() != 1) {
-            throw new AssertionFailedError("Expected to find exactly one class with the name " + className + " but found " + sources.size(), name, fileManagerState.generatedSources().stream().map(FileObject::getName).toList());
+            throw new AssertionFailedError("Expected to find exactly one class with the name " + className + " but found " + sources.size() + " in " + fileManagerState.generatedSources().stream().map(FileObject::getName).toList(), name, fileManagerState.generatedSources().stream().map(FileObject::getName).toList());
         }
 
         JavaFileObject actualSource = sources.getFirst();
@@ -53,6 +53,34 @@ public class FileManagerAssertions extends ErrorMessageAware<FileManagerAssertio
 
             if (!ClassFileContentAssertions.match(actualInputStream.readAllBytes(), expectedInputStream.readAllBytes())) {
                 throw new AssertionFailedError("The class " + className + " was found, but did not match the expected one", expectedContent, actualContent);
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        return this;
+    }
+
+    public FileManagerAssertions containsGeneratedFile(JavaFileObject expectedSource) {
+        String name = "/SOURCE_OUTPUT/" + expectedSource.getName();
+
+        List<JavaFileObject> sources = fileManagerState.generatedSources()
+                .stream()
+                .filter(it -> it.getName().equals(expectedSource.getName()))
+                .toList();
+
+        if (sources.size() != 1) {
+            throw new AssertionFailedError("Expected to find exactly one class with the name " + expectedSource.getName() + " but found " + sources.size(), name, fileManagerState.generatedSources().stream().map(FileObject::getName).toList());
+        }
+
+        JavaFileObject actualSource = sources.getFirst();
+        try(InputStream actualInputStream = actualSource.openInputStream();
+            InputStream expectedInputStream = expectedSource.openInputStream()) {
+            String actualContent = removeLeadingWhiteSpaces(actualInputStream.readAllBytes());
+            String expectedContent = removeLeadingWhiteSpaces(expectedInputStream.readAllBytes());
+
+            if (!ClassFileContentAssertions.match(actualInputStream.readAllBytes(), expectedInputStream.readAllBytes())) {
+                throw new AssertionFailedError("The class " + expectedSource.getName() + " was found, but did not match the expected one", expectedContent, actualContent);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

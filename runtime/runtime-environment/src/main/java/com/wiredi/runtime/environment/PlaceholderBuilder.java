@@ -1,5 +1,7 @@
 package com.wiredi.runtime.environment;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class PlaceholderBuilder {
@@ -7,8 +9,9 @@ public class PlaceholderBuilder {
     private final PlaceholderResolver parent;
     private final StringBuilder start = new StringBuilder(5);
     private final StringBuilder innerContent = new StringBuilder();
-    private final StringBuilder defaultValueDelimiter = new StringBuilder(5);
-    private final StringBuilder defaultValue = new StringBuilder();
+    private final StringBuilder parameterDelimiter = new StringBuilder(5);
+    private final StringBuilder currentParameter = new StringBuilder();
+    private final List<Placeholder.Parameter> parameters = new ArrayList<>();
     private final StringBuilder end = new StringBuilder(5);
     private int relativeStart = -1;
     private Character identifier = null;
@@ -20,55 +23,66 @@ public class PlaceholderBuilder {
         this.parent = parent;
     }
 
-    public void noteStart() {
+    public PlaceholderBuilder noteStart(
+            String start,
+            char identifier,
+            int relativeStart
+    ) {
+        if (this.isActive()) {
+            appendToInnerContent(start);
+        } else {
+            this.start.append(start);
+            this.relativeStart = relativeStart;
+            this.identifier = identifier;
+        }
         this.depth++;
+        return this;
     }
 
-    public void noteEnd(Consumer<Integer> consumer) {
+    public PlaceholderBuilder noteEnd(Consumer<Integer> consumer) {
+        if (this.depth == 1 && !this.parameterDelimiter.isEmpty()) {
+            this.parameters.add(new Placeholder.Parameter(
+                    this.currentParameter.toString(),
+                    parameterDelimiter.toString(),
+                    parent
+            ));
+        }
         if (this.depth != 0) {
             this.depth--;
 
             consumer.accept(this.depth);
         }
+
+        return this;
+    }
+
+    public boolean isActive() {
+        return depth > 0;
+    }
+
+    public boolean isNotActive() {
+        return depth == 0;
     }
 
     public int depth() {
         return this.depth;
     }
 
-    public PlaceholderBuilder withIdentifier(Character identifier) {
-        this.identifier = identifier;
-        return this;
-    }
-
-    public PlaceholderBuilder startOfDefaultValue(String delimiter) {
-        if (this.defaultValueDelimiter.isEmpty()) {
-            this.defaultValueDelimiter.append(delimiter);
-            this.innerContentPointer = defaultValue;
+    public PlaceholderBuilder startOfParametersValue(String delimiter) {
+        if (this.parameterDelimiter.isEmpty()) {
+            this.parameterDelimiter.append(delimiter);
+            this.innerContentPointer = currentParameter;
+        } else if (depth == 1) {
+            this.parameters.add(new Placeholder.Parameter(
+                    this.currentParameter.toString(),
+                    delimiter,
+                    parent
+            ));
+            this.currentParameter.setLength(0);
         } else {
             this.innerContentPointer.append(delimiter);
         }
 
-        return this;
-    }
-
-    public PlaceholderBuilder withRelativeStart(int relativeStart) {
-        this.relativeStart = relativeStart;
-        return this;
-    }
-
-    public PlaceholderBuilder withRelativeEnd(int relativeEnd) {
-        this.relativeEnd = relativeEnd;
-        return this;
-    }
-
-    public PlaceholderBuilder appendToStart(String s) {
-        this.start.append(s);
-        return this;
-    }
-
-    public PlaceholderBuilder appendToStart(char c) {
-        this.start.append(c);
         return this;
     }
 
@@ -82,8 +96,9 @@ public class PlaceholderBuilder {
         return this;
     }
 
-    public PlaceholderBuilder appendToEnd(String s) {
+    public PlaceholderBuilder appendToEnd(String s, int relativeEnd) {
         this.end.append(s);
+        this.relativeEnd = relativeEnd;
         return this;
     }
 
@@ -97,18 +112,10 @@ public class PlaceholderBuilder {
                 identifier,
                 start.toString(),
                 innerContent.toString(),
-                buildDefault(),
+                new ArrayList<>(parameters),
                 end.toString(),
                 parent,
                 relativeStart, relativeEnd);
-    }
-
-    private Placeholder.Default buildDefault() {
-        if (defaultValueDelimiter.isEmpty()) {
-            return null;
-        } else {
-            return new Placeholder.Default(defaultValue.toString(), defaultValueDelimiter.toString(), parent);
-        }
     }
 
     @Override
@@ -117,7 +124,12 @@ public class PlaceholderBuilder {
         if (identifier != null) {
             result.append(identifier);
         }
-        return result.append(start).append(innerContent).append(defaultValueDelimiter).append(defaultValue).append(end).toString();
+        return result.append(start)
+                .append(innerContent)
+                .append(parameterDelimiter)
+                .append(currentParameter)
+                .append(end)
+                .toString();
     }
 
     public void reset() {
@@ -128,9 +140,10 @@ public class PlaceholderBuilder {
         innerContentPointer = innerContent;
         start.setLength(0);
         innerContent.setLength(0);
-        defaultValueDelimiter.setLength(0);
-        defaultValue.setLength(0);
+        parameterDelimiter.setLength(0);
+        currentParameter.setLength(0);
         end.setLength(0);
+        parameters.clear();
     }
 
     public void clear() {
@@ -141,8 +154,9 @@ public class PlaceholderBuilder {
         innerContentPointer = null;
         start.delete(0, start.length());
         innerContent.delete(0, innerContent.length());
-        defaultValueDelimiter.delete(0, defaultValueDelimiter.length());
-        defaultValue.delete(0, defaultValue.length());
+        parameterDelimiter.delete(0, parameterDelimiter.length());
+        currentParameter.delete(0, currentParameter.length());
         end.delete(0, end.length());
+        parameters.clear();
     }
 }

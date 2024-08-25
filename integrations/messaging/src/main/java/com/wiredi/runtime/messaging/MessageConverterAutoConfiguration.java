@@ -22,13 +22,13 @@ public class MessageConverterAutoConfiguration {
     public MessagingEngine messageConverters(
             List<MessageConverter<?, ?>> messageConverter
     ) {
-        return new CompositeMessageEngine(messageConverter);
+        return new CompositeMessagingEngine(messageConverter);
     }
 
     @Provider
-    @ConditionalOnMissingBean(type = HeadersAccessor.class)
-    public HeadersAccessor headersAccessor() {
-        return new HeadersAccessor();
+    @ConditionalOnMissingBean(type = MessageHeadersAccessor.class)
+    public MessageHeadersAccessor headersAccessor() {
+        return new MessageHeadersAccessor();
     }
 
     @Provider
@@ -39,5 +39,13 @@ public class MessageConverterAutoConfiguration {
     @Provider
     public ByteArrayMessageConverter byteArrayMessageConverter() {
         return new ByteArrayMessageConverter();
+    }
+
+    @Provider
+    public RequestContext requestContext(
+            MessageHeadersAccessor headersAccessor,
+            List<RequestAware> requestAwareInstances
+    ) {
+        return new RequestContext(requestAwareInstances, headersAccessor);
     }
 }

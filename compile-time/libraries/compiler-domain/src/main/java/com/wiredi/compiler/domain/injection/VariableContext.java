@@ -2,10 +2,12 @@ package com.wiredi.compiler.domain.injection;
 
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.annotations.environment.Resolve;
+import com.wiredi.annotations.properties.Property;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.WireRepositories;
+import com.wiredi.runtime.lang.TriConsumer;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,26 +48,26 @@ public class VariableContext {
 		return instantiateVariableIfRequired(
 				element,
 				(name, qualifier) -> codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.fetchFromWireRepository(element, qualifier)),
-				(name, resolve) -> codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.resolveFromEnvironment(element, resolve))
+				(name, resolve) -> codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.resolveFromEnvironment(element, resolve)),
+				(name, propertyName, defaultValue) -> codeBlock.addStatement("$T $L = $L", element.asType(), name, wireRepositories.fetchFromProperties(element, propertyName, defaultValue))
 		);
 	}
 
 	public String instantiateVariableIfRequired(
 			@NotNull Element element,
 			@NotNull BiConsumer<String, QualifierType> newNameFunction,
-			@NotNull BiConsumer<String, String> newPropertyFunction
+			@NotNull BiConsumer<String, String> newResolveFunction,
+			@NotNull TriConsumer<String, String, String> newPropertyFunction
 	) {
-		Optional<Resolve> annotation = Annotations.getAnnotation(element, Resolve.class);
-		if (annotation.isPresent()) {
-			Resolve resolve = annotation.get();
-			return resolveCache.computeIfAbsent(resolve.value(), (value) -> {
-				String nextName = nameContext.nextName(varPrefix);
-				newPropertyFunction.accept(nextName, value);
-				return nextName;
-			});
-		} else {
-			return instantiateVariableIfRequired(Qualifiers.injectionQualifier(element), element.asType(), newNameFunction);
-		}
+		return Annotations.getAnnotation(element, Resolve.class).map(annotation -> resolveCache.computeIfAbsent(annotation.value(), (value) -> {
+            String nextName = nameContext.nextName(varPrefix);
+            newResolveFunction.accept(nextName, value);
+            return nextName;
+        })).or(() -> Annotations.getAnnotation(element, Property.class).map(annotation -> resolveCache.computeIfAbsent(annotation.name(), (value) -> {
+            String nextName = nameContext.nextName(varPrefix);
+            newPropertyFunction.accept(nextName, value, annotation.defaultValue());
+            return nextName;
+        }))).orElseGet(() -> instantiateVariableIfRequired(Qualifiers.injectionQualifier(element), element.asType(), newNameFunction));
 	}
 
 	/**

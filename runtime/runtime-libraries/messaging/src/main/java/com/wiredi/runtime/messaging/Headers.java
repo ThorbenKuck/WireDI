@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiConsumer;
 
 /**
@@ -21,15 +22,15 @@ import java.util.function.BiConsumer;
  * If required, technology-dependent details can be transported in the {@link MessageDetails}.
  * But please note that even here it is recommended to use abstraction layers wherever applicable.
  */
-public class Headers {
+public class Headers implements Iterable<HeaderEntry> {
 
     @NotNull
     public static final Headers EMPTY = new Headers(Collections.emptyMap());
 
     @NotNull
-    private final Map<@NotNull String, @NotNull List<@NotNull Header>> values;
+    private final Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> values;
 
-    private Headers(@NotNull Map<@NotNull String, @NotNull List<@NotNull Header>> values) {
+    private Headers(@NotNull Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> values) {
         this.values = Collections.unmodifiableMap(values);
     }
 
@@ -37,7 +38,7 @@ public class Headers {
         return builder().addAll(headers).build();
     }
 
-    public static Headers of(Iterable<Header> headers) {
+    public static Headers of(Iterable<HeaderEntry> headers) {
         Builder builder = builder();
         headers.forEach(builder::add);
         return builder.build();
@@ -62,8 +63,8 @@ public class Headers {
     }
 
     @Nullable
-    public Header firstValue(@NotNull String name) {
-        List<Header> headers = allValues(name);
+    public HeaderEntry firstValue(@NotNull String name) {
+        List<HeaderEntry> headers = allValues(name);
         if (headers.isEmpty()) {
             return null;
         }
@@ -71,8 +72,8 @@ public class Headers {
     }
 
     @Nullable
-    public Header lastValue(@NotNull String name) {
-        List<Header> headers = allValues(name);
+    public HeaderEntry lastValue(@NotNull String name) {
+        List<HeaderEntry> headers = allValues(name);
         if (headers.isEmpty()) {
             return null;
         }
@@ -81,17 +82,17 @@ public class Headers {
     }
 
     @NotNull
-    public List<Header> allValues(@NotNull String name) {
-        List<Header> values = this.values.get(name);
+    public List<HeaderEntry> allValues(@NotNull String name) {
+        List<HeaderEntry> values = this.values.get(name);
         return values != null ? values : Collections.emptyList();
     }
 
     @NotNull
-    public Map<String, List<Header>> map() {
+    public Map<String, List<HeaderEntry>> map() {
         return this.values;
     }
 
-    public void forEach(BiConsumer<String, List<Header>> consumer) {
+    public void forEach(BiConsumer<String, List<HeaderEntry>> consumer) {
         this.values.forEach(consumer);
     }
 
@@ -113,10 +114,20 @@ public class Headers {
         return "HttpHeaders{ " + map() + " }";
     }
 
+    @NotNull
+    @Override
+    public Iterator<HeaderEntry> iterator() {
+        return values.values()
+                .stream()
+                .flatMap(Collection::stream)
+                .toList()
+                .iterator();
+    }
+
     public static class Builder {
 
         @NotNull
-        private final Map<@NotNull String, @NotNull List<@NotNull Header>> entries;
+        private final Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> entries;
 
         public Builder() {
             entries = new HashMap<>();
@@ -131,7 +142,7 @@ public class Headers {
                 @NotNull String name,
                 byte[] value
         ) {
-            return add(new Header(name, value));
+            return add(new HeaderEntry(name, value));
         }
 
         @NotNull
@@ -139,12 +150,12 @@ public class Headers {
                 @NotNull String name,
                 @NotNull String value
         ) {
-            return add(new Header(name, value.getBytes(StandardCharsets.UTF_8)));
+            return add(new HeaderEntry(name, value.getBytes(StandardCharsets.UTF_8)));
         }
 
         @NotNull
         public Builder add(
-                @NotNull Header header
+                @NotNull HeaderEntry header
         ) {
             entries.computeIfAbsent(header.name(), n -> new ArrayList<>()).add(header);
             return this;
@@ -157,7 +168,7 @@ public class Headers {
         }
 
         @NotNull
-        public <C extends Collection<Header>> Builder addAll(
+        public <C extends Collection<HeaderEntry>> Builder addAll(
                 @NotNull String name,
                 @NotNull C values
         ) {
@@ -178,8 +189,8 @@ public class Headers {
         }
 
         @Nullable
-        public Header firstValue(@NotNull String name) {
-            List<Header> headers = allValues(name);
+        public HeaderEntry firstValue(@NotNull String name) {
+            List<HeaderEntry> headers = allValues(name);
             if (headers.isEmpty()) {
                 return null;
             }
@@ -187,8 +198,8 @@ public class Headers {
         }
 
         @Nullable
-        public Header lastValue(@NotNull String name) {
-            List<Header> headers = allValues(name);
+        public HeaderEntry lastValue(@NotNull String name) {
+            List<HeaderEntry> headers = allValues(name);
             if (headers.isEmpty()) {
                 return null;
             }
@@ -197,8 +208,8 @@ public class Headers {
         }
 
         @NotNull
-        public List<Header> allValues(@NotNull String name) {
-            List<Header> values = this.entries.get(name);
+        public List<HeaderEntry> allValues(@NotNull String name) {
+            List<HeaderEntry> values = this.entries.get(name);
             return values != null ? values : Collections.emptyList();
         }
 

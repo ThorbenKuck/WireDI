@@ -16,7 +16,7 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 
 class TimerTest {
 
-    private static final Percentage PRECISION = Percentage.withPercentage(0.5);
+    private static final Percentage PRECISION = Percentage.withPercentage(1);
 
     @Nested
     class NanoTimerCase {

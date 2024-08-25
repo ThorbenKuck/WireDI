@@ -20,19 +20,19 @@ import java.util.List;
         date = "2023-01-01T00:00Z"
 )
 @Wire(
-        to = {Interface.class, Object.class},
+        to = {Interface.class, Object.class, ProxyTarget$$AspectAwareProxy.class},
         singleton = true,
         proxy = false
 )
 final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectAwareProxy {
     private final WireRepository wireRepository;
 
-    private final Value<ExecutionChain> executionChain0;
+    private final Value<ExecutionChain> executionChain;
 
     ProxyTarget$$AspectAwareProxy(final List<AspectHandler> aspectHandlers,
                                   final WireRepository wireRepository) {
         this.wireRepository = wireRepository;
-        this.executionChain0 = Value.async(() ->
+        this.executionChain = Value.async(() ->
                 ExecutionChain.newInstance(
                                 RootMethod.newInstance("toProxy")
                                         .withAnnotation(AnnotationMetaData.empty("com.wiredi.aop.Transactional"))
@@ -43,10 +43,10 @@ final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectA
         );
     }
 
-    @Override
     @Transactional
+    @Override
     public final void toProxy() {
-        executionChain0.get()
+        executionChain.get()
                 .execute()
                 .andReturn();
     }

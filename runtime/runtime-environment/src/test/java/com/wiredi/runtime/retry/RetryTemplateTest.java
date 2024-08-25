@@ -1,6 +1,5 @@
 package com.wiredi.runtime.retry;
 
-import com.wiredi.runtime.retry.RetryTemplate;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.values.SafeReference;
 import com.wiredi.runtime.retry.exception.RetryFailedException;
@@ -51,7 +50,7 @@ class RetryTemplateTest {
         RetryFailedException retryFailedException = (RetryFailedException) raisedException.get();
         assert retryFailedException != null;
         assertThat(retryFailedException.getErrors()).containsExactly(exception, exception, exception);
-        assertThat(retryFailedException.getRetryState().attempt()).isEqualTo(3);
+        assertThat(retryFailedException.getRetryState().attempt()).isEqualTo(4);
         assertThat(retryFailedException.getRetryState().timeout()).isEqualTo(Duration.ofMillis(100));
     }
 }

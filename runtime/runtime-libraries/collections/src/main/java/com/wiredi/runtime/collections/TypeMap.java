@@ -1,9 +1,6 @@
 package com.wiredi.runtime.collections;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -54,6 +51,14 @@ public class TypeMap<T> {
         this(new HashMap<>(initialCapacity, loadFactor));
     }
 
+    public Collection<T> values() {
+        return contents.values();
+    }
+
+    public Collection<String> keys() {
+        return contents.keySet();
+    }
+
     public int size() {
         return contents.size();
     }
@@ -73,6 +78,10 @@ public class TypeMap<T> {
     public T get(Class<?> type) {
         return contents.get(type.getName());
     }
+
+    public T get(String className) {
+        return contents.get(className);
+    }
     
     public boolean containsKey(Class<?> type) {
         return contents.containsKey(type.getName());
@@ -84,6 +93,10 @@ public class TypeMap<T> {
     
     public T put(Class<?> type, T value) {
         return contents.put(type.getName(), value);
+    }
+
+    public T put(String className, T value) {
+        return contents.put(className, value);
     }
     
     public T remove(Class<?> type) {

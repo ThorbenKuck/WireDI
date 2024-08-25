@@ -82,6 +82,14 @@ public class TypeElements {
         }
     }
 
+    public List<? extends ExecutableElement> declaredMethodsOf(TypeElement typeElement) {
+        return typeElement.getEnclosedElements()
+                .stream()
+                .filter(method -> method.getKind() == ElementKind.METHOD)
+                .map(it -> (ExecutableElement) it)
+                .toList();
+    }
+
     private List<? extends ExecutableElement> determineMethodsOf(TypeElement typeElement) {
         Set<ExecutableElement> members = new HashSet<>(
                 typeElement.getEnclosedElements()

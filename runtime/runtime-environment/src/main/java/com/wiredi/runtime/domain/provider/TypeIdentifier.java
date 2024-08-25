@@ -168,6 +168,12 @@ public class TypeIdentifier<T> {
     }
 
     @NotNull
+    public <S extends T> TypeIdentifier<S> withWildcard() {
+        return withGeneric(TypeIdentifier.OBJECT);
+    }
+
+
+    @NotNull
     public <S extends T> TypeIdentifier<S> withGeneric(@NotNull TypeIdentifier<?> type) {
         genericTypes.add(type);
 

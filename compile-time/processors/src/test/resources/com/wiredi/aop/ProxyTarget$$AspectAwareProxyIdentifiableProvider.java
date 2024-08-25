@@ -20,17 +20,18 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
     private static final TypeIdentifier<ProxyTarget> PRIMARY_WIRE_TYPE = TypeIdentifier.of(ProxyTarget.class);
 
     private static final List<TypeIdentifier<?>> ADDITIONAL_WIRE_TYPES = List.of(
-            TypeIdentifier.of(Interface.class)
+            TypeIdentifier.of(Interface.class),
+            TypeIdentifier.of(ProxyTarget$$AspectAwareProxy.class)
     );
 
     private final Value<ProxyTarget$$AspectAwareProxy> instance = Value.empty();
 
     private ProxyTarget$$AspectAwareProxy createInstance(final WireRepository wireRepository,
                                                          final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
-// We will start by Fetching all 2 constructor parameters
-        List<AspectHandler> variable0 = wireRepository.getAll(TypeIdentifier.of(AspectHandler.class));
+        // We will start by Fetching all 2 constructor parameters
+        List<AspectHandler> variable = wireRepository.getAll(TypeIdentifier.of(AspectHandler.class));
         WireRepository variable1 = wireRepository.get(TypeIdentifier.of(WireRepository.class));
-        ProxyTarget$$AspectAwareProxy instance = new ProxyTarget$$AspectAwareProxy(variable0,variable1);
+        ProxyTarget$$AspectAwareProxy instance = new ProxyTarget$$AspectAwareProxy(variable,variable1);
         return instance;
     }
 
