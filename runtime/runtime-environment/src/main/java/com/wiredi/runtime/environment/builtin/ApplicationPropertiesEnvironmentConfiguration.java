@@ -34,7 +34,7 @@ public class ApplicationPropertiesEnvironmentConfiguration implements Environmen
                     try {
                         environment.appendPropertiesFrom(resource);
                     } catch (ResourceException ignore) {
-                        LOGGER.warn("Failed to load properties from file " + resource.getFilename());
+                        LOGGER.debug(() -> "Failed to load properties from file " + resource.getFilename());
                     }
                 });
 

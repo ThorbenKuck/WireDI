@@ -8,4 +8,17 @@ package com.wiredi.runtime.messaging;
  * interface, or use these details to change the conversion.
  */
 public interface MessageDetails {
+
+    /**
+     * An empty implementation that is used instead of null.
+     */
+    MessageDetails NONE = new MessageDetails() {};
+
+    default boolean isNotNone() {
+        return this != NONE;
+    }
+
+    default boolean isNone() {
+        return this == NONE;
+    }
 }

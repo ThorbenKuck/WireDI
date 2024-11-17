@@ -18,7 +18,6 @@
         <module>async</module>
         <module>cache</module>
         <module>collections</module>
-        <module>flow</module>
         <module>logging</module>
         <module>lang</module>
         <module>messaging</module>

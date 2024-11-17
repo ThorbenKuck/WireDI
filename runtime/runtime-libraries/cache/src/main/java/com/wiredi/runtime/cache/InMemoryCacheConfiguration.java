@@ -1,12 +1,12 @@
 package com.wiredi.runtime.cache;
 
-public record CacheConfiguration(
+public record InMemoryCacheConfiguration(
         boolean hitOnOverride,
         boolean reorderOnHit,
         int capacity
 ) {
 
-    public static CacheConfiguration DEFAULT = new CacheConfiguration(true, false, 50);
+    public static InMemoryCacheConfiguration DEFAULT = new InMemoryCacheConfiguration(true, false, 50);
 
     public static Builder newInstance() {
         return new Builder();
@@ -32,8 +32,8 @@ public record CacheConfiguration(
             return this;
         }
 
-        public CacheConfiguration build() {
-            return new CacheConfiguration(hitOnOverride, reorderOnHit, capacity);
+        public InMemoryCacheConfiguration build() {
+            return new InMemoryCacheConfiguration(hitOnOverride, reorderOnHit, capacity);
         }
     }
 }

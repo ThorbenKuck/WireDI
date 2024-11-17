@@ -1,17 +1,15 @@
 package com.wiredi.integration.jackson.exceptions;
 
-import com.wiredi.runtime.messaging.Message;
-
 public class SerializationFailedException extends RuntimeException {
 
-    private final Message<?, ?> message;
+    private final Object payload;
 
-    public SerializationFailedException(Message<?, ?> message, Throwable cause) {
-        super("Failed to serialize " + message, cause);
-        this.message = message;
+    public SerializationFailedException(Object payload, Throwable cause) {
+        super("Failed to serialize " + payload, cause);
+        this.payload = payload;
     }
 
-    public Message<?, ?> getOriginalMessage() {
-        return message;
+    public Object getPayload() {
+        return payload;
     }
 }

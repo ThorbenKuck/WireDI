@@ -2,10 +2,10 @@ package com.wiredi.runtime.messaging;
 
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
-import com.wiredi.runtime.messaging.implementations.ByteArrayMessageConverter;
-import com.wiredi.runtime.messaging.implementations.StringMessageConverter;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
+import com.wiredi.runtime.messaging.converters.ByteArrayMessageConverter;
+import com.wiredi.runtime.messaging.converters.StringMessageConverter;
 
 import java.util.List;
 
@@ -20,9 +20,42 @@ public class MessageConverterAutoConfiguration {
     @Provider
     @ConditionalOnMissingBean(type = MessagingEngine.class)
     public MessagingEngine messageConverters(
-            List<MessageConverter<?, ?>> messageConverter
+            MessagingContext messageEngineContext,
+            RequestContext requestcontext
     ) {
-        return new CompositeMessagingEngine(messageConverter);
+        return new CompositeMessagingEngine(messageEngineContext, requestcontext);
+    }
+
+    @Provider
+    @ConditionalOnMissingBean(type = MessageHeadersAccessor.class)
+    public MessageHeadersAccessor messageHeadersAccessor() {
+        return new MessageHeadersAccessor();
+    }
+
+    @Provider
+    @ConditionalOnMissingBean(type = MessagingErrorHandler.class)
+    public MessagingErrorHandler defaultErrorHandler() {
+        return MessagingErrorHandler.DEFAULT;
+    }
+
+    @Provider
+    @ConditionalOnMissingBean(type = MessagingContext.class)
+    public MessagingContext messageEngineContext(
+            List<MessageConverter<?, ?>> converters,
+            List<MessageInterceptor> messageInterceptors
+    ) {
+        return MessagingContext.defaultContext();
+    }
+
+    @Provider
+    @ConditionalOnMissingBean(type = RequestContext.class)
+    public RequestContext requestContext(
+            List<RequestAware> requestAwareList,
+            List<MessageFilter> messageFilters,
+            MessagingErrorHandler messagingErrorHandler,
+            MessageHeadersAccessor headersAccessor
+    ) {
+        return RequestContext.defaultInstance();
     }
 
     @Provider
@@ -39,13 +72,5 @@ public class MessageConverterAutoConfiguration {
     @Provider
     public ByteArrayMessageConverter byteArrayMessageConverter() {
         return new ByteArrayMessageConverter();
-    }
-
-    @Provider
-    public RequestContext requestContext(
-            MessageHeadersAccessor headersAccessor,
-            List<RequestAware> requestAwareInstances
-    ) {
-        return new RequestContext(requestAwareInstances, headersAccessor);
     }
 }

@@ -4,17 +4,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 
-import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 public class InMemoryCache<K, V> implements Cache<K, V>{
 
     private final @NotNull Map<@Nullable K, @NotNull Node<K, V>> map;
-    private final @NotNull CacheConfiguration configuration;
+    private final @NotNull InMemoryCacheConfiguration configuration;
     @VisibleForTesting
     @Nullable
     Node<K, V> first;
@@ -24,14 +21,14 @@ public class InMemoryCache<K, V> implements Cache<K, V>{
     private int size;
 
     public InMemoryCache(int capacity) {
-        this(CacheConfiguration.newInstance().withCapacity(capacity).build());
+        this(InMemoryCacheConfiguration.newInstance().withCapacity(capacity).build());
     }
 
     public InMemoryCache() {
-        this(CacheConfiguration.DEFAULT);
+        this(InMemoryCacheConfiguration.DEFAULT);
     }
 
-    public InMemoryCache(@NotNull CacheConfiguration configuration) {
+    public InMemoryCache(@NotNull InMemoryCacheConfiguration configuration) {
         this.configuration = configuration;
         this.map = new HashMap<>(configuration.capacity(), 1.1f);
     }

@@ -1,15 +1,17 @@
 package com.wiredi.runtime.messaging;
 
-import com.wiredi.runtime.lang.ThrowingRunnable;
 import com.wiredi.runtime.lang.ThrowingSupplier;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A request context aggregates a list of {@link RequestAware} instances, allowing for easy use of callbacks during
- * the handling of Messages.
+ * This class defines how a request is to be handled.
+ * It aggregates other classes that should be invoked during handling of the {@link Message}.
  * <p>
- * Systems that use the Messaging module can use this context to work on messages.
+ * This class is primarily used by the {@link MessagingEngine}, which constructs the {@link Message} and handles it.
+ * However, Systems that use the Messaging integration can use this context to manually run work on messages.
  * This way it is possible to write generic interceptors of any request sequence.
  * <p>
  * By that, we achieve a generic request context for any kind of messaging integration.
@@ -17,7 +19,9 @@ import java.util.List;
  * Implementations of the {@link RequestAware} might consider the {@link MessageDetails} to determine the kind of
  * request that is being processed.
  * <p>
- * Additionally, this context allows for easy header access by setting the {@link Headers} in the {@link MessageHeadersAccessor}.
+ * The {@link MessageFilter} provided to the engine may skip messages and stop processing early.
+ * <p>
+ * Additionally, this context allows for easy header access by setting the {@link MessageHeaders} in the {@link MessageHeadersAccessor}.
  * <p>
  * Whenever you implement any kind of request processing that uses the messaging api for (de)serialization, consider
  * using this context when processing the message.
@@ -25,79 +29,113 @@ import java.util.List;
  * The {@link RequestContext}
  *
  * @see RequestAware
+ * @see MessageFilter
+ * @see MessagingErrorHandler
  * @see MessageHeadersAccessor
  */
 public class RequestContext {
 
+    private static final RequestContext GLOBAL_INSTANCE = empty();
     private final List<RequestAware> requestAwareList;
+    private final List<MessageFilter> messageFilters;
+    private final MessagingErrorHandler messagingErrorHandler;
     private final MessageHeadersAccessor headersAccessor;
 
     public RequestContext(
             List<RequestAware> requestAwareList,
+            List<MessageFilter> messageFilters,
+            MessagingErrorHandler messagingErrorHandler,
             MessageHeadersAccessor headersAccessor
     ) {
         this.requestAwareList = requestAwareList;
+        this.messageFilters = messageFilters;
+        this.messagingErrorHandler = messagingErrorHandler;
         this.headersAccessor = headersAccessor;
     }
 
-    /**
-     * Executes the {@code throwingRunnable} in the context of the Message.
-     * <p>
-     * It uses the {@link MessageHeadersAccessor} to make headers available.
-     * <p>
-     * Additionally, any available {@link RequestAware} will be invoked.
-     *
-     * @param message The message that is being processed
-     * @param throwingRunnable The process that processes the message
-     * @param <E> Any exception that can occur
-     * @throws E The exception, if the {@link ThrowingRunnable} throws the exception.
-     */
-    public <E extends Throwable> void execute(Message<?, ?> message, ThrowingRunnable<E> throwingRunnable) throws E {
-        Headers previous = headersAccessor.set(message.getHeaders());
-        try {
-            requestAwareList.forEach(it -> it.started(message));
-            throwingRunnable.run();
-            requestAwareList.forEach(requestAware -> requestAware.successful(message));
-        } catch (Throwable throwable) {
-            requestAwareList.forEach(requestAware -> requestAware.failed(throwable, message));
-            throw throwable;
-        } finally {
-            try {
-                requestAwareList.forEach(requestAware -> requestAware.completed(message));
-            } finally {
-                headersAccessor.set(previous);
-            }
-        }
+    public static RequestContext defaultInstance() {
+        return GLOBAL_INSTANCE;
+    }
+
+    public static RequestContext empty() {
+        return new RequestContext(
+                new ArrayList<>(),
+                new ArrayList<>(),
+                MessagingErrorHandler.DEFAULT,
+                new MessageHeadersAccessor()
+        );
+    }
+
+    public List<RequestAware> requestAwareListeners() {
+        return requestAwareList;
+    }
+
+    public List<MessageFilter> messageFilters() {
+        return messageFilters;
+    }
+
+    public MessagingErrorHandler messagingErrorHandler() {
+        return messagingErrorHandler;
+    }
+
+    public MessageHeadersAccessor headersAccessor() {
+        return headersAccessor;
     }
 
     /**
      * Executes the {@code throwingSupplier} in the context of the Message and returns its result.
      * <p>
-     * It uses the {@link MessageHeadersAccessor} to make headers available.
+     * This method:
+     * <ul>
+     *     <li>Set up the {@link MessageHeadersAccessor} to make the headers accessible</li>
+     *     <li>Ignore messages for which a {@link MessageFilter} filters a message</li>
+     *     <li>Invokes all {@link RequestAware} instances</li>
+     *     <li>Uses the {@link MessagingErrorHandler} to handle errors</li>
+     * </ul>
      * <p>
-     * Additionally, any available {@link RequestAware} will be invoked.
+     * The {@link MessagingErrorHandler} will be invoked for any exception raised during the process, with the following
+     * exceptions:
+     * <ul>
+     *     <li>Errors raised during {@link RequestAware#completed(Message)} will be directly propagated</li>
+     *     <li>Errors thrown during {@link MessagingErrorHandler#}</li>
+     * </ul>
      *
-     * @param message The message that is being processed
+     * @param message          The message that is being processed
      * @param throwingSupplier The process that processes the message
-     * @param <E> Any exception that can occur
-     * @throws E The exception, if the {@link ThrowingRunnable} throws the exception.
+     * @param <E>              Any exception that can occur
      */
-    public <T, E extends Throwable> T getAndGet(Message<?, ?> message, ThrowingSupplier<T, E> throwingSupplier) throws E {
-        Headers previous = headersAccessor.set(message.getHeaders());
+    public <T, E extends Throwable> MessagingResult handleRequest(Message<?> message, ThrowingSupplier<T, E> throwingSupplier) {
+        AtomicReference<Message<?>> messagePointer = new AtomicReference<>(message);
         try {
-            requestAwareList.forEach(it -> it.started(message));
-            T t = throwingSupplier.get();
-            requestAwareList.forEach(requestAware -> requestAware.successful(message));
-            return t;
-        } catch (Throwable throwable) {
-            requestAwareList.forEach(requestAware -> requestAware.failed(throwable, message));
-            throw throwable;
-        } finally {
-            try {
-                requestAwareList.forEach(requestAware -> requestAware.completed(message));
-            } finally {
-                headersAccessor.set(previous);
+            // First step: prepare the message
+            for (RequestAware requestAware : requestAwareList) {
+                messagePointer.set(requestAware.started(messagePointer.get()));
             }
+
+            Message<?> targetMessage = messagePointer.get();
+            // Seconds step: Try to filter the message
+            if (messageFilters.stream().anyMatch(it -> it.shouldSkip(targetMessage))) {
+                return new MessagingResult.SkipMessage();
+            }
+
+            // Third step: Now invoke the actual runnable
+            T result = headersAccessor.getWith(targetMessage.headers(), throwingSupplier);
+
+            // Fourth step: Notify successful invocation
+            requestAwareList.forEach(requestAware -> requestAware.successful(targetMessage));
+            return new MessagingResult.Success(result);
+        } catch (Throwable throwable) {
+            requestAwareList.forEach(requestAware -> {
+                try {
+                    requestAware.failed(messagePointer.get(), throwable);
+                } catch (Throwable t2) {
+                    throwable.addSuppressed(t2);
+                }
+            });
+            return messagingErrorHandler.handleError(messagePointer.get(), throwable);
+        } finally {
+            // Fifth step: Notify about completion
+            requestAwareList.forEach(requestAware -> requestAware.completed(messagePointer.get()));
         }
     }
 }

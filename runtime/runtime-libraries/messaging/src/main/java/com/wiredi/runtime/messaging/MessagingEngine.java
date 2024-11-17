@@ -1,9 +1,11 @@
 package com.wiredi.runtime.messaging;
 
+import com.wiredi.runtime.lang.ThrowingConsumer;
+import com.wiredi.runtime.lang.ThrowingFunction;
 import com.wiredi.runtime.messaging.errors.MissingMessageConverterException;
+import com.wiredi.runtime.messaging.messages.SimpleMessage;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Arrays;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * An interface that aggregates {@link MessageConverter} instance and handle (de)serializations.
@@ -19,19 +21,92 @@ import java.util.Arrays;
  *
  * @see CompositeMessagingEngine
  * @see MessageConverter
- * @see Message
+ * @see SimpleMessage
  */
 public interface MessagingEngine {
 
+    static MessagingEngine of(
+            MessagingContext messageEngineContext,
+            RequestContext requestContext
+    ) {
+        return new CompositeMessagingEngine(messageEngineContext, requestContext);
+    }
+
+    static MessagingEngine of(MessagingContext context) {
+        return new CompositeMessagingEngine(context);
+    }
+
+    static MessagingEngine of(RequestContext requestContext) {
+        return new CompositeMessagingEngine(requestContext);
+    }
+
+    static MessagingEngine defaultEngine() {
+        return new CompositeMessagingEngine();
+    }
+
     /**
-     * Constructs a new MessageConverts instance.
+     * Processes the provided {@link Message}.
+     * <p>
+     * When processing the message within the {@code handler}, the message provided to the Function should be used,
+     * as {@link RequestAware} instances may alter the message.
+     * <p>
+     * The returned result is describing what happened during processing.
+     * Underlying implementations should use the {@link RequestContext} to process the message.
      *
-     * @param converters all converters to be used in the CompositeMessageConverters
-     * @return a new CompositeMessageConverters instance
-     * @see CompositeMessagingEngine
+     * @param message the received {@link Message} that should be processed
+     * @param handler the handler that handles the (potentially modified) {@link Message}
+     * @param <E>     potential errors that could be thrown while applying the handler
+     * @param <D>     the generic of the {@link MessageDetails} that the provided message has.
+     * @return a {@link MessagingResult} of processing the {@link Message}
+     * @see RequestContext
+     * @see #handleMessage(Message, ThrowingConsumer)
+     * @see #handleMessage(byte[], MessageHeaders, MessageDetails, ThrowingConsumer)
+     * @see #handleMessage(byte[], MessageDetails, ThrowingConsumer)
+     * @see #handleMessage(byte[], MessageHeaders, ThrowingConsumer)
+     * @see #handleMessage(byte[], ThrowingConsumer)
      */
-    static CompositeMessagingEngine of(MessageConverter<?, ?>... converters) {
-        return new CompositeMessagingEngine(Arrays.asList(converters));
+    <E extends Throwable, D extends MessageDetails> MessagingResult processMessage(Message<D> message, ThrowingFunction<Message<D>, Object, E> handler);
+
+    default <E extends Throwable, S extends MessageDetails> MessagingResult handleMessage(Message<S> message, ThrowingConsumer<Message<S>, E> handler) {
+        return processMessage(message, b -> {
+            handler.accept(b);
+            return null;
+        });
+    }
+
+    default <E extends Throwable, S extends MessageDetails> MessagingResult handleMessage(
+            byte[] body,
+            @NotNull MessageHeaders headers,
+            @NotNull S messageDetails,
+            ThrowingConsumer<Message<S>, E> handler
+    ) throws E {
+        return handleMessage(
+                Message.builder(body)
+                        .withDetails(messageDetails)
+                        .addHeaders(headers)
+                        .build(),
+                handler
+        );
+    }
+
+    default <E extends Throwable, S extends MessageDetails> MessagingResult handleMessage(
+            byte[] body,
+            @NotNull S messageDetails,
+            ThrowingConsumer<Message<S>, E> handler
+    ) throws E {
+        return handleMessage(body, new MessageHeaders(), messageDetails, handler);
+    }
+
+    default <E extends Throwable> MessagingResult handleMessage(
+            byte[] body,
+            @NotNull MessageHeaders headers,
+            ThrowingConsumer<Message<MessageDetails>, E> handler
+    ) throws E {
+        return handleMessage(body, headers, MessageDetails.NONE, handler);
+    }
+
+    default <E extends Throwable> MessagingResult handleMessage(byte[] body, ThrowingConsumer<Message<MessageDetails>, E> handler) throws E {
+        return handleMessage(body, new MessageHeaders(), MessageDetails.NONE, handler);
     }
 
     /**
@@ -48,27 +123,27 @@ public interface MessagingEngine {
      * @throws MissingMessageConverterException if no {@link MessageConverter} was found to deserialize the {@code rawMessage} to the {@code targetType}
      */
     @NotNull
-    <T, S extends MessageDetails> Message<T, S> deserialize(
-            @NotNull Message<byte[], S> rawMessage,
+    <T, S extends MessageDetails> T deserialize(
+            @NotNull Message<S> rawMessage,
             @NotNull Class<T> targetType
     ) throws MissingMessageConverterException;
 
     /**
-     * Deserialize the provided {@code messageBuilder} to a concrete {@link Message} of type {@code targetType}.
+     * Deserialize the provided {@code messageBuilder} to a concrete {@link SimpleMessage} of type {@code targetType}.
      * <p>
      * Implementation should never return non-null instances.
      * Instead, they should consider throwing an Exception corresponding to the error that prevented message conversion.
      *
      * @param messageBuilder the raw message that should be deserialized
-     * @param targetType the type that the deserialized message should contain
-     * @param <T>        the generic type of the Message, based on the {@code targetType}
-     * @param <S>        the generic MessageDetails, already contained in the {@code messageBuilder}
-     * @return a new, deserialized {@link Message} with the type {@code targetType}
+     * @param targetType     the type that the deserialized message should contain
+     * @param <T>            the generic type of the Message, based on the {@code targetType}
+     * @param <S>            the generic MessageDetails, already contained in the {@code messageBuilder}
+     * @return a new, deserialized {@link SimpleMessage} with the type {@code targetType}
      * @throws MissingMessageConverterException if no {@link MessageConverter} was found to deserialize the {@code messageBuilder} to the {@code targetType}
      */
     @NotNull
-    default <T, S extends MessageDetails> Message<T, S> deserialize(
-            @NotNull Message.Builder<byte[], S> messageBuilder,
+    default <T, S extends MessageDetails> T deserialize(
+            @NotNull SimpleMessage.Builder<S> messageBuilder,
             @NotNull Class<T> targetType
     ) throws MissingMessageConverterException {
         return deserialize(messageBuilder.build(), targetType);
@@ -80,13 +155,30 @@ public interface MessagingEngine {
      * Implementation should never return non-null instances.
      * Instead, they should consider throwing an Exception corresponding to the error that prevented message conversion.
      *
-     * @param message the raw message that should be deserialized
-     * @param <T>     the generic type of the Message, based on the {@code targetType}
+     * @param payload the raw message that should be deserialized
      * @param <S>     the generic MessageDetails, already contained in the {@code message}
-     * @return a new, serialized {@link Message}
+     * @return a new, serialized {@link SimpleMessage}
      * @throws MissingMessageConverterException if no {@link MessageConverter} was found to serialize the {@code message}
      */
     @NotNull
-    <T, S extends MessageDetails> Message<byte[], S> serialize(@NotNull Message<T, S> message) throws MissingMessageConverterException;
+    <S extends MessageDetails> Message<S> serialize(@Nullable Object payload, @NotNull MessageHeaders headers, @NotNull S details) throws MissingMessageConverterException;
 
+    @NotNull
+    default Message<MessageDetails> serialize(@Nullable Object payload, @NotNull MessageHeaders headers) throws MissingMessageConverterException {
+        return serialize(payload, headers, MessageDetails.NONE);
+    }
+
+    @NotNull
+    default <S extends MessageDetails> Message<S> serialize(@Nullable Object payload, @NotNull S details) throws MissingMessageConverterException {
+        return serialize(payload, new MessageHeaders(), details);
+    }
+
+    @NotNull
+    default Message<MessageDetails> serialize(@Nullable Object payload) throws MissingMessageConverterException {
+        return serialize(payload, null, MessageDetails.NONE);
+    }
+
+    @NotNull MessagingContext messageEngineContext();
+
+    @NotNull RequestContext requestContext();
 }

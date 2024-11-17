@@ -13,41 +13,45 @@ import java.time.format.DateTimeFormatter;
  *
  * @param content the content of the header.
  */
-public record HeaderEntry(String name, byte[] content) {
+public record MessageHeader(String name, byte[] content) {
 
-    public static HeaderEntry of(String name, String value) {
-        return new HeaderEntry(name, Bytes.convert(value));
+    public static MessageHeader of(String name, String value) {
+        return new MessageHeader(name, Bytes.convert(value));
     }
 
-    public static HeaderEntry of(String name, short s) {
-        return new HeaderEntry(name, Bytes.convert(s));
+    public static MessageHeader of(String name, short s) {
+        return new MessageHeader(name, Bytes.convert(s));
     }
 
-    public static HeaderEntry of(String name, int s) {
-        return new HeaderEntry(name, Bytes.convert(s));
+    public static MessageHeader of(String name, int s) {
+        return new MessageHeader(name, Bytes.convert(s));
     }
 
-    public static HeaderEntry of(String name, long s) {
-        return new HeaderEntry(name, Bytes.convert(s));
+    public static MessageHeader of(String name, boolean s) {
+        return new MessageHeader(name, Bytes.convert(s));
     }
 
-    public static HeaderEntry of(String name, float s) {
-        return new HeaderEntry(name, Bytes.convert(s));
+    public static MessageHeader of(String name, long s) {
+        return new MessageHeader(name, Bytes.convert(s));
     }
 
-    public static HeaderEntry of(String name, double s) {
-        return new HeaderEntry(name, Bytes.convert(s));
+    public static MessageHeader of(String name, float s) {
+        return new MessageHeader(name, Bytes.convert(s));
     }
 
-    public static HeaderEntry of(String name, Enum<?> s) {
+    public static MessageHeader of(String name, double s) {
+        return new MessageHeader(name, Bytes.convert(s));
+    }
+
+    public static MessageHeader of(String name, Enum<?> s) {
         return of(name, s.name());
     }
 
-    public static HeaderEntry of(String name, Instant instant) {
+    public static MessageHeader of(String name, Instant instant) {
         return of(name, instant.toEpochMilli());
     }
 
-    public static HeaderEntry of(String name, Instant instant, DateTimeFormatter dateTimeFormatter) {
+    public static MessageHeader of(String name, Instant instant, DateTimeFormatter dateTimeFormatter) {
         return of(name, dateTimeFormatter.format(instant));
     }
 

@@ -1,5 +1,6 @@
 package com.wiredi.runtime.messaging;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -32,7 +33,7 @@ public interface MessageConverter<T, S extends MessageDetails> {
      * @param targetType the type that the deserialized message should have
      * @return true, if this converter can deserialize the message
      */
-    boolean canDeserialize(Message<byte[], ?> message, Class<?> targetType);
+    boolean canDeserialize(@NotNull Message<?> message, @NotNull Class<?> targetType);
 
     /**
      * Deserialize the provided {@code message} to the {@code targetType}.
@@ -46,29 +47,29 @@ public interface MessageConverter<T, S extends MessageDetails> {
      * @return a deserialized message, or null if deserialization was not possible.
      */
     @Nullable
-    Message<T, S> deserialize(Message<byte[], S> message, Class<T> targetType);
+    T deserialize(@NotNull Message<S> message, @NotNull Class<T> targetType);
 
     /**
-     * Whether this instance can serialize the provided {@code message}.
+     * Whether this instance can serialize the provided {@code payload}.
      * <p>
-     * If true is returned, this converter will be asked to serialize the message using {@link #serialize(Message)}.
+     * If true is returned, this converter will be asked to serialize the payload using {@link #serialize(Object, MessageHeaders, MessageDetails)}.
      *
-     * @param message the message to serialize
-     * @return true, if this converter can serialize the message
+     * @param payload the payload to serialize
+     * @return true, if this converter can serialize the payload
      */
-    boolean canSerialize(Message<?, ?> message);
+    boolean canSerialize(@NotNull Object payload, @NotNull MessageHeaders headers, @NotNull MessageDetails messageDetails);
 
     /**
-     * Serialize the provided {@code message}.
+     * Serialize the provided {@code payload}.
      * <p>
-     * This method will only be invoked if {@link #canSerialize(Message)} returns true.
-     * If this function returns a non-null value, no other converter will be asked to serialize the {@code message}.
-     * If null is returned, the next potential converter will be asked to serialize the {@code message}.
+     * This method will only be invoked if {@link #canSerialize(Object, MessageHeaders, MessageDetails)} returns true.
+     * If this function returns a non-null value, no other converter will be asked to serialize the {@code payload}.
+     * If null is returned, the next potential converter will be asked to serialize the {@code payload}.
      *
-     * @param message the message to serialize.
-     * @return a serialized message, or null if serialization was not possible.
+     * @param payload the payload to serialize.
+     * @return a serialized payload, or null if serialization was not possible.
      */
     @Nullable
-    Message<byte[], S> serialize(Message<T, S> message);
+    Message<S> serialize(@NotNull Object payload, @NotNull MessageHeaders headers, @NotNull S messageDetails);
 
 }

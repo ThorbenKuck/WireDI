@@ -2,7 +2,7 @@ package com.wiredi.integration.cache;
 
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
-import com.wiredi.runtime.cache.CacheConfiguration;
+import com.wiredi.runtime.cache.InMemoryCacheConfiguration;
 import com.wiredi.runtime.cache.CacheManager;
 import com.wiredi.runtime.cache.InMemoryCacheManager;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
@@ -21,7 +21,7 @@ import java.util.Optional;
 public class CacheAutoConfiguration {
 
     @Provider
-    public CacheManager cacheManager(@Nullable CacheConfiguration cacheConfiguration) {
-        return new InMemoryCacheManager(Optional.ofNullable(cacheConfiguration).orElse(CacheConfiguration.DEFAULT));
+    public CacheManager cacheManager(@Nullable InMemoryCacheConfiguration cacheConfiguration) {
+        return new InMemoryCacheManager(Optional.ofNullable(cacheConfiguration).orElse(InMemoryCacheConfiguration.DEFAULT));
     }
 }

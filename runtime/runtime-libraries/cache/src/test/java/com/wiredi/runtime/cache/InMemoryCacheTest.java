@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class InMemoryCacheTest {
 
-    private InMemoryCache<String, String> createCache(CacheConfiguration cacheConfiguration) {
+    private InMemoryCache<String, String> createCache(InMemoryCacheConfiguration cacheConfiguration) {
         InMemoryCache<String, String> cache = new InMemoryCache<>(cacheConfiguration);
 
         cache.put("1", "1");
@@ -24,7 +24,7 @@ class InMemoryCacheTest {
     public void verifyThatAHitPreventsFromCapacityBasedEvict() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                CacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.newInstance()
                         .withCapacity(3)
                         .build()
         );
@@ -43,7 +43,7 @@ class InMemoryCacheTest {
     public void verifyThatAHitPreventsFromCapacityBasedEvictWithTwoHits() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                CacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.newInstance()
                         .withCapacity(3)
                         .build()
         );
@@ -63,7 +63,7 @@ class InMemoryCacheTest {
     public void verifyThatReorderOnHitTwiceChangesTheEvictionTarget() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                CacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.newInstance()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)
@@ -86,7 +86,7 @@ class InMemoryCacheTest {
     public void verifyThatReorderOnHitChangesTheEvictionTarget() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                CacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.newInstance()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)
@@ -108,7 +108,7 @@ class InMemoryCacheTest {
     public void verifyThatFirstLowestHitIsInvalidated() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                CacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.newInstance()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)

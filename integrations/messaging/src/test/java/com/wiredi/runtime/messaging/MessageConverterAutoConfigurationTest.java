@@ -3,6 +3,8 @@ package com.wiredi.runtime.messaging;
 import com.wiredi.runtime.WireRepository;
 import org.junit.jupiter.api.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 class MessageConverterAutoConfigurationTest {
 
     @Test
@@ -12,9 +14,10 @@ class MessageConverterAutoConfigurationTest {
         MessagingEngine messageConverters = wireRepository.get(MessagingEngine.class);
 
         // Act
-        Message<byte[], MessageDetails> serialized = messageConverters.serialize(Message.of("test").build());
+        Message<MessageDetails> serialized = messageConverters.serialize("test");
 
         // Assert
+        assertThat(serialized.body()).isEqualTo("test".getBytes());
     }
 
 }

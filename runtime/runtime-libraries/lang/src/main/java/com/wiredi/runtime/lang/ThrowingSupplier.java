@@ -17,7 +17,7 @@ public interface ThrowingSupplier<T, E extends Throwable> {
         };
     }
 
-    T get() throws E;
+    T get() throws E, E, E, E;
 
     default Supplier<T> safeSupplier() {
         var parent = this;

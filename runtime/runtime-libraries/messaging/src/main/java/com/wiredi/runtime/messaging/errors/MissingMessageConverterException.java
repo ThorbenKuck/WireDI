@@ -2,16 +2,16 @@ package com.wiredi.runtime.messaging.errors;
 
 import com.wiredi.runtime.messaging.Message;
 
-public class MissingMessageConverterException extends MessageException {
+public class MissingMessageConverterException extends MessagingException {
 
-    private final Message<?, ?> converter;
+    private final Message<?> message;
 
-    public MissingMessageConverterException(Message<?, ?> message) {
-        super(message, "No message converter found for " + message);
-        this.converter = message;
+    public MissingMessageConverterException(Message<?> message) {
+        super("No message converter found for " + message);
+        this.message = message;
     }
 
-    public Message<?, ?> getConverter() {
-        return converter;
+    public Message<?> getRootMessage() {
+        return message;
     }
 }

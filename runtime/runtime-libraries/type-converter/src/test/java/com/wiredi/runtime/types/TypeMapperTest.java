@@ -18,6 +18,8 @@ class TypeMapperTest {
         short one = 1;
         short minusTen = -10;
         return List.of(
+                argument("Test", "Test".getBytes(), byte[].class),
+
                 argument("Test".getBytes(), "Test", String.class),
                 argument("Test", "Test", String.class),
 

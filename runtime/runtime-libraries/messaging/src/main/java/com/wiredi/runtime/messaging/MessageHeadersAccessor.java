@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Consumer;
 
 /**
- * This class supports thread local access to {@link Headers}.
+ * This class supports thread local access to {@link MessageHeaders}.
  * <p>
  * It can be used by integrations to transport headers across processes without the requirement to pass the headers
  * manually.
@@ -18,15 +18,15 @@ import java.util.function.Consumer;
  */
 public class MessageHeadersAccessor {
 
-    private final ThreadLocal<Headers> currentThreadValues = new ThreadLocal<>();
+    private final ThreadLocal<MessageHeaders> currentThreadValues = new ThreadLocal<>();
 
     @Nullable
-    public Headers getCurrentHeaders() {
+    public MessageHeaders getCurrentHeaders() {
         return currentThreadValues.get();
     }
 
-    public <T extends Throwable> void doWith(Headers headers, ThrowingRunnable<T> runnable) throws T {
-        Headers previous = currentThreadValues.get();
+    public <T extends Throwable> void doWith(MessageHeaders headers, ThrowingRunnable<T> runnable) throws T {
+        MessageHeaders previous = currentThreadValues.get();
         try {
             currentThreadValues.set(headers);
             runnable.run();
@@ -35,8 +35,8 @@ public class MessageHeadersAccessor {
         }
     }
 
-    public <V, T extends Throwable> V getWith(Headers headers, ThrowingSupplier<V, T> runnable) throws T {
-        Headers previous = currentThreadValues.get();
+    public <V, T extends Throwable> V getWith(MessageHeaders headers, ThrowingSupplier<V, T> runnable) throws T {
+        MessageHeaders previous = currentThreadValues.get();
         try {
             currentThreadValues.set(headers);
             return runnable.get();
@@ -45,8 +45,8 @@ public class MessageHeadersAccessor {
         }
     }
 
-    public void ifPresent(Consumer<Headers> headersConsumer) {
-        Headers current = currentThreadValues.get();
+    public void ifPresent(Consumer<MessageHeaders> headersConsumer) {
+        MessageHeaders current = currentThreadValues.get();
         headersConsumer.accept(current);
     }
 
@@ -55,8 +55,8 @@ public class MessageHeadersAccessor {
     }
 
     @Nullable
-    public Headers set(@Nullable Headers headers) {
-        Headers previousHeaders = this.currentThreadValues.get();
+    public MessageHeaders set(@Nullable MessageHeaders headers) {
+        MessageHeaders previousHeaders = this.currentThreadValues.get();
         this.currentThreadValues.set(headers);
         return previousHeaders;
     }

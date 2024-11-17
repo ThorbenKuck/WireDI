@@ -3,6 +3,7 @@ package com.wiredi.runtime.types;
 import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.types.converter.*;
 import com.wiredi.runtime.types.exceptions.InvalidPropertyTypeException;
+import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,14 +38,15 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public final class TypeMapper {
 
-    private static final TypeMapper INSTANCE = new TypeMapper();
-
-    static {
-        preconfigure(INSTANCE);
-    }
+    private static final Value<TypeMapper> INSTANCE = Value.async(() -> {
+        TypeMapper typeMapper = new TypeMapper();
+        preconfigure(typeMapper);
+        return typeMapper;
+    });
 
     private static TypeMapper preconfigure(TypeMapper typeMapper) {
         typeMapper.setTypeConverter(BooleanTypeConverter.INSTANCE).forAllSupportedTypes();
+        typeMapper.setTypeConverter(ByteArrayTypeConverter.INSTANCE).forAllSupportedTypes();
         typeMapper.setTypeConverter(CharSequenceTypeConverter.INSTANCE).forAllSupportedTypes();
         typeMapper.setTypeConverter(ClassTypeConverter.INSTANCE).forAllSupportedTypes();
         typeMapper.setTypeConverter(DoubleTypeConverter.INSTANCE).forAllSupportedTypes();
@@ -80,7 +82,7 @@ public final class TypeMapper {
     }
 
     public static TypeMapper getInstance() {
-        return INSTANCE;
+        return INSTANCE.get();
     }
 
     public void takeTypeConvertersFrom(TypeMapper typeMapper) {

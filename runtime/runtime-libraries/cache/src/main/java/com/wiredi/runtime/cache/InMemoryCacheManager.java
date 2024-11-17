@@ -13,33 +13,33 @@ import java.util.function.Supplier;
 public class InMemoryCacheManager implements CacheManager {
 
     @NotNull
-    private final Map<Object, Cache<?, ?>> caches = new HashMap<>();
+    private final Map<CacheIdentifier<?, ?>, Cache<?, ?>> caches = new HashMap<>();
     @NotNull
     private final Map<Object, Lock> locks = new HashMap<>();
     @NotNull
-    private final CacheConfiguration cacheConfiguration;
+    private final InMemoryCacheConfiguration cacheConfiguration;
 
-    public InMemoryCacheManager(@NotNull CacheConfiguration cacheConfiguration) {
+    public InMemoryCacheManager(@NotNull InMemoryCacheConfiguration cacheConfiguration) {
         this.cacheConfiguration = cacheConfiguration;
     }
 
     public InMemoryCacheManager() {
-        this.cacheConfiguration = CacheConfiguration.DEFAULT;
+        this.cacheConfiguration = InMemoryCacheConfiguration.DEFAULT;
     }
 
     @Override
-    public <K, V> @NotNull Cache<K, V> getCache(@NotNull Object cacheIdentifier) {
+    public <K, V> @NotNull Cache<K, V> getCache(@NotNull CacheIdentifier<K, V> cacheIdentifier) {
         return getLocked(cacheIdentifier, () -> getOrCreateCache(cacheIdentifier));
     }
 
-    public <K, V> void modifyCache(@NotNull Object cacheIdentifier, @NotNull Consumer<Cache<K, V>> consumer) {
+    public <K, V> void modifyCache(@NotNull CacheIdentifier<K, V> cacheIdentifier, @NotNull Consumer<Cache<K, V>> consumer) {
         runLocked(cacheIdentifier, () -> {
             Cache<K, V> cache = getOrCreateCache(cacheIdentifier);
             consumer.accept(cache);
         });
     }
 
-    private <K, V> @NotNull Cache<K, V> getOrCreateCache(@NotNull Object cacheIdentifier) {
+    private <K, V> @NotNull Cache<K, V> getOrCreateCache(@NotNull CacheIdentifier<K, V> cacheIdentifier) {
         return (Cache<K, V>) caches.computeIfAbsent(cacheIdentifier, (n) -> new InMemoryCache<>(cacheConfiguration));
     }
 

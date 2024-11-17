@@ -5,7 +5,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.concurrent.LinkedBlockingDeque;
 import java.util.function.BiConsumer;
 
 /**
@@ -22,40 +21,41 @@ import java.util.function.BiConsumer;
  * If required, technology-dependent details can be transported in the {@link MessageDetails}.
  * But please note that even here it is recommended to use abstraction layers wherever applicable.
  */
-public class Headers implements Iterable<HeaderEntry> {
+public class MessageHeaders implements Iterable<MessageHeader> {
 
     @NotNull
-    public static final Headers EMPTY = new Headers(Collections.emptyMap());
+    private final Map<@NotNull String, @NotNull List<@NotNull MessageHeader>> values;
 
-    @NotNull
-    private final Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> values;
-
-    private Headers(@NotNull Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> values) {
-        this.values = Collections.unmodifiableMap(values);
+    public MessageHeaders() {
+        this.values = new HashMap<>();
     }
 
-    public static Headers of(Map<String, ? extends Collection<String>> headers) {
+    public MessageHeaders(@NotNull Map<@NotNull String, @NotNull List<@NotNull MessageHeader>> values) {
+        this.values = new HashMap<>(values);
+    }
+
+    public static MessageHeaders of(Map<String, ? extends Collection<String>> headers) {
         return builder().addAll(headers).build();
     }
 
-    public static Headers of(Iterable<HeaderEntry> headers) {
+    public static MessageHeaders of(Iterable<MessageHeader> headers) {
         Builder builder = builder();
         headers.forEach(builder::add);
         return builder.build();
     }
 
     @NotNull
-    public static Headers.Builder builder() {
+    public static MessageHeaders.Builder builder() {
         return new Builder();
     }
 
     @NotNull
-    public static Headers.Builder builder(Headers headers) {
+    public static MessageHeaders.Builder builder(MessageHeaders headers) {
         return new Builder(headers);
     }
 
-    public Headers copy() {
-        return new Headers(values);
+    public MessageHeaders.Builder copy() {
+        return new Builder(this);
     }
 
     public boolean isEmpty() {
@@ -63,8 +63,8 @@ public class Headers implements Iterable<HeaderEntry> {
     }
 
     @Nullable
-    public HeaderEntry firstValue(@NotNull String name) {
-        List<HeaderEntry> headers = allValues(name);
+    public MessageHeader firstValue(@NotNull String name) {
+        List<MessageHeader> headers = allValues(name);
         if (headers.isEmpty()) {
             return null;
         }
@@ -72,8 +72,8 @@ public class Headers implements Iterable<HeaderEntry> {
     }
 
     @Nullable
-    public HeaderEntry lastValue(@NotNull String name) {
-        List<HeaderEntry> headers = allValues(name);
+    public MessageHeader lastValue(@NotNull String name) {
+        List<MessageHeader> headers = allValues(name);
         if (headers.isEmpty()) {
             return null;
         }
@@ -82,24 +82,24 @@ public class Headers implements Iterable<HeaderEntry> {
     }
 
     @NotNull
-    public List<HeaderEntry> allValues(@NotNull String name) {
-        List<HeaderEntry> values = this.values.get(name);
+    public List<MessageHeader> allValues(@NotNull String name) {
+        List<MessageHeader> values = this.values.get(name);
         return values != null ? values : Collections.emptyList();
     }
 
     @NotNull
-    public Map<String, List<HeaderEntry>> map() {
+    public Map<String, List<MessageHeader>> map() {
         return this.values;
     }
 
-    public void forEach(BiConsumer<String, List<HeaderEntry>> consumer) {
+    public void forEach(BiConsumer<String, List<MessageHeader>> consumer) {
         this.values.forEach(consumer);
     }
 
     @Override
     public boolean equals(Object object) {
         if (this == object) return true;
-        if (!(object instanceof Headers that)) return false;
+        if (!(object instanceof MessageHeaders that)) return false;
         return Objects.equals(values, that.values);
     }
 
@@ -116,7 +116,7 @@ public class Headers implements Iterable<HeaderEntry> {
 
     @NotNull
     @Override
-    public Iterator<HeaderEntry> iterator() {
+    public Iterator<MessageHeader> iterator() {
         return values.values()
                 .stream()
                 .flatMap(Collection::stream)
@@ -127,14 +127,33 @@ public class Headers implements Iterable<HeaderEntry> {
     public static class Builder {
 
         @NotNull
-        private final Map<@NotNull String, @NotNull List<@NotNull HeaderEntry>> entries;
+        private final Map<@NotNull String, @NotNull List<@NotNull MessageHeader>> entries;
 
         public Builder() {
             entries = new HashMap<>();
         }
 
-        public Builder(Headers headers) {
+        public Builder(MessageHeaders headers) {
             entries = new HashMap<>(headers.values);
+        }
+
+        public Builder set(
+                @NotNull String name,
+                byte[] value
+        ) {
+            return set(new MessageHeader(name, value));
+        }
+
+        public Builder set(
+                @NotNull String name,
+                String value
+        ) {
+            return set(MessageHeader.of(name, value));
+        }
+
+        public Builder set(MessageHeader messageHeader) {
+            this.entries.put(messageHeader.name(), List.of(messageHeader));
+            return this;
         }
 
         @NotNull
@@ -142,7 +161,7 @@ public class Headers implements Iterable<HeaderEntry> {
                 @NotNull String name,
                 byte[] value
         ) {
-            return add(new HeaderEntry(name, value));
+            return add(new MessageHeader(name, value));
         }
 
         @NotNull
@@ -150,12 +169,12 @@ public class Headers implements Iterable<HeaderEntry> {
                 @NotNull String name,
                 @NotNull String value
         ) {
-            return add(new HeaderEntry(name, value.getBytes(StandardCharsets.UTF_8)));
+            return add(new MessageHeader(name, value.getBytes(StandardCharsets.UTF_8)));
         }
 
         @NotNull
         public Builder add(
-                @NotNull HeaderEntry header
+                @NotNull MessageHeader header
         ) {
             entries.computeIfAbsent(header.name(), n -> new ArrayList<>()).add(header);
             return this;
@@ -168,7 +187,13 @@ public class Headers implements Iterable<HeaderEntry> {
         }
 
         @NotNull
-        public <C extends Collection<HeaderEntry>> Builder addAll(
+        public Builder clear() {
+            entries.clear();
+            return this;
+        }
+
+        @NotNull
+        public <C extends Collection<MessageHeader>> Builder addAll(
                 @NotNull String name,
                 @NotNull C values
         ) {
@@ -178,9 +203,9 @@ public class Headers implements Iterable<HeaderEntry> {
 
         @NotNull
         public Builder addAll(
-                @NotNull Headers headers
+                @NotNull Iterable<MessageHeader> headers
         ) {
-            this.entries.putAll(headers.values);
+            headers.forEach(this::add);
             return this;
         }
 
@@ -189,8 +214,8 @@ public class Headers implements Iterable<HeaderEntry> {
         }
 
         @Nullable
-        public HeaderEntry firstValue(@NotNull String name) {
-            List<HeaderEntry> headers = allValues(name);
+        public MessageHeader firstValue(@NotNull String name) {
+            List<MessageHeader> headers = allValues(name);
             if (headers.isEmpty()) {
                 return null;
             }
@@ -198,8 +223,8 @@ public class Headers implements Iterable<HeaderEntry> {
         }
 
         @Nullable
-        public HeaderEntry lastValue(@NotNull String name) {
-            List<HeaderEntry> headers = allValues(name);
+        public MessageHeader lastValue(@NotNull String name) {
+            List<MessageHeader> headers = allValues(name);
             if (headers.isEmpty()) {
                 return null;
             }
@@ -208,18 +233,18 @@ public class Headers implements Iterable<HeaderEntry> {
         }
 
         @NotNull
-        public List<HeaderEntry> allValues(@NotNull String name) {
-            List<HeaderEntry> values = this.entries.get(name);
+        public List<MessageHeader> allValues(@NotNull String name) {
+            List<MessageHeader> values = this.entries.get(name);
             return values != null ? values : Collections.emptyList();
         }
 
         @NotNull
-        public Headers build() {
-            if (entries.isEmpty()) {
-                return EMPTY;
-            }
+        public MessageHeaders build() {
+            return new MessageHeaders(entries);
+        }
 
-            return new Headers(entries);
+        public Map<@NotNull String, @NotNull List<@NotNull MessageHeader>> snapshot() {
+            return Collections.unmodifiableMap(entries);
         }
     }
 }

@@ -13,8 +13,10 @@ public interface RequestAware extends Ordered {
      * Invoked before the provided {@code message} is processed.
      *
      * @param message The message that is being processed
+     * @return the message to use
      */
-    default void started(Message<?, ?> message) {
+    default Message<?> started(Message<?> message) {
+        return message;
     }
 
     /**
@@ -22,7 +24,7 @@ public interface RequestAware extends Ordered {
      *
      * @param message The message that is being processed
      */
-    default void successful(Message<?, ?> message) {
+    default void successful(Message<?> message) {
     }
 
     /**
@@ -36,16 +38,16 @@ public interface RequestAware extends Ordered {
      * @param message   The message that is being processed
      * @param throwable The error that occurred
      */
-    default void failed(Throwable throwable, Message<?, ?> message) {
+    default void failed(Message<?> message, Throwable throwable) {
     }
 
     /**
      * Invoked after the processing is complete.
      * <p>
-     * This method is invoked after either {@link #successful(Message)} or {@link #failed(Throwable, Message)} are invoked.
+     * This method is invoked after either {@link #successful(Message)} or {@link #failed(Message, Throwable)} are invoked.
      *
      * @param message The message that is being processed
      */
-    default void completed(Message<?, ?> message) {
+    default void completed(Message<?> message) {
     }
 }
