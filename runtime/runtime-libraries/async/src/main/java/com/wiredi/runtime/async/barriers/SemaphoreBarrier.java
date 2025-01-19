@@ -1,9 +1,8 @@
-package com.wiredi.runtime.async;
+package com.wiredi.runtime.async.barriers;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.lang.ThrowingSupplier;
+import com.wiredi.runtime.async.AsyncBarrierException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.concurrent.Semaphore;
@@ -46,9 +45,9 @@ import java.util.function.Supplier;
  * <p>
  * The thread that executed `waitUntilPublished` will be suspended until another thread called `publish`.
  */
-public final class Barrier {
+public final class SemaphoreBarrier implements MuitableBarrier {
 
-    private static final Logging logger = Logging.getInstance(Barrier.class);
+    private static final Logging logger = Logging.getInstance(SemaphoreBarrier.class);
     @NotNull
     private final Semaphore semaphore = new Semaphore(0);
     @NotNull
@@ -56,32 +55,35 @@ public final class Barrier {
     private boolean isOpen = false;
 
     @NotNull
-    public static Barrier opened() {
-        @NotNull final Barrier barrier = new Barrier();
+    public static SemaphoreBarrier opened() {
+        @NotNull final SemaphoreBarrier barrier = new SemaphoreBarrier();
         barrier.open();
         return barrier;
     }
 
     @NotNull
-    public static Barrier closed() {
-        @NotNull final Barrier barrier = new Barrier();
+    public static SemaphoreBarrier closed() {
+        @NotNull final SemaphoreBarrier barrier = new SemaphoreBarrier();
         barrier.close();
         return barrier;
     }
 
+    @Override
     public boolean isOpen() {
         return isOpen;
     }
 
+    @Override
     public boolean isClosed() {
         return !isOpen;
     }
 
-    public Barrier withTraversingFailedMessage(String message) {
+    public SemaphoreBarrier withTraversingFailedMessage(String message) {
         this.traversingFailedException = () -> new AsyncBarrierException(message);
         return this;
     }
 
+    @Override
     public void open() {
         if (isOpen) {
             return;
@@ -91,31 +93,7 @@ public final class Barrier {
         semaphore.release();
     }
 
-    public boolean ifOpen(Runnable runnable) {
-        if (isOpen) {
-            runnable.run();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns the value of the provided supplier, if the barrier is opened, otherwise null.
-     *
-     * @param supplier The supplier that generates the value if the barrier is opened.
-     * @param <T> the generic type of the value returned by the Supplier
-     * @return the supplier value of the barrier is opened, or null.
-     */
-    @Nullable
-    public <T> T ifOpen(@NotNull Supplier<@NotNull T> supplier) {
-        if (isOpen) {
-            return supplier.get();
-        }
-
-        return null;
-    }
-
+    @Override
     public void close() {
         if (!isOpen) {
             return;
@@ -130,31 +108,7 @@ public final class Barrier {
         }
     }
 
-    public boolean ifClosed(Runnable runnable) {
-        if (!isOpen) {
-            runnable.run();
-            return true;
-        }
-
-        return false;
-    }
-
-    /**
-     * Returns the value of the provided supplier, if the barrier is closed, otherwise null.
-     *
-     * @param supplier The supplier that generates the value if the barrier is closed.
-     * @param <T> the generic type of the value returned by the Supplier
-     * @return the supplier value of the barrier is closed, or null.
-     */
-    @Nullable
-    public <T> T ifClosed(@NotNull Supplier<@NotNull T> supplier) {
-        if (!isOpen) {
-            return supplier.get();
-        }
-
-        return null;
-    }
-
+    @Override
     public void traverse() throws AsyncBarrierException {
         if (!isOpen) {
             try {
@@ -166,6 +120,7 @@ public final class Barrier {
         }
     }
 
+    @Override
     public void traverse(@NotNull final Duration duration) throws AsyncBarrierException {
         if (!isOpen) {
             try {
@@ -179,31 +134,10 @@ public final class Barrier {
         }
     }
 
-    public void execute(@NotNull final Runnable runnable) {
-        traverse();
-        runnable.run();
-    }
-
-    public void execute(
-            @NotNull final Duration duration,
-            @NotNull final Runnable runnable
-    ) {
-        traverse(duration);
-        runnable.run();
-    }
-
-    @NotNull
-    public <T> T get(@NotNull final Supplier<T> supplier) {
-        traverse();
-        return supplier.get();
-    }
-
-    @NotNull
-    public <T, E extends Throwable> T get(
-            @NotNull final Duration duration,
-            @NotNull final ThrowingSupplier<T, E> supplier
-    ) throws E {
-        traverse(duration);
-        return supplier.get();
+    @Override
+    public String toString() {
+        return "SemaphoreBarrier{" +
+                "open=" + isOpen +
+                '}';
     }
 }

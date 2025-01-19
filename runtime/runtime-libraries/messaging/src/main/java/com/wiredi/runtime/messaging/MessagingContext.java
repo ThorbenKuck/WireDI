@@ -43,6 +43,13 @@ public class MessagingContext {
         return GLOBAL_INSTANCE;
     }
 
+    public MessagingContext copy() {
+        return new MessagingContext(
+                new ArrayList<>(this.converters),
+                new ArrayList<>(this.messageInterceptors)
+        );
+    }
+
     @NotNull
     public <T, D extends MessageDetails> T convertCacheAware(
             Class<?> targetType,

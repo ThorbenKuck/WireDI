@@ -189,6 +189,10 @@ public class Bytes {
         return toString(content, charset);
     }
 
+    public byte[] unwrap() {
+        return content;
+    }
+
     public <T extends Enum<T>> T toEnum(Class<T> type) {
         return toEnum(content, type);
     }

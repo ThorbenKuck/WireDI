@@ -16,6 +16,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static com.wiredi.runtime.lang.Preconditions.is;
+import static com.wiredi.runtime.lang.Preconditions.isNotNull;
 
 /**
  * This class represents a specific type.
@@ -243,13 +244,11 @@ public class TypeIdentifier<T> {
     }
 
     public <S> TypeIdentifier<S> firstGenericType() {
-        is(!genericTypes.isEmpty(), () -> "There are no generics set on " + this);
-        return (TypeIdentifier<S>) genericTypes.get(0);
+        return (TypeIdentifier<S>) isNotNull(genericTypes.get(0), () -> "There are no generics set on " + this);
     }
 
     public <S> Class<S> firstGeneric() {
-        is(!genericTypes.isEmpty(), () -> "There are no generics set on " + this);
-        return (Class<S>) genericTypes.get(0).rootType;
+        return (Class<S>) isNotNull(genericTypes.get(0).rootType, () -> "There are no generics set on " + this);
     }
 
     @NotNull

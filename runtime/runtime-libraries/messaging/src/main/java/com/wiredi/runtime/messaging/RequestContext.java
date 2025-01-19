@@ -1,6 +1,7 @@
 package com.wiredi.runtime.messaging;
 
 import com.wiredi.runtime.lang.ThrowingSupplier;
+import com.wiredi.runtime.messaging.compression.MessageCompression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,17 +41,20 @@ public class RequestContext {
     private final List<MessageFilter> messageFilters;
     private final MessagingErrorHandler messagingErrorHandler;
     private final MessageHeadersAccessor headersAccessor;
+    private final MessageCompression messageCompression;
 
     public RequestContext(
             List<RequestAware> requestAwareList,
             List<MessageFilter> messageFilters,
             MessagingErrorHandler messagingErrorHandler,
-            MessageHeadersAccessor headersAccessor
+            MessageHeadersAccessor headersAccessor,
+            MessageCompression messageCompression
     ) {
         this.requestAwareList = requestAwareList;
         this.messageFilters = messageFilters;
         this.messagingErrorHandler = messagingErrorHandler;
         this.headersAccessor = headersAccessor;
+        this.messageCompression = messageCompression;
     }
 
     public static RequestContext defaultInstance() {
@@ -62,7 +66,8 @@ public class RequestContext {
                 new ArrayList<>(),
                 new ArrayList<>(),
                 MessagingErrorHandler.DEFAULT,
-                new MessageHeadersAccessor()
+                new MessageHeadersAccessor(),
+                MessageCompression.newDefault()
         );
     }
 
@@ -105,7 +110,7 @@ public class RequestContext {
      * @param <E>              Any exception that can occur
      */
     public <T, E extends Throwable> MessagingResult handleRequest(Message<?> message, ThrowingSupplier<T, E> throwingSupplier) {
-        AtomicReference<Message<?>> messagePointer = new AtomicReference<>(message);
+        AtomicReference<Message<?>> messagePointer = new AtomicReference<>(messageCompression.decompress(message));
         try {
             // First step: prepare the message
             for (RequestAware requestAware : requestAwareList) {

@@ -1,7 +1,7 @@
 package com.wiredi.runtime.values;
 
 import com.wiredi.runtime.async.AsyncLoader;
-import com.wiredi.runtime.async.Barrier;
+import com.wiredi.runtime.async.barriers.SemaphoreBarrier;
 import com.wiredi.runtime.lang.ThrowingSupplier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +24,7 @@ import static com.wiredi.runtime.lang.Preconditions.is;
  */
 public class FutureValue<T> implements Value<T> {
 
-    private final Barrier barrier = Barrier.closed();
+    private final SemaphoreBarrier barrier = SemaphoreBarrier.closed();
     @Nullable
     private CompletionStageSubscription<T> subscription;
     private T content;

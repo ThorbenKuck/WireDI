@@ -28,6 +28,10 @@ public class AnnotationMetaData {
         return new Builder(className);
     }
 
+    public static Builder newInstance(Class<?> type) {
+        return new Builder(type.getName());
+    }
+
     public static AnnotationMetaData none() {
         return empty("");
     }

@@ -32,7 +32,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
                 error(identifiableProviders, 0, expectedType);
             }
 
-            return bestMatches.get(0);
+            return bestMatches.getFirst();
         }
     },
     FIRST_DIRECT_MATCH {

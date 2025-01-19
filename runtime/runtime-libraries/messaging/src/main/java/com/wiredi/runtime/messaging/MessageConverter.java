@@ -28,12 +28,17 @@ public interface MessageConverter<T, S extends MessageDetails> {
      * Whether this instance can deserialize the provided {@code message} to the {@code targetType}.
      * <p>
      * If true is returned, this converter will be asked to deserialize the message using {@link #deserialize(Message, Class)}.
+     * <p>
+     * By default, this method returns true, leaving the decision up to the {@link #deserialize(Message, Class)} method.
+     * If you want to have finer control, you can override this method.
      *
      * @param message    the message to deserialize
      * @param targetType the type that the deserialized message should have
      * @return true, if this converter can deserialize the message
      */
-    boolean canDeserialize(@NotNull Message<?> message, @NotNull Class<?> targetType);
+    default boolean canDeserialize(@NotNull Message<?> message, @NotNull Class<?> targetType) {
+        return true;
+    }
 
     /**
      * Deserialize the provided {@code message} to the {@code targetType}.
@@ -53,11 +58,17 @@ public interface MessageConverter<T, S extends MessageDetails> {
      * Whether this instance can serialize the provided {@code payload}.
      * <p>
      * If true is returned, this converter will be asked to serialize the payload using {@link #serialize(Object, MessageHeaders, MessageDetails)}.
+     * <p>
+     * By default, this method returns true,
+     * leaving the decision up to the {@link #serialize(Object, MessageHeaders, MessageDetails)}method.
+     * If you want to have finer control, you can override this method.
      *
      * @param payload the payload to serialize
      * @return true, if this converter can serialize the payload
      */
-    boolean canSerialize(@NotNull Object payload, @NotNull MessageHeaders headers, @NotNull MessageDetails messageDetails);
+    default boolean canSerialize(@NotNull Object payload, @NotNull MessageHeaders headers, @NotNull MessageDetails messageDetails) {
+        return true;
+    }
 
     /**
      * Serialize the provided {@code payload}.

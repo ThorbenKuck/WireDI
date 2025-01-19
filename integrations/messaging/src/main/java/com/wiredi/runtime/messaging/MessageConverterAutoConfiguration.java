@@ -4,6 +4,8 @@ import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
+import com.wiredi.runtime.messaging.compression.MessageCompression;
+import com.wiredi.runtime.messaging.compression.MessageCompressionAlgorithm;
 import com.wiredi.runtime.messaging.converters.ByteArrayMessageConverter;
 import com.wiredi.runtime.messaging.converters.StringMessageConverter;
 
@@ -44,7 +46,18 @@ public class MessageConverterAutoConfiguration {
             List<MessageConverter<?, ?>> converters,
             List<MessageInterceptor> messageInterceptors
     ) {
-        return MessagingContext.defaultContext();
+        return new MessagingContext(converters, messageInterceptors);
+    }
+
+    @Provider
+    @ConditionalOnMissingBean(type = MessageCompression.class)
+    public MessageCompression messageCompression(
+            List<MessageCompressionAlgorithm> messageCompressionAlgorithms,
+            List<MessageCompressionConfiguration> configurations
+    ) {
+        MessageCompression compression = new MessageCompression(messageCompressionAlgorithms);
+        configurations.forEach(configuration -> configuration.configure(compression));
+        return compression;
     }
 
     @Provider
@@ -55,7 +68,7 @@ public class MessageConverterAutoConfiguration {
             MessagingErrorHandler messagingErrorHandler,
             MessageHeadersAccessor headersAccessor
     ) {
-        return RequestContext.defaultInstance();
+        return new RequestContext(requestAwareList, messageFilters, messagingErrorHandler, headersAccessor, );
     }
 
     @Provider

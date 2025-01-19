@@ -15,9 +15,10 @@
     </parent>
 
     <modules>
-        <module>jackson</module>
-        <module>messaging</module>
         <module>cache</module>
+        <module>jackson</module>
+        <module>logging</module>
+        <module>messaging</module>
         <module>retry</module>
     </modules>
 

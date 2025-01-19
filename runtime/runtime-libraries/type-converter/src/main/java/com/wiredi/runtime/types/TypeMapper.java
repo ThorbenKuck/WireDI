@@ -62,10 +62,10 @@ public final class TypeMapper {
     private final TypeMap<List<TypeConverter<?>>> generalConverters = new TypeMap<>();
     private final TypeMap<TypeMap<@Nullable TypeConverter<?>>> typedTypeConverters = new TypeMap<>();
 
-    private TypeMapper() {
+    public TypeMapper() {
     }
 
-    private TypeMapper(
+    public TypeMapper(
             TypeMap<List<TypeConverter<?>>> generalConverters,
             TypeMap<TypeMap<@Nullable TypeConverter<?>>> typedTypeConverters
     ) {

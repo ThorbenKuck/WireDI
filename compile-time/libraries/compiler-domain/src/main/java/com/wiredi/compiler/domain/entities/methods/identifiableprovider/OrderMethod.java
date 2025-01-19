@@ -90,7 +90,7 @@ public class OrderMethod implements StandaloneMethodFactory {
                 if (before <= (after + 1)) {
                     throw new IllegalStateException("Before should be less than after + 1, but before=" + before + " and after=" + after + ". To reliably put an order between to others, at least one free");
                 }
-                return after - Math.floorDiv(before - after, 2);
+                return after + Math.floorDiv(before - after, 2);
             }
 
             if (after != null) {

@@ -26,6 +26,11 @@ public interface PropertyFileTypeLoader {
     @NotNull
     Map<Key, String> extract(@NotNull Resource resource);
 
+    /**
+     * All file types that this loader supports.
+     *
+     * @return a list of file types which this loader understands
+     */
     @NotNull
     List<String> supportedFileTypes();
 

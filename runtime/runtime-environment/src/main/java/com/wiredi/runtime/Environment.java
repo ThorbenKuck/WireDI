@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
  * Notes: In general, it is not recommended to manually construct an Environment, but if you really have to,
  * make sure to call {@link #autoconfigure()}.
  * Otherwise, try to confine the usages to instances maintained in the {@link WireRepository}.
- *
+ * <p>
  * The environment can be used generically, by using {@link #resolve(String)}
  *
  * @see WireRepository
@@ -51,8 +51,8 @@ public class Environment {
     private static final String PLACE_HOLDER_START = "{";
     private static final String PLACE_HOLDER_END = "}";
     private static final PlaceholderResolver placeholderResolver = new PlaceholderResolver(PLACE_HOLDER_START, PLACE_HOLDER_END);
-    private static final Key TAKE_ENVIRONMENT_PROPERTIES = Key.just("environment.autoconfiguration.take-environment-properties");
-    private static final Key TAKE_SYSTEM_PROPERTIES = Key.just("environment.autoconfiguration.take-system-properties");
+    private static final Key TAKE_ENVIRONMENT_PROPERTIES_KEY = Key.just("environment.autoconfiguration.take-environment-properties");
+    private static final Key TAKE_SYSTEM_PROPERTIES_KEY = Key.just("environment.autoconfiguration.take-system-properties");
     private final Map<Character, EnvironmentExpressionResolver> expressionResolvers;
     private final TypeMapper typeMapper = TypeMapper.newPreconfigured();
     private final TypedProperties properties = new TypedProperties(typeMapper);
@@ -190,14 +190,14 @@ public class Environment {
                     .sorted(OrderedComparator.INSTANCE)
                     .forEach(config -> config.configure(this));
 
-            if (properties.getBoolean(TAKE_ENVIRONMENT_PROPERTIES, true)) {
+            if (properties.getBoolean(TAKE_ENVIRONMENT_PROPERTIES_KEY, true)) {
                 logger.debug("Appending all JVM environment variables to the environment");
                 System.getenv().forEach((key, value) -> {
                     properties.set(Key.format(key), resolve(value));
                 });
             }
 
-            if (properties.getBoolean(TAKE_SYSTEM_PROPERTIES, true)) {
+            if (properties.getBoolean(TAKE_SYSTEM_PROPERTIES_KEY, true)) {
                 logger.debug("Adding all system variables to the environment");
                 System.getProperties()
                         .stringPropertyNames().forEach(property -> {
@@ -219,7 +219,7 @@ public class Environment {
      * @see PropertyLoader
      */
     public TypedProperties loadProperties(String path) {
-        Resource resource = loadResource(path);
+        Resource resource = resourceLoader.load(path);
         return propertyLoader.load(resource);
     }
 
@@ -237,9 +237,9 @@ public class Environment {
      * Converts the {@code input} into the requested {@code type}
      *
      * @param input The object to convert
-     * @param type The type to convert the input into
+     * @param type  The type to convert the input into
+     * @param <T>   a generic of the target type
      * @return A new instance of the {@code type}
-     * @param <T> a generic of the target type
      * @throws InvalidPropertyTypeException when the property could not be converted
      */
     @NotNull

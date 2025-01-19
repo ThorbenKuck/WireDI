@@ -1,10 +1,9 @@
 package com.wiredi.processor.tck;
 
-import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.processor.tck.domain.condition.ConditionTestCase;
-import com.wiredi.runtime.time.Timed;
-import com.wiredi.runtime.time.TimedValue;
 import com.wiredi.processor.tck.domain.InjectionTest;
+import com.wiredi.processor.tck.domain.condition.ConditionTestCase;
+import com.wiredi.processor.tck.domain.example.Car;
+import com.wiredi.processor.tck.domain.example.V1Engine;
 import com.wiredi.processor.tck.domain.generics.GenericTestCase;
 import com.wiredi.processor.tck.domain.ordered.CommandBasedStringBuilder;
 import com.wiredi.processor.tck.domain.override.OverwritingTestClass;
@@ -13,6 +12,11 @@ import com.wiredi.processor.tck.domain.provide.CoffeeMachine;
 import com.wiredi.processor.tck.domain.transactional.TransactionalTestController;
 import com.wiredi.processor.tck.infrastructure.TckTestCase;
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireRepositoryProperties;
+import com.wiredi.runtime.domain.StandardWireConflictResolver;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.time.Timed;
+import com.wiredi.runtime.time.TimedValue;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
@@ -23,9 +27,27 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 
 public class WireDiTck {
+
+    @Test
+    public void test() {
+        // Arrange
+        WireRepository wireRepository = WireRepository.open(
+                new WireRepositoryProperties()
+                        .withConflictResolver(StandardWireConflictResolver.BEST_MATCH)
+        );
+
+        // Act
+        Car car = wireRepository.get(Car.class);
+
+        // Assert
+        if (!(car.getEngine() instanceof V1Engine)) {
+            fail("Engine is not V6Engine, but " + car.getEngine().getClass().getSimpleName());
+        }
+    }
 
     @Test
     public void testLoadTimeOfObjects() {
