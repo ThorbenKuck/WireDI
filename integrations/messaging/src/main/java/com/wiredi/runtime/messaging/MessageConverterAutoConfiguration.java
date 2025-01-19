@@ -66,9 +66,10 @@ public class MessageConverterAutoConfiguration {
             List<RequestAware> requestAwareList,
             List<MessageFilter> messageFilters,
             MessagingErrorHandler messagingErrorHandler,
-            MessageHeadersAccessor headersAccessor
+            MessageHeadersAccessor headersAccessor,
+            MessageCompression compression
     ) {
-        return new RequestContext(requestAwareList, messageFilters, messagingErrorHandler, headersAccessor, );
+        return new RequestContext(requestAwareList, messageFilters, messagingErrorHandler, headersAccessor, compression);
     }
 
     @Provider
