@@ -3,6 +3,7 @@ package com.wiredi.runtime.domain.provider.condition;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.domain.conditional.context.ConditionContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -25,7 +26,10 @@ public class BatchLoadCondition extends AbstractLoadCondition {
             return true;
         }
         for (LoadConditionEvaluationStage loadConditionEvaluationStage : evaluators) {
-            if (!evaluate(wireRepository, loadConditionEvaluationStage.type(), loadConditionEvaluationStage.annotationMetaData())) {
+            ConditionContext.Runtime context = new ConditionContext.Runtime(wireRepository.environment(), wireRepository.beanContainer(), loadConditionEvaluationStage.annotationMetaData());
+            evaluate(wireRepository, context, loadConditionEvaluationStage.type());
+
+            if (!context.isMatched()) {
                 return false;
             }
         }

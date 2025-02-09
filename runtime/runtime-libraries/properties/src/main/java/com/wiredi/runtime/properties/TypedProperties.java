@@ -95,7 +95,7 @@ public final class TypedProperties implements AutoCloseable {
             @NotNull final Key key,
             @NotNull final String value
     ) {
-        properties.merge(key, value, (a, b) -> a + "," + b);
+        properties.merge(key, value, (a, b) -> a + LIST_ENTRY_SEPARATOR + b);
         return this;
     }
 

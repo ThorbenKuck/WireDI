@@ -431,6 +431,10 @@ public class Environment {
                 .map(function);
     }
 
+    public void addActiveProfile(String profile) {
+        this.properties.add(DefaultEnvironmentKeys.ACTIVE_PROFILES, profile);
+    }
+
     public List<String> activeProfiles() {
         return getAllProperties(DefaultEnvironmentKeys.ACTIVE_PROFILES);
     }

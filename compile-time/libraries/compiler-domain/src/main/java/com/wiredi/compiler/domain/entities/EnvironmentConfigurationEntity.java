@@ -3,9 +3,9 @@ package com.wiredi.compiler.domain.entities;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.resources.ResourceLoader;
@@ -23,7 +23,7 @@ import java.util.List;
 public class EnvironmentConfigurationEntity extends AbstractClassEntity<EnvironmentConfigurationEntity> {
 
 	private final List<String> propertiesToLoad = new ArrayList<>();
-	private final List<Entry> entries = new ArrayList<>();
+	private final List<EnvironmentModification> entries = new ArrayList<>();
 	private final ResourceLoader resourceLoader = ResourceLoader.open(ClassPathResourceProtocolResolver.INSTANCE, FileSystemResourceProtocolResolver.INSTANCE);
 	private final TypeElement typeElement;
 	private static final Logger logger = Logger.get(EnvironmentConfigurationEntity.class);
@@ -56,12 +56,12 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 		return this;
 	}
 
-	public EnvironmentConfigurationEntity appendEntry(Entry entry) {
+	public EnvironmentConfigurationEntity appendModification(EnvironmentModification entry) {
 		this.entries.add(entry);
 		return this;
 	}
 
-	public EnvironmentConfigurationEntity appendEntries(List<Entry> entries) {
+	public EnvironmentConfigurationEntity appendModifications(List<EnvironmentModification> entries) {
 		this.entries.addAll(entries);
 		return this;
 	}
@@ -74,7 +74,9 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 			codeBlock.addStatement("environment.loadResource($S).ifExists(environment::appendPropertiesFrom)", property);
 		});
 
-		entries.forEach(entry -> codeBlock.addStatement("environment.setProperty($T.just($S), $S)", Key.class, entry.key.value(), entry.value));
+		entries.forEach(entry -> {
+			entry.apply(codeBlock);
+		});
 
 		builder.addMethod(
 				MethodSpec.methodBuilder("configure")
@@ -90,9 +92,4 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 						.build()
 		);
 	}
-
-	public record Entry(
-			Key key,
-			String value
-	) {}
 }

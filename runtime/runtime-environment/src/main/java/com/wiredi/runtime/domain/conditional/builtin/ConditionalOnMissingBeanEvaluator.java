@@ -1,20 +1,20 @@
 package com.wiredi.runtime.domain.conditional.builtin;
 
-import com.wiredi.runtime.domain.conditional.ConditionContext;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
+import com.wiredi.runtime.domain.conditional.context.ConditionContext;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 
 public class ConditionalOnMissingBeanEvaluator implements ConditionEvaluator {
 
     @Override
-    public boolean matches(
-            @NotNull final ConditionContext context
-    ) {
+    public void testRuntimeCondition(ConditionContext.@NotNull Runtime context) {
         final TypeIdentifier<?> beanType = context.annotationMetaData().requireType("type");
 
-        return context.beanContainer()
+        if (context.beanContainer()
                 .access(beanType)
-                .isEmpty();
+                .isNotEmpty()) {
+            context.failAndStop("Bean of type " + beanType + " is present");
+        }
     }
 }

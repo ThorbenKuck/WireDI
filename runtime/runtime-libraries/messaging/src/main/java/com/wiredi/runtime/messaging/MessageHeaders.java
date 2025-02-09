@@ -11,11 +11,11 @@ import java.util.function.BiConsumer;
  * A generic representation of Headers.
  * <p>
  * Headers are a map of names, pointing to a list of values.
- * They are used to pass additional information with requests or responses in different technologies.
+ * They're used to pass additional information with requests or responses in different technologies.
  * One example of this is the Http headers.
  * <p>
  * Whenever integrating a technology that supports headers, it is recommended to use this class here wiredi internally.
- * This way, the integration will be technology independent.
+ * This way, the integration is technology independent.
  * Integrations should (if possible) not use the technology-dependent header classes.
  * <p>
  * If required, technology-dependent details can be transported in the {@link MessageDetails}.
@@ -89,7 +89,7 @@ public class MessageHeaders implements Iterable<MessageHeader> {
 
     @NotNull
     public Map<String, List<MessageHeader>> map() {
-        return this.values;
+        return Collections.unmodifiableMap(this.values);
     }
 
     public void forEach(BiConsumer<String, List<MessageHeader>> consumer) {
@@ -111,7 +111,7 @@ public class MessageHeaders implements Iterable<MessageHeader> {
     @Override
     @NotNull
     public String toString() {
-        return "HttpHeaders{ " + map() + " }";
+        return "MessageHeaders{ " + this.values + " }";
     }
 
     @NotNull

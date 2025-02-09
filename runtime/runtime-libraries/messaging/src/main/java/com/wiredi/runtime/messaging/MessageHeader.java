@@ -5,6 +5,8 @@ import com.wiredi.runtime.types.Bytes;
 import java.nio.charset.Charset;
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * A simple record to wrap a header value.
@@ -99,5 +101,16 @@ public record MessageHeader(String name, byte[] content) {
 
     public <T extends Enum<T>> T decodeToEnum(Class<T> clazz) {
         return Bytes.toEnum(content, clazz);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof MessageHeader that)) return false;
+        return Objects.equals(name, that.name) && Objects.deepEquals(content, that.content);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(name, Arrays.hashCode(content));
     }
 }

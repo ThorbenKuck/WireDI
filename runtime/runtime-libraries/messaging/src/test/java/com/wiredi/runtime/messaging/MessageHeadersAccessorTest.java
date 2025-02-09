@@ -19,14 +19,14 @@ class MessageHeadersAccessorTest {
                 .build();
 
         // Act
-        AtomicReference<MessageHeaders> headers = new AtomicReference<>();
+        AtomicReference<MessageHeaders> expectedHeaders = new AtomicReference<>(message.headers());
+        AtomicReference<MessageHeaders> actualHeaders = new AtomicReference<>();
         messagingEngine.handleMessage(message, m -> {
             MessageHeaders currentHeaders = accessor.getCurrentHeaders();
-            headers.set(currentHeaders);
+            actualHeaders.set(currentHeaders);
         });
 
         // Assert
-        assertThat(headers.get()).isSameAs(message.headers());
+        assertThat(actualHeaders.get()).isEqualTo(expectedHeaders.get());
     }
-
 }

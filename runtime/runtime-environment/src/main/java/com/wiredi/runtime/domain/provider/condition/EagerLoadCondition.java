@@ -2,7 +2,8 @@ package com.wiredi.runtime.domain.provider.condition;
 
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.AnnotationMetaData;
-import com.wiredi.runtime.domain.conditional.ConditionContext;
+import com.wiredi.runtime.domain.conditional.context.ConditionContext;
+import com.wiredi.runtime.domain.conditional.context.RuntimeConditionContext;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.domain.conditional.Conditional;
 
@@ -26,7 +27,9 @@ public class EagerLoadCondition implements LoadCondition {
 
     @Override
     public boolean matches(WireRepository wireRepository) {
-        return conditionEvaluator.matches(new ConditionContext(wireRepository.environment(), wireRepository.beanContainer(), annotationMetaData));
+        ConditionContext context = ConditionContext.runtime(wireRepository, annotationMetaData);
+        conditionEvaluator.test(context);
+        return context.isMatched();
     }
 
     @Override

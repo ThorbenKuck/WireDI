@@ -3,6 +3,8 @@ package com.wiredi.compiler.processor.factories;
 import com.wiredi.annotations.properties.PropertySource;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.entities.EnvironmentConfigurationEntity;
+import com.wiredi.compiler.domain.entities.environment.AddPropertyEnvironmentModification;
+import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
 import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
@@ -29,9 +31,9 @@ public class EnvironmentConfigurationFactory implements Factory<EnvironmentConfi
 		PropertySource propertySource = annotation.get();
 		return compilerRepository.newEnvironmentConfiguration(typeElement)
 				.appendSourceFiles(propertySource.value())
-				.appendEntries(
+				.appendModifications(
 						Arrays.stream(propertySource.entries())
-								.map(it -> new EnvironmentConfigurationEntity.Entry(Key.format(it.key()), it.value()))
+								.map(it -> EnvironmentModification.addProperty(Key.format(it.key()), it.value()))
 								.toList()
 				);
 	}

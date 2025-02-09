@@ -4,6 +4,7 @@ import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.conditional.Conditional;
+import com.wiredi.runtime.domain.conditional.context.ConditionContext;
 
 import java.util.List;
 
@@ -25,7 +26,9 @@ public class SingleLoadCondition extends AbstractLoadCondition {
 
     @Override
     public boolean matches(WireRepository wireRepository) {
-        return evaluate(wireRepository, evaluatorType, annotationMetaData);
+        ConditionContext context = ConditionContext.runtime(wireRepository, annotationMetaData);
+        evaluate(wireRepository, context, evaluatorType);
+        return context.isMatched();
     }
 
     @Override

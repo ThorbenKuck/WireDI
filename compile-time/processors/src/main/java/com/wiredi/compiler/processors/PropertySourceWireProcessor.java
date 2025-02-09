@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.wiredi.annotations.properties.PropertySource;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.entities.EnvironmentConfigurationEntity;
+import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.compiler.processor.factories.EnvironmentConfigurationFactory;
@@ -53,9 +54,9 @@ public class PropertySourceWireProcessor extends WireBaseProcessor {
 
         compilerRepository.newEnvironmentConfiguration(typeElement)
                 .appendSourceFiles(propertySource.value())
-                .appendEntries(
+                .appendModifications(
                         Arrays.stream(propertySource.entries())
-                                .map(it -> new EnvironmentConfigurationEntity.Entry(Key.format(it.key()), it.value()))
+                                .map(it -> EnvironmentModification.addProperty(Key.format(it.key()), it.value()))
                                 .toList()
                 );
     }

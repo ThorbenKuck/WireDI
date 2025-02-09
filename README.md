@@ -187,7 +187,7 @@ The annotation processor generates instance of `IdentifiableProvider` classes, w
 These providers hold a sum of static information about this class, that are then used at runtime;
 Including the template as to how this class is created.
 
-# Properties
+## Properties
 
 Order of Properties:
 
@@ -196,3 +196,7 @@ Order of Properties:
 - profile properties (application-<profile>.properties)
 - OS Environment Variables
 - System Properties
+
+# Project Structure
+
+The project is mainly split into two modules: [runtime](runtime) and [compile time](compile-time).
