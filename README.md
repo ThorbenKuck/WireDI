@@ -1,5 +1,7 @@
 # WireDI
 
+[![Java CI with Maven](https://github.com/ThorbenKuck/WireDI/actions/workflows/maven.yml/badge.svg)](https://github.com/ThorbenKuck/WireDI/actions/workflows/maven.yml)
+
 ![header](.img/header.png)
 
 ## Links:

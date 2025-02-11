@@ -1,0 +1,44 @@
+name: Publish package to the Maven Central Repository and GitHub Packages
+
+on:
+  push:
+    tags:
+      - 'release/*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Parse version
+        id: release_version
+        uses: ashley-taylor/regex-property-action@v1.3
+        with:
+          value: "${{ github.ref_name }}"
+          regex: "release/"
+          replacement: ""
+      - uses: actions/checkout@v4
+      - name: Set up Java for publishing to Maven Central Repository
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+      - name: Publish to the Maven Central Repository
+        run: mvn -Drevision=${{ steps.release_version.outputs.value }} -DskipTests --batch-mode clean deploy
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+#      - name: Set up Java for publishing to GitHub Packages
+#        uses: actions/setup-java@v4
+#        with:
+#          java-version: '11'
+#          distribution: 'temurin'
+#      - name: Publish to GitHub Packages
+#        run: mvn -Drevision=2.0.0-SNAPSHOT -DskipTests --batch-mode clean deploy
+#        env:
+#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
