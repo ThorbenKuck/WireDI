@@ -22,7 +22,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure GPG Key
         run: |
-          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
+          echo -n "$GPG_SIGNING_KEY" | gpg --import
         env:
           GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - name: Set up Java for publishing to Maven Central Repository
