@@ -20,11 +20,6 @@ jobs:
           regex: "release/"
           replacement: ""
       - uses: actions/checkout@v4
-      - name: Configure GPG Key
-        run: |
-          echo -n "$GPG_SIGNING_KEY" | base64 --decode | gpg --import
-        env:
-          GPG_SIGNING_KEY: ${{ secrets.GPG_SIGNING_KEY }}
       - name: Set up Java for publishing to Maven Central Repository
         uses: actions/setup-java@v4
         with:
@@ -33,11 +28,15 @@ jobs:
           server-id: ossrh
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_SIGNING_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish to the Maven Central Repository
         run: mvn -Drevision=${{ steps.release_version.outputs.value }} -P deploy -DskipTests --batch-mode clean deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+
 #      - name: Set up Java for publishing to GitHub Packages
 #        uses: actions/setup-java@v4
 #        with:
