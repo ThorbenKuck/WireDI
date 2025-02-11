@@ -29,7 +29,7 @@ jobs:
           server-username: MAVEN_USERNAME
           server-password: MAVEN_PASSWORD
       - name: Publish to the Maven Central Repository
-        run: mvn -Drevision=${{ steps.release_version.outputs.value }} -DskipTests --batch-mode clean deploy
+        run: mvn -Drevision=${{ steps.release_version.outputs.value }} -P deploy -DskipTests --batch-mode clean deploy
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
