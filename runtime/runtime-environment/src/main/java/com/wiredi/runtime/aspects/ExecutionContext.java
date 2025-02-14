@@ -1,6 +1,5 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.aspects.links.RootMethod;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.properties.ThreadLocalTypedProperties;
 import com.wiredi.runtime.properties.TypedProperties;
@@ -26,32 +25,23 @@ public class ExecutionContext {
     private final ExecutionChainParameters parameters;
 
     @NotNull
-    private final ThreadLocalTypedProperties typedProperties = new ThreadLocalTypedProperties();
+    private final Deque<AspectHandler> aspectHandlers;
 
-    @Nullable
-    private ExecutionChainLink next = null;
+    @NotNull
+    private final ThreadLocalTypedProperties typedProperties = new ThreadLocalTypedProperties();
 
     public ExecutionContext(
             @NotNull RootMethod rootMethod,
-            @NotNull ExecutionChainParameters parameters
+            @NotNull ExecutionChainParameters parameters,
+            @NotNull Deque<AspectHandler> aspectHandlers
     ) {
         this.rootMethod = rootMethod;
         this.parameters = parameters;
-    }
-
-    public ExecutionContext(@NotNull RootMethod rootMethod) {
-        this(rootMethod, new ExecutionChainParameters());
-    }
-
-    @NotNull
-    public ExecutionContext prepend(ExecutionChainLink nextElement) {
-        ExecutionContext executionContext = new ExecutionContext(rootMethod, parameters);
-        executionContext.next = nextElement;
-        return executionContext;
+        this.aspectHandlers = aspectHandlers;
     }
 
     public void clear() {
-        parameters.clear();
+        aspectHandlers.clear();
     }
 
     @NotNull
@@ -61,10 +51,11 @@ public class ExecutionContext {
 
     @Nullable
     public <S> S proceed() {
-        if (next == null) {
-            throw new IllegalStateException("Proceed was called on the first chain element, which is not allowed");
+        if (aspectHandlers.isEmpty()) {
+            throw new IllegalStateException("No further aspect handlers available. This should normally not happen, as the last element always should be the RootMethod!");
         }
-        return next.execute();
+
+        return (S) aspectHandlers.pop().process(this);
     }
 
     @NotNull
@@ -107,11 +98,6 @@ public class ExecutionContext {
 
     public AnnotationMetaData getAnnotation(Class<? extends Annotation> annotation) {
         return rootMethod.getAnnotation(annotation);
-    }
-
-    public void setParameters(@NotNull Map<String, Object> parameters) {
-        this.parameters.clear();
-        this.parameters.set(parameters);
     }
 
     @NotNull

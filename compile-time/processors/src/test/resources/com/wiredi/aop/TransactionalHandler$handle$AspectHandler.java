@@ -3,7 +3,7 @@ package com.wiredi.aop;
 import com.wiredi.annotations.Wire;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionContext;
-import com.wiredi.runtime.aspects.links.RootMethod;
+import com.wiredi.runtime.aspects.RootMethod;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import jakarta.annotation.Generated;
 import java.lang.Object;

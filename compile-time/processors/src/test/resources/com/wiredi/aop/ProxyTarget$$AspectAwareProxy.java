@@ -5,14 +5,14 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
-import com.wiredi.runtime.aspects.links.RootMethod;
+import com.wiredi.runtime.aspects.ExecutionChainRegistry;
+import com.wiredi.runtime.aspects.RootMethod;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
 import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
 import java.lang.Object;
 import java.lang.Override;
-import java.util.List;
 
 @PrimaryWireType(ProxyTarget.class)
 @Generated(
@@ -29,17 +29,16 @@ final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectA
 
     private final Value<ExecutionChain> executionChain;
 
-    ProxyTarget$$AspectAwareProxy(final List<AspectHandler> aspectHandlers,
-                                  final WireRepository wireRepository) {
+    ProxyTarget$$AspectAwareProxy(final ExecutionChainRegistry executionChainRegistry,
+                          final WireRepository wireRepository) {
         this.wireRepository = wireRepository;
         this.executionChain = Value.async(() ->
-                ExecutionChain.newInstance(
-                                RootMethod.newInstance("toProxy")
-                                        .withAnnotation(AnnotationMetaData.empty("com.wiredi.aop.Transactional"))
-                                        .build(AspectHandler.wrap((c) -> super.toProxy()))
-                        )
-                        .withProcessors(aspectHandlers)
-                        .build()
+                executionChainRegistry.getExecutionChain(
+                        RootMethod.newInstance("toProxy")
+                                .withAnnotation(AnnotationMetaData.empty("com.wiredi.aop.Transactional"))
+                                .build(AspectHandler.wrap((c) -> super.toProxy()))
+                )
+
         );
     }
 

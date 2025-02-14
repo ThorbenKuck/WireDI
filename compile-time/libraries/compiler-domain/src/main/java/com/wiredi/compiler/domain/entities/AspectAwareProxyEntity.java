@@ -5,7 +5,8 @@ import com.wiredi.annotations.PrimaryWireType;
 import com.wiredi.annotations.Wire;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
-import com.wiredi.runtime.aspects.links.RootMethod;
+import com.wiredi.runtime.aspects.ExecutionChainRegistry;
+import com.wiredi.runtime.aspects.RootMethod;
 import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.domain.AnnotationMetaDataSpec;
 import com.wiredi.compiler.domain.TypeIdentifiers;
@@ -29,7 +30,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
 
     private static final String WIRE_REPOSITORY_FIELD_NAME = "wireRepository";
 
-    private static final String ASPECT_HANDLER_PARAMETER_NAME = "aspectHandlers";
+    private static final String EXECUTION_CHAIN_REGISTRY_PARAMETER_NAME = "executionChainRegistry";
 
     private final List<FieldEntity> fieldEntities = new ArrayList<>();
 
@@ -129,14 +130,11 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
                     .indent();
         }
         executionChain.initializer()
-                .add("$T.newInstance(\n", ExecutionChain.class)
+                .add("$L.getExecutionChain(\n", EXECUTION_CHAIN_REGISTRY_PARAMETER_NAME)
                 .indent()
                 .add("$L", createRootMethod(proxyMethod))
                 .unindent().add("\n)\n");
 
-        executionChain.initializer()
-                .add(".withProcessors($L)\n", ASPECT_HANDLER_PARAMETER_NAME)
-                .add(".build()");
         if (asyncExecutionChainConstruction) {
             executionChain.initializer().unindent().add("\n)");
         }
@@ -194,7 +192,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
     public AspectAwareProxyEntity addConstructorInvocation(@Nullable ExecutableElement inheritedConstructor) {
         CodeBlock.Builder manualInitialization = CodeBlock.builder();
         ConstructorBuilder constructorBuilder = new ConstructorBuilder();
-        constructorBuilder.addParameter(ParameterizedTypeName.get(List.class, AspectHandler.class), ASPECT_HANDLER_PARAMETER_NAME);
+        constructorBuilder.addParameter(TypeName.get(ExecutionChainRegistry.class), EXECUTION_CHAIN_REGISTRY_PARAMETER_NAME);
         constructorBuilder.initializeField(TypeName.get(WireRepository.class), WIRE_REPOSITORY_FIELD_NAME);
 
         // Inherit parameters and call super as the first thing in the constructor

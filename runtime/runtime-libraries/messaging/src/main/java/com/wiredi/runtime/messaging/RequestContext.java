@@ -1,5 +1,6 @@
 package com.wiredi.runtime.messaging;
 
+import com.sun.source.util.TaskListener;
 import com.wiredi.runtime.lang.ThrowingSupplier;
 import com.wiredi.runtime.messaging.compression.MessageCompression;
 

@@ -2,7 +2,7 @@ package com.wiredi.aop;
 
 import com.google.auto.service.AutoService;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.aspects.AspectHandler;
+import com.wiredi.runtime.aspects.ExecutionChainRegistry;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
@@ -29,7 +29,7 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
     private ProxyTarget$$AspectAwareProxy createInstance(final WireRepository wireRepository,
                                                          final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
         // We will start by Fetching all 2 constructor parameters
-        List<AspectHandler> variable = wireRepository.getAll(TypeIdentifier.of(AspectHandler.class));
+        ExecutionChainRegistry variable = wireRepository.get(TypeIdentifier.of(ExecutionChainRegistry.class));
         WireRepository variable1 = wireRepository.get(TypeIdentifier.of(WireRepository.class));
         ProxyTarget$$AspectAwareProxy instance = new ProxyTarget$$AspectAwareProxy(variable,variable1);
         return instance;

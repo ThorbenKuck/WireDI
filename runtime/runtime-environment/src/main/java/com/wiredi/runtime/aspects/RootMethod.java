@@ -1,23 +1,18 @@
-package com.wiredi.runtime.aspects.links;
+package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.aspects.AspectHandler;
-import com.wiredi.runtime.aspects.ExecutionChainLink;
-import com.wiredi.runtime.aspects.ExecutionChainParameters;
-import com.wiredi.runtime.aspects.ExecutionContext;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class RootMethod implements ExecutionChainLink {
+public class RootMethod implements AspectHandler {
 
     @NotNull
-    private final ExecutionContext context = new ExecutionContext(this);
-    @NotNull
-    private final AspectHandler rootMethod;
+    private final AspectHandler rootMethodAspectHandler;
     @NotNull
     private final String methodName;
     @NotNull
@@ -26,12 +21,12 @@ public class RootMethod implements ExecutionChainLink {
     private final List<@NotNull AnnotationMetaData> annotations;
 
     public RootMethod(
-            @NotNull AspectHandler rootMethod,
+            @NotNull AspectHandler rootMethodAspectHandler,
             @NotNull String methodName,
             @NotNull Map<String, TypeIdentifier<?>> parameterTypes,
             @NotNull List<@NotNull AnnotationMetaData> annotations
     ) {
-        this.rootMethod = rootMethod;
+        this.rootMethodAspectHandler = rootMethodAspectHandler;
         this.methodName = methodName;
         this.parameterTypes = parameterTypes;
         this.annotations = annotations;
@@ -48,24 +43,6 @@ public class RootMethod implements ExecutionChainLink {
         return new Builder(methodName);
     }
 
-    @Override
-    public Object executeRaw() {
-        return rootMethod.process(context);
-    }
-
-    @Override
-    public ExecutionContext context() {
-        return context;
-    }
-
-    @Override
-    public ExecutionChainLink prepend(
-            @NotNull AspectHandler handler
-    ) {
-        ExecutionContext prependedContext = context.prepend(this);
-        return ExecutionChainElement.create(prependedContext, handler);
-    }
-
     @NotNull
     public String getMethodName() {
         return methodName;
@@ -79,11 +56,6 @@ public class RootMethod implements ExecutionChainLink {
     @NotNull
     public Map<String, TypeIdentifier<?>> parameterTypes() {
         return parameterTypes;
-    }
-
-    @NotNull
-    public ExecutionChainParameters parameters() {
-        return context.parameters();
     }
 
     public Optional<AnnotationMetaData> findAnnotation(Predicate<AnnotationMetaData> predicate) {
@@ -120,8 +92,7 @@ public class RootMethod implements ExecutionChainLink {
     public boolean equals(Object object) {
         if (this == object) return true;
         if (!(object instanceof RootMethod that)) return false;
-        return Objects.equals(context, that.context)
-                && Objects.equals(rootMethod, that.rootMethod)
+        return Objects.equals(rootMethodAspectHandler, that.rootMethodAspectHandler)
                 && Objects.equals(methodName, that.methodName)
                 && Objects.equals(parameterTypes, that.parameterTypes)
                 && Objects.equals(annotations, that.annotations);
@@ -129,18 +100,22 @@ public class RootMethod implements ExecutionChainLink {
 
     @Override
     public int hashCode() {
-        return Objects.hash(context, rootMethod, methodName, parameterTypes, annotations);
+        return Objects.hash(rootMethodAspectHandler, methodName, parameterTypes, annotations);
     }
 
     @Override
     public String toString() {
         return "RootMethod{" +
-                "context=" + context +
-                ", rootMethod=" + rootMethod +
+                "rootMethod=" + rootMethodAspectHandler +
                 ", methodName='" + methodName + '\'' +
                 ", parameterTypes=" + parameterTypes +
                 ", annotations=" + annotations +
                 '}';
+    }
+
+    @Override
+    public @Nullable Object process(@NotNull ExecutionContext context) {
+        return rootMethodAspectHandler.process(context);
     }
 
     public static class Builder {

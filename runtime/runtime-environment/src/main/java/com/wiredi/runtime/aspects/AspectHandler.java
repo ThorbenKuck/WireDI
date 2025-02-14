@@ -1,6 +1,5 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.aspects.links.RootMethod;
 import com.wiredi.runtime.domain.Ordered;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public interface AspectHandler extends Ordered {
 	 * @param rootMethod
 	 * @return
 	 */
-	default boolean appliesTo(RootMethod rootMethod) {
+	default boolean appliesTo(@NotNull RootMethod rootMethod) {
 		return true;
 	}
 }

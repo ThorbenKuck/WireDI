@@ -1,9 +1,8 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.aspects.AspectHandler;
-import com.wiredi.runtime.aspects.ExecutionChain;
-import com.wiredi.runtime.aspects.links.RootMethod;
 import com.wiredi.runtime.domain.AnnotationMetaData;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
 import org.junit.jupiter.api.Test;
@@ -30,8 +29,8 @@ class ExecutionChainTest {
 		// Arrange
 		// Act
 		String result = ExecutionChain.newInstance(rootMethod)
-				.withProcessor(context -> context.proceed() + " From")
-				.withProcessor(context -> context.proceed() + " Aspects")
+				.withProcessor(new AspectsAppender())
+				.withProcessor(new FromAppender())
 				.build()
 				.execute(Map.of("param", "Hello World"), String.class);
 
@@ -86,8 +85,8 @@ class ExecutionChainTest {
 		int rounds = 10;
 
 		ExecutionChain executionChain = ExecutionChain.newInstance(rootMethod)
-				.withProcessor(context -> context.proceed() + " From")
-				.withProcessor(context -> context.proceed() + " Aspects")
+				.withProcessor(new AspectsAppender())
+				.withProcessor(new FromAppender())
 				.build();
 
 		return IntStream.range(0, rounds).mapToObj(i -> {
@@ -108,8 +107,8 @@ class ExecutionChainTest {
 		// Arrange
 		// Act
 		String result = ExecutionChain.newInstance(rootMethod)
-				.withProcessor(context -> context.proceed() + " From")
-				.withProcessor(context -> context.proceed() + " Aspects")
+				.withProcessor(new AspectsAppender())
+				.withProcessor(new FromAppender())
 				.build()
 				.execute()
 				.withParameter("param", "Hello World")
@@ -123,7 +122,19 @@ class ExecutionChainTest {
 	@interface ExampleAnnotation {
 	}
 
-	@ExampleAnnotation
-	static class ExampleClass {
+	class FromAppender implements AspectHandler {
+
+		@Override
+		public @Nullable Object process(@NotNull ExecutionContext context) {
+			return context.proceed() + " From";
+		}
+	}
+
+	class AspectsAppender implements AspectHandler {
+
+		@Override
+		public @Nullable Object process(@NotNull ExecutionContext context) {
+			return context.proceed() + " Aspects";
+		}
 	}
 }

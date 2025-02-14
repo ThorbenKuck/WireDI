@@ -1,10 +1,8 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.aspects.links.RootMethod;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -26,7 +24,6 @@ import java.util.concurrent.LinkedBlockingDeque;
  * Though this class is meant to be used for aspect executions, it can be used standalone.
  *
  * @see RootMethod
- * @see ExecutionChainLink
  * @see AspectHandler
  * @see ExecutionContext
  */
@@ -38,18 +35,13 @@ public class ExecutionChain {
     @NotNull
     private final RootMethod rootMethod;
 
-    /**
-     * The current head of the chain. At the beginning this will be the {@link #rootMethod} and this
-     * will be replaced by the {@link #prepend(AspectHandler)} method
-     */
     @NotNull
-    private ExecutionChainLink head;
+    private final Deque<AspectHandler> queue = new LinkedBlockingDeque<>();
 
     public ExecutionChain(
             @NotNull RootMethod rootFunction
     ) {
         this.rootMethod = rootFunction;
-        this.head = rootFunction;
     }
 
     @NotNull
@@ -59,7 +51,30 @@ public class ExecutionChain {
 
     @NotNull
     public ExecutionChain prepend(@NotNull AspectHandler handler) {
-        this.head = head.prepend(handler);
+        synchronized (queue) {
+            this.queue.addFirst(handler);
+        }
+        return this;
+    }
+
+    @NotNull
+    public ExecutionChain append(@NotNull AspectHandler handler) {
+        synchronized (queue) {
+            this.queue.addLast(handler);
+        }
+        return this;
+    }
+
+    public ExecutionChain setHandlers(@NotNull Collection<AspectHandler> handlers) {
+        List<AspectHandler> applicableHandlers = handlers.stream()
+                .filter(it -> it.appliesTo(this.rootMethod))
+                .toList();
+
+        synchronized (queue) {
+            this.queue.clear();
+            this.queue.addAll(applicableHandlers);
+        }
+
         return this;
     }
 
@@ -69,13 +84,13 @@ public class ExecutionChain {
     }
 
     @NotNull
-    public ExecutionChainLink tail() {
-        return rootMethod;
+    public AspectHandler tail() {
+        return this.queue.getLast();
     }
 
     @NotNull
-    public ExecutionChainLink head() {
-        return head;
+    public AspectHandler head() {
+        return this.queue.getFirst();
     }
 
     @Nullable
@@ -105,11 +120,14 @@ public class ExecutionChain {
 
     @Nullable
     private Object doExecute(@NotNull Map<String, Object> parameters) {
+        ArrayDeque<AspectHandler> handlers = new ArrayDeque<>(this.queue.size() + 1);
+        handlers.addAll(this.queue);
+        handlers.addLast(this.rootMethod);
+        ExecutionContext executionContext = new ExecutionContext(rootMethod, new ExecutionChainParameters(parameters), handlers);
         try {
-            rootMethod.parameters().set(parameters);
-            return head.executeRaw();
+            return executionContext.proceed();
         } finally {
-            rootMethod.parameters().clear();
+            executionContext.clear();
         }
     }
 
@@ -118,7 +136,7 @@ public class ExecutionChain {
         @NotNull
         private final RootMethod rootMethod;
         @NotNull
-        private final Queue<ComponentBuilder<? extends Annotation>> prepends = new LinkedBlockingDeque<>();
+        private final Deque<AspectHandler> handlers = new LinkedBlockingDeque<>();
         private boolean distinct = false;
 
         public Builder(@NotNull RootMethod rootMethod) {
@@ -128,7 +146,7 @@ public class ExecutionChain {
         @NotNull
         public Builder withProcessor(@NotNull AspectHandler handler) {
             if (handler.appliesTo(rootMethod)) {
-                prepends.add(new ComponentBuilder<>(handler));
+                handlers.add(handler);
             }
             return this;
         }
@@ -137,7 +155,7 @@ public class ExecutionChain {
         public Builder withProcessors(@NotNull List<AspectHandler> handlers) {
             for (AspectHandler handler : handlers) {
                 if (handler.appliesTo(rootMethod)) {
-                    prepends.add(new ComponentBuilder<>(handler));
+                    this.handlers.add(handler);
                 }
             }
             return this;
@@ -160,43 +178,15 @@ public class ExecutionChain {
 
         @NotNull
         public ExecutionChain build() {
-            if(distinct) {
-                return buildDistinct();
+            final LinkedBlockingDeque<AspectHandler> aspectHandlers = new LinkedBlockingDeque<>();
+
+            if (distinct) {
+                aspectHandlers.addAll(new HashSet<>(this.handlers));
             } else {
-                return buildIndistinct();
-            }
-        }
-
-        private ExecutionChain buildDistinct() {
-            final ExecutionChain executionChain = new ExecutionChain(rootMethod);
-            final HashSet<AspectHandler> handlers = new HashSet<>();
-
-            while (prepends.peek() != null) {
-                ComponentBuilder<? extends Annotation> current = prepends.poll();
-                if (!handlers.contains(current.function)) {
-                    prepend(executionChain, current);
-                    handlers.add(current.function);
-                }
+                aspectHandlers.addAll(this.handlers);
             }
 
-            return executionChain;
-        }
-
-        private ExecutionChain buildIndistinct() {
-            final ExecutionChain executionChain = new ExecutionChain(rootMethod);
-
-            while (prepends.peek() != null) {
-                prepend(executionChain, prepends.poll());
-            }
-
-            return executionChain;
-        }
-
-        private <T extends Annotation> void prepend(@NotNull ExecutionChain executionChain, @NotNull ComponentBuilder<T> componentBuilder) {
-            executionChain.prepend(componentBuilder.function);
-        }
-
-        private record ComponentBuilder<T extends Annotation>(@NotNull AspectHandler function) {
+            return new ExecutionChain(rootMethod).setHandlers(aspectHandlers);
         }
     }
 
