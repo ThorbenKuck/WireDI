@@ -102,7 +102,7 @@ public class RequestContext {
      * exceptions:
      * <ul>
      *     <li>Errors raised during {@link RequestAware#completed(Message)} will be directly propagated</li>
-     *     <li>Errors thrown during {@link MessagingErrorHandler#}</li>
+     *     <li>Errors thrown during {@link MessagingErrorHandler#handleError(Message, Throwable)}</li>
      * </ul>
      *
      * @param message          The message that is being processed
