@@ -10,12 +10,12 @@ import java.lang.annotation.*;
  * configuration".
  * <p>
  * It behaves exactly like the Wire annotation itself, just using different semantics.
- * A reading developer may understand it more easily that this class is not meant to be used in the production code.
+ * A reading developer may understand it more easily that this class isn't meant to be used in the production code.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Wire
+@Wire(proxy = false)
 @Pure
 public @interface Configuration {
 }

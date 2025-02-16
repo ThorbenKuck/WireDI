@@ -4,11 +4,15 @@ import com.google.auto.service.AutoService;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @AutoService(IdentifiableProvider.class)
 public class ExecutionChainRegistryProvider implements IdentifiableProvider<ExecutionChainRegistry> {
+
+    private final Value<ExecutionChainRegistry> instance = Value.empty();
+
     @Override
     public @NotNull TypeIdentifier<? super ExecutionChainRegistry> type() {
         return TypeIdentifier.of(ExecutionChainRegistry.class);
@@ -16,6 +20,6 @@ public class ExecutionChainRegistryProvider implements IdentifiableProvider<Exec
 
     @Override
     public @Nullable ExecutionChainRegistry get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<ExecutionChainRegistry> concreteType) {
-        return ExecutionChainRegistry.getInstance();
+        return instance.getOrSet(ExecutionChainRegistry::new);
     }
 }

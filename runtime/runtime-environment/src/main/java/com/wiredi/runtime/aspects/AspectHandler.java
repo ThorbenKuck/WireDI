@@ -62,6 +62,7 @@ import java.util.function.Consumer;
  * @see com.wiredi.annotations.aspects.AspectTarget
  * @see ExecutionContext
  * @see ExecutionChain
+ * @see ExecutionChainRegistry
  * @see ExecutionChainParameters
  */
 @FunctionalInterface

@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
  * An ExecutionChain is a chain of responsibility pattern implementation.
@@ -12,10 +14,10 @@ import java.util.concurrent.LinkedBlockingDeque;
  * The chain has a tail and a head. The tail will always be the {@link #rootMethod}, which is
  * the original and concrete method you want to delegate to.
  * <p>
- * At the beginning of a chains constructions, the head is the same as the tail. Upon calling
- * {@link #prepend(AspectHandler)}, a new head ist constructed and the existing head
- * is replaced by the new head. In the relativeEnd, the last added {@link AspectHandler} will be the
- * head of the execution chain. The tail will always be root method.
+ * At the beginning of a chains constructions, the effective head is the same as the effective tail.
+ * Upon calling {@link #prepend(AspectHandler)}, a new head ist constructed and the existing head is replaced by the new head.
+ * In the relativeEnd, the last added {@link AspectHandler} will be the head of the execution chain.
+ * The tail will always be root method.
  * <p>
  * A constructed {@link ExecutionChain} will hold the head/tail information, but for execution
  * the {@link #execute()} method must be called. This will construct a new {@link ExecutionStage}
@@ -26,17 +28,21 @@ import java.util.concurrent.LinkedBlockingDeque;
  * @see RootMethod
  * @see AspectHandler
  * @see ExecutionContext
+ * @see ExecutionChainRegistry
  */
 public class ExecutionChain {
 
     /**
-     * The original method, also known as the tail.
+     * The original method which will be invoked after the chain elements in the {@link #queue}
      */
     @NotNull
     private final RootMethod rootMethod;
 
     @NotNull
     private final Deque<AspectHandler> queue = new LinkedBlockingDeque<>();
+
+    @NotNull
+    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public ExecutionChain(
             @NotNull RootMethod rootFunction
@@ -51,17 +57,13 @@ public class ExecutionChain {
 
     @NotNull
     public ExecutionChain prepend(@NotNull AspectHandler handler) {
-        synchronized (queue) {
-            this.queue.addFirst(handler);
-        }
+        write(() -> this.queue.addFirst(handler));
         return this;
     }
 
     @NotNull
     public ExecutionChain append(@NotNull AspectHandler handler) {
-        synchronized (queue) {
-            this.queue.addLast(handler);
-        }
+        write(() -> this.queue.addLast(handler));
         return this;
     }
 
@@ -70,11 +72,10 @@ public class ExecutionChain {
                 .filter(it -> it.appliesTo(this.rootMethod))
                 .toList();
 
-        synchronized (queue) {
+        write(() -> {
             this.queue.clear();
             this.queue.addAll(applicableHandlers);
-        }
-
+        });
         return this;
     }
 
@@ -120,14 +121,30 @@ public class ExecutionChain {
 
     @Nullable
     private Object doExecute(@NotNull Map<String, Object> parameters) {
-        ArrayDeque<AspectHandler> handlers = new ArrayDeque<>(this.queue.size() + 1);
-        handlers.addAll(this.queue);
-        handlers.addLast(this.rootMethod);
+        ArrayDeque<AspectHandler> handlers;
+        try {
+            lock.readLock().lock();
+            handlers = new ArrayDeque<>(this.queue.size() + 1);
+            handlers.addAll(this.queue);
+            handlers.addLast(this.rootMethod);
+        } finally {
+            lock.readLock().unlock();
+        }
+
         ExecutionContext executionContext = new ExecutionContext(rootMethod, new ExecutionChainParameters(parameters), handlers);
         try {
             return executionContext.proceed();
         } finally {
             executionContext.clear();
+        }
+    }
+
+    private void write(Runnable runnable) {
+        lock.writeLock().lock();
+        try {
+            runnable.run();
+        } finally {
+            lock.writeLock().unlock();
         }
     }
 
