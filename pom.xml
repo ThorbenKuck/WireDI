@@ -10,7 +10,7 @@
     <description>Easy and simple di using annotation processors</description>
 
     <properties>
-        <revision>1.0.0-beta-SNAPSHOT</revision>
+        <revision>1.0.0-beta</revision>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>21</java.version>
         <maven.compiler.target>${java.version}</maven.compiler.target>
@@ -252,6 +252,7 @@
                 <executions>
                     <execution>
                         <id>attach-sources</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar-no-fork</goal>
                         </goals>
@@ -299,6 +300,7 @@
                 <executions>
                     <execution>
                         <id>attach-javadocs</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
@@ -357,22 +359,10 @@
         </developer>
     </developers>
 
-    <distributionManagement>
-        <snapshotRepository>
-            <id>central</id>
-            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
-        </snapshotRepository>
-        <repository>
-            <id>central</id>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-    </distributionManagement>
-
     <scm>
         <connection>scm:git:git@github.com:ThorbenKuck/WireDI.git</connection>
         <url>scm:git:git@github.com:ThorbenKuck/WireDI.git</url>
         <developerConnection>scm:git:git@github.com:ThorbenKuck/WireDI.git</developerConnection>
-        <tag>wire-di-0.1</tag>
     </scm>
 
     <licenses>

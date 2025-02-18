@@ -26,6 +26,9 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           server-id: central
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-passphrase: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
       - name: Publish to the Maven Central Repository
         run: mvn -P deploy --batch-mode clean deploy -DskipTests -Drevision=${{ steps.release_version.outputs.value }}
         env:
@@ -33,13 +36,3 @@ jobs:
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_SIGNING_KEY }}
-
-#      - name: Set up Java for publishing to GitHub Packages
-#        uses: actions/setup-java@v4
-#        with:
-#          java-version: '11'
-#          distribution: 'temurin'
-#      - name: Publish to GitHub Packages
-#        run: mvn -Drevision=2.0.0-SNAPSHOT -DskipTests --batch-mode clean deploy
-#        env:
-#          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
