@@ -33,7 +33,7 @@
         <javapoet.version>1.13.0</javapoet.version>
         <logback.bundle>1.4.12</logback.bundle>
         <jackson.version>2.16.1</jackson.version>
-        <logback.version>1.4.12</logback.version>
+        <logback.version>1.5.13</logback.version>
 
         <!-- Plugins -->
         <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
