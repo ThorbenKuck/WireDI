@@ -114,6 +114,9 @@ public class WireRepositories {
 		} else if (type.isBean()) {
 			codeBlocks.add(typeIdentifiers.newTypeIdentifier(getGenericTypeOf(typeMirror)));
 			codeBlock.add("getBean");
+		} else if (type.isObjectReference()) {
+			codeBlocks.add(typeIdentifiers.newTypeIdentifier(getGenericTypeOf(typeMirror)));
+			codeBlock.add("getReference");
 		} else if (type.isCollection() || type.isList()) {
 			codeBlocks.add(typeIdentifiers.newTypeIdentifier(getGenericTypeOf(typeMirror)));
 			codeBlock.add("getAll");

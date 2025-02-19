@@ -9,6 +9,14 @@ import com.wiredi.runtime.qualifier.QualifierType;
 import java.util.List;
 import java.util.function.Supplier;
 
+/**
+ * This class represents available instances of the provided generic.
+ * <p>
+ * A Bean can consist of 0 - n instances of the same type.
+ * Any IdentifiableProvider that produces the same value is aggregated in one Bean.
+ *
+ * @param <T>
+ */
 public interface Bean<T> {
 
     static <T> Bean<T> empty() {
@@ -41,10 +49,10 @@ public interface Bean<T> {
      * It follows a similar algorithm as {@link #get(TypeIdentifier, Supplier)}.
      * <p>
      * If a primary bean can be found, return it.
-     * If no primary bean is found, this will only return a value if exactly one instance is maintained in this bean.
+     * If no primary bean is found, this method only returns a value if exactly one instance is maintained in this bean.
      *
-     * @param conflictResolver
-     * @return
+     * @param conflictResolver the strategy on how to handle conflicts
+     * @return a {@link BeanValue} of this Bean
      */
     BeanValue<T> get(Supplier<WireConflictResolver> conflictResolver);
 

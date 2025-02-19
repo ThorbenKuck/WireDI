@@ -600,6 +600,15 @@ public class WireRepository {
         return requireSingleProvider(typeIdentifier, qualifierType);
     }
 
+    /* ############ Get ObjectReference methods ############ */
+    public <T> ObjectReference<T> getReference(@NotNull final Class<T> type) {
+        return getReference(TypeIdentifier.of(type));
+    }
+
+    public <T> ObjectReference<T> getReference(@NotNull final TypeIdentifier<T> type) {
+        return new ObjectReference<>(this, type);
+    }
+
     /* ############ Get Bean methods ############ */
     public <T> Bean<T> getBean(TypeIdentifier<T> typeIdentifier) {
         return beanContainer.access(typeIdentifier);

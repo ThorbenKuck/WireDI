@@ -50,5 +50,4 @@ public class IdentifiableProviderEntity extends AbstractClassEntity<Identifiable
 	public List<Class<?>> autoServiceTypes() {
 		return List.of(IdentifiableProvider.class);
 	}
-
 }

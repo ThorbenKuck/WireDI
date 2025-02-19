@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wiredi.annotations.Order;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
+import com.wiredi.runtime.ObjectReference;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 import com.wiredi.runtime.messaging.MessagingContext;
@@ -17,6 +18,12 @@ import com.wiredi.runtime.messaging.MessagingEngine;
         matchIfMissing = true
 )
 public class MessageConversionAutoConfiguration {
+
+    private final ObjectReference<ObjectMapper> reference;
+
+    public MessageConversionAutoConfiguration(ObjectReference<ObjectMapper> reference) {
+        this.reference = reference;
+    }
 
     @Provider
     @Order(Order.LAST - 10)

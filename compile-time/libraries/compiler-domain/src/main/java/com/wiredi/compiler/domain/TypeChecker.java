@@ -2,6 +2,7 @@ package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.TypeName;
+import com.wiredi.runtime.ObjectReference;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.beans.Bean;
@@ -83,6 +84,10 @@ public class TypeChecker {
 
 		public boolean isBean() {
 			return isAssignable(Bean.class, typeMirror);
+		}
+
+		public boolean isObjectReference() {
+			return isAssignable(ObjectReference.class, typeMirror);
 		}
 
 		public boolean isOf(Class<?> type) {

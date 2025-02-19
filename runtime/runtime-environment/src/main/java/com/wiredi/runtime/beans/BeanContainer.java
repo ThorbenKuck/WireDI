@@ -60,7 +60,7 @@ public class BeanContainer {
     }
 
     public Timed load(WireRepository wireRepository) {
-        // pre check to avoid unnecessary synchronization
+        // pre-check to avoid unnecessary synchronization
         if (loaded) {
             return Timed.ZERO;
         }
