@@ -189,6 +189,11 @@ The annotation processor generates instance of `IdentifiableProvider` classes, w
 These providers hold a sum of static information about this class, that are then used at runtime;
 Including the template as to how this class is created.
 
+## Examples
+
+If you'd like to see a few examples on how to use WireDI, have a look at the [examples](examples).
+This project contains concrete examples for WireDI.
+
 ## Properties
 
 Order of Properties:

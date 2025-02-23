@@ -406,4 +406,8 @@ public final class TypedProperties implements AutoCloseable {
     public ThreadLocalTypedProperties threadLocal() {
         return new ThreadLocalTypedProperties(this);
     }
+
+    public List<String> splitKey(String key) {
+        return Arrays.asList(key.split(LIST_ENTRY_SEPARATOR));
+    }
 }

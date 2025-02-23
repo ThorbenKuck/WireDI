@@ -62,9 +62,9 @@ import static com.wiredi.runtime.lang.Preconditions.is;
  * <p>
  * <h2>Loaded Repository</h2>
  * <p>
- * A loaded repository is not only filled, it is also setup correctly. That means:
+ * A loaded repository isn't only filled, it's also setup correctly. That means:
  * <ul>
- *     <li>The {@link Environment} is completely setup</li>
+ *     <li>The {@link Environment} is fully setup</li>
  *     <li>The {@link BeanContainer} is loaded and can uniquely resolve a {@link Bean}</li>
  *     <li>Any {@link Eager} class is loaded</li>
  *     <li>All {@link State} provided by {@link StateFull} instances in the {@link BeanContainer} have been successfully completed</li>
@@ -94,7 +94,7 @@ import static com.wiredi.runtime.lang.Preconditions.is;
  * MyService service = repository.get(MyService.class);
  * </code></pre>
  * Optionally, you can call "load" at any point in time.
- * Calling load will trigger the process of loading and autoconfiguration as described in the section "Loaded Repository".
+ * Calling `load` triggers the process of loading and autoconfiguration as described in the section "Loaded Repository".
  * <pre><code>
  * WireRepository repository = WireRepository.create();
  * configure(repository);
@@ -131,23 +131,24 @@ public class WireRepository {
      * Constructs a new WireRepository using the default {@link WireRepositoryProperties}
      */
     public WireRepository() {
-        this(new WireRepositoryProperties());
+        this(null);
     }
 
     /**
      * Constructs a new WireRepository using a custom {@link WireRepositoryProperties}.
      *
-     * @param properties the properties for the WireRepository.
+     * @param baseProperties the properties for the WireRepository.
      */
-    public WireRepository(WireRepositoryProperties properties) {
-        if (properties.contextCallbacksEnabled()) {
+    public WireRepository(@Nullable WireRepositoryProperties baseProperties) {
+        this.properties = Objects.requireNonNullElseGet(baseProperties, () -> new WireRepositoryProperties(environment));
+
+        if (this.properties.contextCallbacksEnabled()) {
             this.contextCallbacks.addAll(loader.contextCallbacks());
         } else {
             this.contextCallbacks.add(new LoggingWireRepositoryContextCallbacks());
         }
 
-        this.beanContainer = new BeanContainer(properties, loader);
-        this.properties = properties;
+        this.beanContainer = new BeanContainer(this.properties, loader);
         new ArrayList<>(this.contextCallbacks).forEach(it -> it.initialize(this));
     }
 

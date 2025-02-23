@@ -5,8 +5,10 @@ import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.types.TypeMapper;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,35 +26,41 @@ import java.util.stream.Collectors;
 public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader {
 
     @NotNull
-    private static final Yaml DEFAULT_YAML = new Yaml();
-    private Yaml yaml;
+    private static final YamlFactory DEFAULT_YAML = YamlFactory.simple();
+    private YamlFactory yamlFactory;
     private TypeMapper typeMapper;
 
     public YamlPropertyFileTypeLoader() {
         this(DEFAULT_YAML, TypeMapper.getInstance());
     }
 
-    public YamlPropertyFileTypeLoader(Yaml yaml) {
-        this(yaml, TypeMapper.getInstance());
+    public YamlPropertyFileTypeLoader(YamlFactory yamlFactory) {
+        this(yamlFactory, TypeMapper.getInstance());
     }
 
     public YamlPropertyFileTypeLoader(TypeMapper typeMapper) {
         this(DEFAULT_YAML, typeMapper);
     }
 
-    public YamlPropertyFileTypeLoader(Yaml yaml, TypeMapper typeMapper) {
-        this.yaml = yaml;
+    public YamlPropertyFileTypeLoader(YamlFactory yamlFactory, TypeMapper typeMapper) {
+        this.yamlFactory = yamlFactory;
         this.typeMapper = typeMapper;
     }
 
     @Override
     public @NotNull Map<Key, String> extract(@NotNull final Resource resource) {
-        @NotNull final Map<String, Object> load = yaml.load(resource.getInputStream());
-        return flatten(load);
+        Yaml yaml = yamlFactory.create();
+
+        try (InputStream input = resource.getInputStream();
+             Reader reader = new InputStreamReader(input)) {
+            return flatten(yaml.load(reader));
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     @NotNull
-    private Map<Key, String> flatten(@NotNull final Map<String, Object> input) {
+    private Map<Key, String> flatten(@Nullable final Map<String, Object> input) {
         @NotNull final FlatteningContext flatteningContext = new FlatteningContext();
         flatten(input, flatteningContext);
 
@@ -68,12 +76,14 @@ public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader 
     }
 
     private void flatten(
-            @NotNull final Map<String, ?> collection,
+            @Nullable final Map<String, ?> propertyMap,
             @NotNull final FlatteningContext context
     ) {
-        collection.forEach((key, value) -> {
-            context.nextDepth(key, () -> flattenEntry(value, context));
-        });
+        if (propertyMap != null) {
+            propertyMap.forEach((key, value) -> {
+                context.nextDepth(key, () -> flattenEntry(value, context));
+            });
+        }
     }
 
     private void flattenEntry(

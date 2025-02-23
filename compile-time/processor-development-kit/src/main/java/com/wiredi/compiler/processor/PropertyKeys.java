@@ -16,6 +16,7 @@ public enum PropertyKeys {
     EXTENSION_FILE_NAME("processor.wire-di-extension-file", "wire-di.extensions"),
     PARALLEL_EXTENSION_PROCESSING("processor.wire-di-process-extension-in-parallel", false),
     INJECT_ANNOTATIONS("processor.injections.annotations", "Inject"),
+    ENABLE_GENERATED_SOURCES("processor.enable-generated-sources", true),
 
     /**
      * Determines if additional wire types will contain inherited super types.

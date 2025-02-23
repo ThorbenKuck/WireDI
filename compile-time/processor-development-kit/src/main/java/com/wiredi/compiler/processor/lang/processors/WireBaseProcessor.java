@@ -131,11 +131,19 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
     protected void doInitialization() {
     }
 
+    /**
+     * This method can be overwritten, to be informed of the processing over round
+     */
+    protected void processingOver() {
+        // NoOp, override to change behavior
+    }
+
     @Override
     public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         if (roundEnv.processingOver()) {
             logger.info(() -> getClass().getSimpleName() + " finalized");
+            processingOver();
         } else {
             targetAnnotations().forEach(annotation -> {
                 logger.debug(() -> "Starting processing round for annotation " + annotation.getSimpleName());

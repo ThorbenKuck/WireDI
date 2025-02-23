@@ -1,6 +1,7 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.domain.Ordered;
 import org.jetbrains.annotations.NotNull;
 
 public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiableProvider<T> {
@@ -38,6 +39,15 @@ public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiab
             @NotNull final TypeIdentifier<T> concreteType
     ) {
         return instance;
+    }
+
+    @Override
+    public int getOrder() {
+        if (instance instanceof Ordered o) {
+            return o.getOrder();
+        } else {
+            return super.getOrder();
+        }
     }
 
     @Override
