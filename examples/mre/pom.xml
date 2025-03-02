@@ -25,6 +25,11 @@
             <artifactId>processors</artifactId>
             <optional>true</optional>
         </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>logging-integration</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
     </dependencies>
 
     <developers>

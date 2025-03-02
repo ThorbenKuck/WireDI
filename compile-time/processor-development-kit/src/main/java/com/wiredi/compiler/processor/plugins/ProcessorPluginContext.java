@@ -9,8 +9,7 @@ import com.wiredi.compiler.repository.CompilerRepositoryCallback;
 import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.domain.OrderedComparator;
 
-import java.util.List;
-import java.util.ServiceLoader;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -38,8 +37,14 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
         registerAttachListener(WireBridgeEntity.class, entity -> wireProcessorPlugins.forEach(it -> it.handle(entity)));
     }
 
+    private static final Map<Class<?>, List<?>> LOADED_CLASSES = new HashMap<>();
+
     public synchronized static <T extends Plugin> List<T> load(Injector injector, Class<T> type) {
-        List<T> content = ServiceLoader.load(type)
+        return (List<T>) LOADED_CLASSES.computeIfAbsent(type, t -> doLoad(injector, type));
+    }
+
+    private static <T extends Plugin> List<T> doLoad(Injector injector, Class<T> type) {
+        List<T> result = ServiceLoader.load(type)
                 .stream()
                 .map(provider -> injector.get(provider.type()))
                 .sorted(OrderedComparator.INSTANCE)
@@ -48,8 +53,10 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
                     logger.debug(() -> "Initialized ProcessorPlugin: " + it.getClass().getSimpleName());
                 })
                 .collect(Collectors.toList());
-        logger.info(() -> "Loaded " + content.size() + " ProcessorPlugins: " + content.stream().map(it -> it.getClass().getSimpleName()).toList());
-        return content;
+        logger.info(() -> "Loaded " + result.size() + " ProcessorPlugins: " + result.stream().map(it -> it.getClass().getSimpleName()).toList());
+
+        return result;
+
     }
 
     public <T extends ClassEntity<T>> void registerAttachListener(Class<T> type, Consumer<T> consumer) {

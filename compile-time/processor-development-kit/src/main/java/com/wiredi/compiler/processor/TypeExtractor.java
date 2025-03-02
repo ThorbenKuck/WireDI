@@ -16,7 +16,7 @@ import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
-import static com.wiredi.compiler.processor.PropertyKeys.ADDITIONAL_WIRE_TYPES_SUPPORT_INHERITANCE;
+import static com.wiredi.compiler.processor.CompilerPropertyKeys.ADDITIONAL_WIRE_TYPES_SUPPORT_INHERITANCE;
 
 public class TypeExtractor {
 
@@ -81,7 +81,7 @@ public class TypeExtractor {
     }
 
     private List<TypeMirror> filterAdditionalWireTypes(List<TypeMirror> typeMirrors) {
-        List<String> ignore = properties.getAll(PropertyKeys.ADDITIONAL_WIRE_TYPES_IGNORE);
+        List<String> ignore = properties.getAll(CompilerPropertyKeys.ADDITIONAL_WIRE_TYPES_IGNORE);
 
         return typeMirrors.stream()
                 .filter(it -> !ignore.contains(it.toString()))

@@ -57,30 +57,9 @@ public class LoggingWireRepositoryContextCallbacks implements WireRepositoryCont
     }
 
     @Override
-    public void loadedBeanContainer(@NotNull Timed timed, @NotNull WireRepository wireRepository, @NotNull BeanContainer beanContainer) {
-        if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
-            logger.info(() -> "BeanContainer loaded in " + timed);
-        }
-    }
-
-    @Override
     public void configuredEnvironment(@NotNull Timed timed, @NotNull Environment environment) {
         if (environment.getProperty(ENABLED_KEY, true)) {
             logger.info(() -> "Environment was configured with beans in " + timed);
-        }
-    }
-
-    @Override
-    public void loadedEagerClasses(@NotNull Timed timed, @NotNull WireRepository wireRepository, @NotNull List<? extends Eager> eagerInstances) {
-        if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
-            logger.info(() -> eagerInstances.size() + " Eager instances loaded in " + timed);
-        }
-    }
-
-    @Override
-    public void synchronizedOnStates(Timed timed, WireRepository wireRepository, List<StateFull> stateFulls) {
-        if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
-            logger.info(() -> stateFulls.size() + " States where loaded in " + timed);
         }
     }
 

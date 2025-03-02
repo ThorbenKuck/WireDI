@@ -73,16 +73,6 @@ import java.util.List;
 public interface WireRepositoryContextCallbacks extends Ordered {
 
     /**
-     * This method is only called once and only when a wire repository is constructed.
-     * <p>
-     * This is the only method in which it is safe to register additional WireRepositoryContextCallbacks!
-     *
-     * @param wireRepository the WireRepository that is being initialized
-     */
-    default void initialize(@NotNull WireRepository wireRepository) {
-    }
-
-    /**
      * This method will be called after the banner has been printed,
      * but before the environment is configured.
      * <p>
@@ -112,21 +102,6 @@ public interface WireRepositoryContextCallbacks extends Ordered {
     }
 
     /**
-     * This method will be called after the second phase of the load lifecycle
-     * (loading the {@link BeanContainer}) has successfully been concluded and
-     * before the fourth and last phase, loading the {@link Eager EagerInstances}
-     * has been started.
-     * started.
-     * <p>
-     * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
-     *
-     * @param timed         The time that loading the BeanContainer required
-     * @param beanContainer the fully configured BeanContainer
-     */
-    default void loadedBeanContainer(@NotNull Timed timed, @NotNull WireRepository wireRepository, @NotNull BeanContainer beanContainer) {
-    }
-
-    /**
      * This method will be called after the environment was configured with bean instances.
      * <p>
      * This phase is mostly optional, as it is not recommended to do too much configuration with beans.
@@ -141,27 +116,6 @@ public interface WireRepositoryContextCallbacks extends Ordered {
     }
 
     /**
-     * This method will be called after the last phase of the load lifecycle
-     * (initializing the {@link Eager EagerInstances}) has successfully been
-     * concluded.
-     * <p>
-     * This method will only be called, if at least one eager class is present
-     * in the previously configured {@link WireRepository}.
-     * If no eager classes are present, instead only the next method {@link #loadingFinished(Timed, WireRepository)}
-     * will be called.
-     * <p>
-     * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
-     *
-     * @param timed          The time that loading the AspectRepository required
-     * @param eagerInstances the fully configured AspectRepository
-     */
-    default void loadedEagerClasses(@NotNull Timed timed, @NotNull WireRepository wireRepository, @NotNull List<? extends Eager> eagerInstances) {
-    }
-
-    default void synchronizedOnStates(Timed timed, WireRepository wireRepository, List<StateFull> stateFulls) {
-    }
-
-    /**
      * This method will be called, after the loading lifecycle of the {@link WireRepository}
      * has successfully concluded.
      * <p>
@@ -172,7 +126,6 @@ public interface WireRepositoryContextCallbacks extends Ordered {
      */
     default void loadingFinished(@NotNull Timed timed, @NotNull WireRepository wireRepository) {
     }
-
 
     /**
      * This method is only called once, when a wire repository is constructed.

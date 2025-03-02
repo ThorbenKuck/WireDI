@@ -45,7 +45,7 @@ import java.util.function.Supplier;
  * <p>
  * The thread that executed `waitUntilPublished` will be suspended until another thread called `publish`.
  */
-public final class SemaphoreBarrier implements MuitableBarrier {
+public final class SemaphoreBarrier implements MutableBarrier {
 
     private static final Logging logger = Logging.getInstance(SemaphoreBarrier.class);
     @NotNull

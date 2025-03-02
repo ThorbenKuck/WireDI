@@ -25,23 +25,23 @@ public class ProcessorProperties {
 		this.properties.setAll(options.entrySet().stream().collect(Collectors.toMap(it -> Key.format(it.getKey()), Map.Entry::getValue)));
 	}
 
-	public boolean isEnabled(PropertyKeys propertyKey) {
+	public boolean isEnabled(CompilerPropertyKeys propertyKey) {
 		return properties.getBoolean(propertyKey.getRawKey(), toBool(propertyKey.getDefaultValue(), false));
 	}
 
-	public boolean isDisabled(PropertyKeys propertyKey) {
+	public boolean isDisabled(CompilerPropertyKeys propertyKey) {
 		return !isEnabled(propertyKey);
 	}
 
-	public int getCount(PropertyKeys propertyKey, int defaultValue) {
+	public int getCount(CompilerPropertyKeys propertyKey, int defaultValue) {
 		return properties.getInt(propertyKey.getRawKey(), defaultValue);
 	}
 
-	public String getName(PropertyKeys extensionFileName) {
+	public String getName(CompilerPropertyKeys extensionFileName) {
 		return properties.require(extensionFileName.getRawKey());
 	}
 
-	public List<String> getAll(PropertyKeys propertyKey) {
+	public List<String> getAll(CompilerPropertyKeys propertyKey) {
 		return properties.getAll(propertyKey.getRawKey());
 	}
 

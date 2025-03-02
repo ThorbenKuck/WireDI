@@ -3,7 +3,6 @@ package com.wiredi.runtime.beans;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.ServiceLoader;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.WireRepositoryProperties;
 import com.wiredi.runtime.async.DataAccess;
 import com.wiredi.runtime.beans.value.BeanValue;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
@@ -32,23 +31,21 @@ public class BeanContainer {
     @NotNull
     private final Map<TypeIdentifier<?>, ModifiableBean<?>> mapping = new HashMap<>();
     @NotNull
-    private final WireRepositoryProperties properties;
+    private final BeanContainerProperties properties;
     @NotNull
     private final ServiceLoader loader;
     private volatile boolean loaded = false;
 
     public BeanContainer(
-            @NotNull WireRepositoryProperties properties
-    ) {
-        this(properties, ServiceLoader.getInstance());
-    }
-
-    public BeanContainer(
-            @NotNull WireRepositoryProperties properties,
+            @NotNull BeanContainerProperties properties,
             @NotNull ServiceLoader loader
     ) {
         this.properties = properties;
         this.loader = loader;
+    }
+
+    public BeanContainerProperties properties() {
+        return properties;
     }
 
     public void clear() {
@@ -182,7 +179,7 @@ public class BeanContainer {
     public <T> BeanValue<T> get(final TypeIdentifier<T> concreteType) {
         is(concreteType.referenceConcreteType(), () -> "Cannot call get on a reference type (Bean, IdentifiableProvider): " + concreteType);
         return dataAccess.readValue(() -> unsafeGet(concreteType))
-                .get(concreteType, properties.conflictResolverSupplier());
+                .get(concreteType, properties.wireConflictResolverSupplier());
     }
 
     public <T> BeanValue<T> get(final TypeIdentifier<T> typeIdentifier, QualifierType qualifierType) {

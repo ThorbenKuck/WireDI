@@ -59,6 +59,7 @@ public class Environment {
     private final ResourceLoader resourceLoader = new ResourceLoader();
     private final PropertyLoader propertyLoader = new PropertyLoader();
     private final ServiceLoader loader;
+    private boolean loaded = false;
 
     public Environment(ServiceLoader loader, EnvironmentExpressionResolver... expressionResolvers) {
         this(loader, Arrays.asList(expressionResolvers));
@@ -165,6 +166,7 @@ public class Environment {
         propertyLoader.clear();
         properties.clear();
         typeMapper.takeTypeConvertersFrom(TypeMapper.getInstance());
+        this.loaded = false;
     }
 
     /**
@@ -181,6 +183,9 @@ public class Environment {
      * @return How long the autoconfiguration took.
      */
     public Timed autoconfigure() {
+        if (loaded) {
+            return Timed.ZERO;
+        }
         return Timed.of(() -> {
             addExpressionResolvers(loader.environmentExpressionResolvers());
             resourceLoader.addProtocolResolvers(loader.protocolResolvers());
@@ -204,6 +209,7 @@ public class Environment {
                             properties.set(Key.format(property), resolve(System.getProperty(property)));
                         });
             }
+            this.loaded = true;
         }).then(time -> logger.debug("Environment autoconfigured in " + time));
     }
 
@@ -432,7 +438,11 @@ public class Environment {
     }
 
     public void addActiveProfile(String profile) {
-        this.properties.add(DefaultEnvironmentKeys.ACTIVE_PROFILES, profile);
+        List<String> profiles = this.properties.getAll(DefaultEnvironmentKeys.ACTIVE_PROFILES);
+
+        if (!profiles.contains(profile)) {
+            this.properties.add(DefaultEnvironmentKeys.ACTIVE_PROFILES, profile);
+        }
     }
 
     public List<String> activeProfiles() {

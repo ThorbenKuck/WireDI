@@ -322,6 +322,12 @@ public class Timed {
         return this;
     }
 
+    @NotNull
+    public Timed then(@NotNull Runnable runnable) {
+        runnable.run();
+        return this;
+    }
+
     /**
      * Prints a human-readable representation of the value.
      *

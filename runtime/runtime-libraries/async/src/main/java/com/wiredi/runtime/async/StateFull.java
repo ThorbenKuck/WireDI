@@ -8,6 +8,6 @@ public interface StateFull<T> {
 	@NotNull
 	State<T> getState();
 
-	default void tearDown() {
+	default void dismantleState() {
 	}
 }

@@ -2,12 +2,18 @@ package com.wiredi.examples;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.time.Timed;
 
 public class MRE {
 
     public static void main(String[] args) {
-        WireRepository wireRepository = WireRepository.open();
-        wireRepository.get(DependencyA.class);
+        for (int i = 0 ; i < 100 ; i++) {
+            Timed.of(() -> {
+                WireRepository wireRepository = WireRepository.open();
+                Parent a = wireRepository.get(Parent.class);
+                System.out.println(a);
+            }).then(time -> System.out.println("MRE took " + time));
+        }
     }
 }
 
@@ -15,14 +21,23 @@ interface Command {
 }
 
 @Wire
-class DependencyA {
-    private final DependencyB dependencyB;
+class Parent {
+    private final Command command;
 
-    DependencyA(DependencyB dependencyB) {
-        this.dependencyB = dependencyB;
+    Parent(Command command) {
+        this.command = command;
+    }
+
+    @Override
+    public String toString() {
+        return "Parent@" + Integer.toHexString(hashCode()) + "(" + command + ')';
     }
 }
 
-@Wire(to = {Command.class})
-class DependencyB {
+@Wire
+class Child implements Command {
+    @Override
+    public String toString() {
+        return "Child@" + Integer.toHexString(hashCode());
+    }
 }

@@ -1,14 +1,12 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
+import com.wiredi.runtime.beans.Bean;
+import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.lang.ReflectionsHelper;
 import com.wiredi.runtime.lang.SingletonSupplier;
-import com.wiredi.runtime.collections.TypeMap;
-import com.wiredi.runtime.beans.Bean;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
@@ -19,26 +17,16 @@ import java.util.function.Supplier;
 
 public class OnDemandInjector {
 
+    private static final Map<WireRepository, OnDemandInjector> INSTANCES = new HashMap<>();
     private final WireRepository wireRepository;
     private final TypeMap<Object> cache = new TypeMap<>();
     private final TypeMap<Class<?>> typeTranslations = new TypeMap<>();
     private final TypeMap<Supplier<?>> constructors = new TypeMap<>();
-    private static final Map<WireRepository, OnDemandInjector> INSTANCES = new HashMap<>();
 
     OnDemandInjector(WireRepository wireRepository) {
         this.wireRepository = wireRepository;
-        wireRepository.register(OnDemandInjectorUnRegistrationCallback.INSTANCE);
         bind(OnDemandInjector.class).toValue(this);
-    }
-
-    public static class OnDemandInjectorUnRegistrationCallback implements WireRepositoryContextCallbacks {
-
-        private static final WireRepositoryContextCallbacks INSTANCE = new OnDemandInjectorUnRegistrationCallback();
-
-        @Override
-        public void destroyed(@NotNull WireRepository wireRepository) {
-            INSTANCES.remove(wireRepository);
-        }
+        bind(WireRepository.class).toValue(wireRepository);
     }
 
     public static OnDemandInjector of(WireRepository wireRepository) {

@@ -5,7 +5,7 @@ import com.wiredi.runtime.properties.Key;
 import java.io.Serializable;
 import java.util.List;
 
-public enum PropertyKeys {
+public enum CompilerPropertyKeys {
     DEBUG_ENABLED("flags.debug-enabled", false),
     AOP_REQUIRES_ASPECT_TARGET_ANNOTATION("flags.aop-requires-annotation-target", true),
     AOP_STRICT_ANNOTATION_TARGET("flags.strict-aop-annotation-target", true),
@@ -37,16 +37,16 @@ public enum PropertyKeys {
             Serializable.class.getName()
     ));
 
-    private final String rawKey;
+    private final Key rawKey;
     private final Object defaultValue;
 
-    PropertyKeys(String rawKey, Object defaultValue) {
-        this.rawKey = rawKey;
+    CompilerPropertyKeys(String rawKey, Object defaultValue) {
+        this.rawKey = Key.just(rawKey);
         this.defaultValue = defaultValue;
     }
 
     public Key getRawKey() {
-        return Key.just(rawKey);
+        return rawKey;
     }
 
     public Object getDefaultValue() {

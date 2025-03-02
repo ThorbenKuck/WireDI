@@ -3,7 +3,7 @@ package com.wiredi.runtime.domain;
 import com.wiredi.runtime.WireRepository;
 
 /**
- * Classes that implement this interface will be used while {@link WireRepository#destroy()} is called.
+ * Classes that implement this interface will be used while {@link WireRepository#clear()} is called.
  * <p>
  * This implies that your instance can shut down and cleanup resources.
  */

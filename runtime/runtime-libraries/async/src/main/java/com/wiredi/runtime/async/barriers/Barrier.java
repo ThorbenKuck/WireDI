@@ -33,19 +33,19 @@ public interface Barrier {
     void traverse(@NotNull Duration duration) throws AsyncBarrierException;
 
     @NotNull
-    static MuitableBarrier create() {
+    static MutableBarrier create() {
         return new SemaphoreBarrier();
     }
 
     @NotNull
-    static MuitableBarrier opened() {
+    static MutableBarrier opened() {
         final SemaphoreBarrier barrier = new SemaphoreBarrier();
         barrier.open();
         return barrier;
     }
 
     @NotNull
-    static MuitableBarrier closed() {
+    static MutableBarrier closed() {
         final SemaphoreBarrier barrier = new SemaphoreBarrier();
         barrier.close();
         return barrier;

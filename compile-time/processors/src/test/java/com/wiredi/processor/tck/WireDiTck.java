@@ -11,8 +11,9 @@ import com.wiredi.processor.tck.domain.override.OverwrittenTestClass;
 import com.wiredi.processor.tck.domain.provide.CoffeeMachine;
 import com.wiredi.processor.tck.domain.transactional.TransactionalTestController;
 import com.wiredi.processor.tck.infrastructure.TckTestCase;
+import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.WireRepositoryProperties;
+import com.wiredi.runtime.beans.BeanContainerProperties;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.time.Timed;
@@ -35,10 +36,8 @@ public class WireDiTck {
     @Test
     public void test() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open(
-                new WireRepositoryProperties()
-                        .withConflictResolver(StandardWireConflictResolver.BEST_MATCH)
-        );
+        Environment environment = Environment.build();
+        WireRepository wireRepository = WireRepository.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
 
         // Act
         Car car = wireRepository.get(Car.class);

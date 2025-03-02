@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.wiredi.annotations.ActiveProfiles;
 import com.wiredi.integration.jackson.ObjectMapperConfigurer;
+import com.wiredi.runtime.WiredApplication;
+import com.wiredi.runtime.WiredApplicationInstance;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.WireRepository;
@@ -19,7 +21,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperIsLoadedIntoTheWireRepository() {
         // Arrange
-        WireRepository repository = WireRepository.open();
+        WireRepository repository = WiredApplication.start().repository();
 
         // Act
         // Assert
@@ -49,7 +51,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperCanBeDynamicallyConfigured() {
         // Arrange
-        WireRepository repository = WireRepository.open();
+        WireRepository repository = WiredApplication.start().repository();
         repository.announce(IdentifiableProvider.singleton(objectMapper -> objectMapper.enable(SerializationFeature.CLOSE_CLOSEABLE), ObjectMapperConfigurer.class));
 
         // Act
@@ -75,7 +77,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperCanBeUsedAsASingletonDependency() {
         // Arrange
-        WireRepository repository = WireRepository.open();
+        WireRepository repository = WiredApplication.start().repository();
 
         // Act
         // Assert

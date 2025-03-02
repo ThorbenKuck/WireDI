@@ -3,24 +3,22 @@ package com.wiredi.runtime;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.async.StateFull;
 import com.wiredi.runtime.async.state.State;
-import com.wiredi.runtime.banner.Banner;
 import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.beans.BeanContainer;
-import com.wiredi.runtime.domain.*;
+import com.wiredi.runtime.beans.BeanContainerProperties;
+import com.wiredi.runtime.domain.Eager;
+import com.wiredi.runtime.domain.OrderedComparator;
+import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.provider.WrappingProvider;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
-import com.wiredi.runtime.environment.EnvironmentConfiguration;
-import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
 import com.wiredi.runtime.properties.PropertyLoader;
-import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.resources.ResourceLoader;
-import com.wiredi.runtime.resources.ResourceProtocolResolver;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.types.TypeMapper;
 import com.wiredi.runtime.values.Value;
@@ -29,8 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.UndeclaredThrowableException;
-import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -113,43 +109,20 @@ public class WireRepository {
     @NotNull
     private static final ServiceLoader loader = ServiceLoader.getInstance();
     @NotNull
-    private final Environment environment = new Environment();
-    @NotNull
-    private final Banner banner = new Banner(environment);
-    @NotNull
     private final BeanContainer beanContainer;
-    @NotNull
-    private final WireRepositoryProperties properties;
-    @NotNull
-    private final List<WireRepositoryContextCallbacks> contextCallbacks = new ArrayList<>();
     @NotNull
     private final Value<OnDemandInjector> onDemandInjector = Value.lazy(() -> new OnDemandInjector(this));
     @NotNull
     private final ExceptionHandlerContext exceptionHandler = new ExceptionHandlerContext(this);
+    private final Environment environment;
 
-    /**
-     * Constructs a new WireRepository using the default {@link WireRepositoryProperties}
-     */
-    public WireRepository() {
-        this(null);
+    public WireRepository(@NotNull Environment environment) {
+        this(environment, new BeanContainerProperties(environment));
     }
 
-    /**
-     * Constructs a new WireRepository using a custom {@link WireRepositoryProperties}.
-     *
-     * @param baseProperties the properties for the WireRepository.
-     */
-    public WireRepository(@Nullable WireRepositoryProperties baseProperties) {
-        this.properties = Objects.requireNonNullElseGet(baseProperties, () -> new WireRepositoryProperties(environment));
-
-        if (this.properties.contextCallbacksEnabled()) {
-            this.contextCallbacks.addAll(loader.contextCallbacks());
-        } else {
-            this.contextCallbacks.add(new LoggingWireRepositoryContextCallbacks());
-        }
-
-        this.beanContainer = new BeanContainer(this.properties, loader);
-        new ArrayList<>(this.contextCallbacks).forEach(it -> it.initialize(this));
+    public WireRepository(@NotNull Environment environment, @NotNull BeanContainerProperties beanContainerProperties) {
+        this.environment = environment;
+        this.beanContainer = new BeanContainer(beanContainerProperties, loader);
     }
 
     /**
@@ -160,22 +133,20 @@ public class WireRepository {
      * @return a new and fully configured WireRepository.
      */
     public static WireRepository open() {
-        WireRepository repository = new WireRepository();
-        repository.load();
-
-        return repository;
+        Environment environment = Environment.build();
+        return open(environment, new BeanContainerProperties(environment));
     }
 
-    /**
-     * Creates a new fully configured WireRepository using the default properties.
-     * <p>
-     * It behaves similar to {@link #open()}, but allows you to provide a new instance of the properties.
-     *
-     * @param properties the properties to configure the WireRepository
-     * @return a new and fully configured WireRepository.
-     */
-    public static WireRepository open(WireRepositoryProperties properties) {
-        WireRepository repository = new WireRepository(properties);
+    public static WireRepository open(BeanContainerProperties properties) {
+        return open(Environment.build(), properties);
+    }
+
+    public static WireRepository open(Environment environment) {
+        return open(environment, new BeanContainerProperties(environment));
+    }
+
+    public static WireRepository open(Environment environment, BeanContainerProperties properties) {
+        WireRepository repository = new WireRepository(environment, properties);
         repository.load();
 
         return repository;
@@ -187,28 +158,24 @@ public class WireRepository {
      * @return a new WireRepository instance
      */
     public static WireRepository create() {
-        return new WireRepository();
+        Environment environment = Environment.build();
+        return create(environment, new BeanContainerProperties(environment));
     }
 
-    /**
-     * Creates a new, not loaded WireRepository.
-     * <p>
-     * It behaves similar to {@link #create()}, but allows you to provide a new instance of the properties.
-     *
-     * @param properties the properties to configure the WireRepository
-     * @return a new WireRepository instance
-     */
-    public static WireRepository create(WireRepositoryProperties properties) {
-        return new WireRepository(properties);
+    public static WireRepository create(BeanContainerProperties properties) {
+        return create(Environment.build(), properties);
     }
 
-    /**
-     * The concrete Banner that is set up for this WireRepository
-     *
-     * @return the Banner for this WireRepository
-     */
-    public Banner banner() {
-        return banner;
+    public static WireRepository create(Environment environment) {
+        return create(environment, new BeanContainerProperties(environment));
+    }
+
+    public static WireRepository create(Environment environment, BeanContainerProperties properties) {
+        return new WireRepository(environment, properties);
+    }
+
+    public Environment environment() {
+        return environment;
     }
 
     /**
@@ -233,26 +200,6 @@ public class WireRepository {
     public boolean isNotLoaded() {
         return !isLoaded();
     }
-
-    /**
-     * Returns the {@link Environment} of this WireRepository.
-     * <p>
-     * This Environment contains configurations and properties.
-     * For further details, please refer to the {@link Environment} documentation.
-     *
-     * @return the Environment for this repository
-     * @see Environment
-     */
-    @NotNull
-    public Environment environment() {
-        return this.environment;
-    }    @NotNull
-    private final ShutdownHook shutdownHook = new ShutdownHook(() -> {
-        if (isLoaded()) {
-            logger.info("Detected JVM shutdown. Instructing the WireRepository to shutdown.");
-            destroy();
-        }
-    });
 
     /**
      * The BeanContainer that is associated with this repository.
@@ -351,149 +298,28 @@ public class WireRepository {
         return true;
     }
 
-    /**
-     * Registers a new {@link WireRepositoryContextCallbacks} to be invoked by this repository.
-     *
-     * @param contextCallbacks the callback that should be registered
-     * @see WireRepositoryContextCallbacks
-     */
-    public void register(@NotNull WireRepositoryContextCallbacks contextCallbacks) {
-        this.contextCallbacks.add(contextCallbacks);
-    }
-
-    /**
-     * Destroys and therefor shuts down this instance of the {@link WireRepository}.
-     * <p>
-     * This method will make sure to tear down all hold {@link StateFull} and {@link Disposable} instances.
-     * <p>
-     * After this, resources will be cleaned up, which includes {@link BeanContainer} and {@link Environment}
-     *
-     * @return The time it took to destroy the instance
-     * @see Timed
-     * @see StateFull
-     * @see Disposable
-     * @see #load()
-     */
-    @NotNull
-    public Timed destroy() {
-        is(isLoaded(), () -> "The WireRepository is not loaded");
-        return safeTimed(() -> {
-            logger.debug(() -> "Destroying all Beans of the WireRepository");
-            getAll(TypeIdentifier.just(StateFull.class))
-                    .parallelStream()
-                    .forEach(StateFull::tearDown);
-            getAll(TypeIdentifier.just(Disposable.class))
-                    .parallelStream()
-                    .forEach(bean -> bean.tearDown(this));
-            beanContainer.clear();
-            environment.clear();
-            onDemandInjector.ifPresent(OnDemandInjector::clear);
-            new ArrayList<>(this.contextCallbacks).forEach(callback -> callback.destroyed(this));
-            if (Thread.currentThread() != shutdownHook) {
-                Runtime.getRuntime().removeShutdownHook(this.shutdownHook);
-            }
-            // Suggest to the gc freeing up resources is a good idea.
-            // We have just cleared a lot of collections, so the gc can pick up a lot.
-            Runtime.getRuntime().gc();
-        }).then(timed -> logger.info(() -> "WireRepository destroyed in " + timed));
-    }
-
-    /**
-     * Sets up the WireRepository.
-     * <p>
-     * It will run through the following steps:
-     * <ul>
-     *     <li>Setting up the environment: The environment will be autoconfigured</li>
-     *     <li>Setting up the BeanContainer: Setup all beans and construct the IdentifiableProviders if not already instantiated</li>
-     *     <li>Additional environment configuration: The environment will be configured with bean instances</li>
-     *     <li>Setting up eager classes: Classes implementing the {@link Eager} interface will be invoked</li>
-     *     <li>Synchronization: Classes implementing the {@link StateFull} interface will be asked to provide states to synchronize on all states</li>
-     * </ul>
-     *
-     * @return a new {@link Timed} instance containing the time it took to load the repository
-     */
-    @NotNull
     public Timed load() {
         is(isNotLoaded(), () -> "The WireRepository is already loaded");
-        return safeTimed(() -> {
-            contextCallbacks.forEach(it -> it.loadingStarted(this));
+        return Timed.of(() -> {
+            announce(IdentifiableProvider.singleton(this, TypeIdentifier.just(WireRepository.class)));
+            announce(IdentifiableProvider.singleton(beanContainer, TypeIdentifier.just(BeanContainer.class)));
+            announce(IdentifiableProvider.singleton(beanContainer.properties(), TypeIdentifier.just(BeanContainerProperties.class)));
 
-            Timed.of(() -> {
-                logger.debug("Loading Environment");
-                setupEnvironment();
-            }).then(timed -> contextCallbacks.forEach(it -> it.loadedEnvironment(timed, environment)));
+            announce(IdentifiableProvider.singleton(exceptionHandler, TypeIdentifier.just(ExceptionHandlerContext.class)));
 
-            Timed.of(() -> {
-                logger.debug("Loading BeanContainer");
-                setupBeanContainer();
-            }).then(timed -> contextCallbacks.forEach(callback -> callback.loadedBeanContainer(timed, this, beanContainer)));
-
-            Timed.of(() -> {
-                logger.debug("Configuring Environment with Bean instances");
-                configureEnvironment();
-            }).then(timed -> contextCallbacks.forEach(callback -> callback.configuredEnvironment(timed, environment)));
-
-            if (properties.loadEagerInstance()) {
-                setupEagerClasses(contextCallbacks);
-            }
-
-            if (properties.awaitStates()) {
-                synchronizeOnStates();
-            }
-            Runtime.getRuntime().addShutdownHook(shutdownHook);
-        }).then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, this)));
+            announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
+            announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
+            announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
+            announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
+            beanContainer.load(this);
+        });
     }
 
-    /**
-     * Configures the environment and prepares it for the runtime
-     */
-    private void setupEnvironment() {
-        environment.autoconfigure();
-        banner.print();
-        environment.printProfiles();
-    }
-
-    private void configureEnvironment() {
-        environment.addExpressionResolvers(getAll(EnvironmentExpressionResolver.class));
-        environment.resourceLoader().addProtocolResolvers(getAll(ResourceProtocolResolver.class));
-        environment.propertyLoader().addPropertyFileLoaders(getAll(PropertyFileTypeLoader.class));
-        getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
-    }
-
-    private void setupBeanContainer() {
-        logger.trace("Registering all known static types");
-        announce(IdentifiableProvider.singleton(beanContainer, TypeIdentifier.just(BeanContainer.class)));
-        announce(IdentifiableProvider.singleton(this, TypeIdentifier.just(WireRepository.class)));
-        announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
-        announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
-        announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
-        announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
-        announce(IdentifiableProvider.singleton(exceptionHandler, TypeIdentifier.just(ExceptionHandlerContext.class)));
-        announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
-        beanContainer.load(this);
-    }
-
-    private void setupEagerClasses(List<WireRepositoryContextCallbacks> contextCallbacks) {
-        logger.debug("Checking for eager classes");
-        final List<Eager> eagerInstances = getAll(Eager.class);
-        if (!eagerInstances.isEmpty()) {
-            logger.debug("Loading " + eagerInstances.size() + " eager classes.");
-            Timed.of(() -> eagerInstances.parallelStream().forEach(it -> it.setup(this)))
-                    .then(timed -> contextCallbacks.forEach(callback -> callback.loadedEagerClasses(timed, this, eagerInstances)));
-        }
-    }
-
-    private void synchronizeOnStates() {
-        // Writing StateFull<?> right here leads to compile time errors, this
-        // is why we explicitly skip the raw type inspection with the following comment
-        //noinspection rawtypes
-        final List<StateFull> stateFulls = getAll(TypeIdentifier.just(StateFull.class));
-        if (!stateFulls.isEmpty()) {
-            logger.debug(() -> "Synchronizing on " + stateFulls.size() + " StateFull instances.");
-            Duration duration = properties.awaitStatesTimeout();
-            Timed.of(() -> stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet(duration)))
-                    .then(timed -> contextCallbacks.forEach(callback -> callback.synchronizedOnStates(timed, this, stateFulls)));
-        }
+    public void clear() {
+        is(isLoaded(), () -> "The WiredApplication is not loaded");
+        logger.debug(() -> "Destroying all Beans of the WireRepository");
+        beanContainer.clear();
+        onDemandInjector.ifPresent(OnDemandInjector::clear);
     }
 
     /**
@@ -641,23 +467,6 @@ public class WireRepository {
         }
     }
 
-    @NotNull
-    public Timed safeTimed(@NotNull Runnable runnable) {
-        return Timed.of(() -> safeRun(runnable));
-    }
-
-    public void safeRun(@NotNull Runnable runnable) {
-        try {
-            runnable.run();
-        } catch (final Throwable throwable) {
-            try {
-                exceptionHandler.handle(throwable);
-            } catch (final Throwable e) {
-                throw new IllegalStateException(e);
-            }
-        }
-    }
-
     @Nullable
     private <T> T instantiate(
             @NotNull final IdentifiableProvider<T> provider,
@@ -680,14 +489,5 @@ public class WireRepository {
     private <T> IdentifiableProvider<T> requireSingleProvider(@NotNull final TypeIdentifier<T> type, QualifierType qualifierType) {
         return beanContainer.get(type, qualifierType)
                 .orElseThrow(() -> new DiInstantiationException("Could not find any instance for " + type, type));
-    }
-
-    private static final class ShutdownHook extends Thread {
-        public ShutdownHook(Runnable runnable) {
-            super(runnable);
-            setName("WireRepository Shutdown Hook");
-            setPriority(Thread.NORM_PRIORITY + 2);
-            setDaemon(false);
-        }
     }
 }

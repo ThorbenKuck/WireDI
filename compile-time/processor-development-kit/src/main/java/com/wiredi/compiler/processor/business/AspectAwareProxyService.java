@@ -6,7 +6,7 @@ import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.values.ProxyMethod;
 import com.wiredi.compiler.processor.AspectIgnoredAnnotations;
 import com.wiredi.compiler.processor.ProcessorProperties;
-import com.wiredi.compiler.processor.PropertyKeys;
+import com.wiredi.compiler.processor.CompilerPropertyKeys;
 
 import javax.lang.model.element.*;
 import java.util.Collections;
@@ -15,7 +15,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.wiredi.compiler.processor.PropertyKeys.AOP_REQUIRES_ASPECT_TARGET_ANNOTATION;
+import static com.wiredi.compiler.processor.CompilerPropertyKeys.AOP_REQUIRES_ASPECT_TARGET_ANNOTATION;
 
 public class AspectAwareProxyService {
 
@@ -71,7 +71,7 @@ public class AspectAwareProxyService {
             return false;
         }
 
-        if (properties.isEnabled(PropertyKeys.AOP_STRICT_ANNOTATION_TARGET)) {
+        if (properties.isEnabled(CompilerPropertyKeys.AOP_STRICT_ANNOTATION_TARGET)) {
             if(annotationElement.getAnnotation(AspectTarget.class) != null) {
                 return true;
             }

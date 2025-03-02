@@ -2,6 +2,7 @@ package com.wiredi.runtime.beans;
 
 import com.wiredi.runtime.*;
 import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBeanEvaluator;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -32,7 +33,7 @@ class BeanContainerTest {
         OnDemandInjector onDemandInjector = Mockito.mock(OnDemandInjector.class);
         Mockito.when(onDemandInjector.get(ConditionalOnBeanEvaluator.class)).thenReturn(new ConditionalOnBeanEvaluator());
         ServiceLoader loader = Mockito.mock(ServiceLoader.class);
-        BeanContainer container = new BeanContainer(new WireRepositoryProperties().withConditionalRoundThreshold(1), loader);
+        BeanContainer container = new BeanContainer(new BeanContainerProperties(1, () -> StandardWireConflictResolver.DEFAULT), loader);
         Mockito.when(wireRepository.environment()).thenReturn(new Environment(loader));
         Mockito.when(wireRepository.beanContainer()).thenReturn(container);
         Mockito.when(loader.identifiableProviders()).thenReturn(List.of(

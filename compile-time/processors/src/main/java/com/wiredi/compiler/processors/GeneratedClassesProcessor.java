@@ -13,7 +13,7 @@ import java.io.Writer;
 import java.lang.annotation.Annotation;
 import java.util.*;
 
-import static com.wiredi.compiler.processor.PropertyKeys.ENABLE_GENERATED_SOURCES;
+import static com.wiredi.compiler.processor.CompilerPropertyKeys.ENABLE_GENERATED_SOURCES;
 
 @AutoService(Processor.class)
 public class GeneratedClassesProcessor extends WireBaseProcessor {

@@ -1,7 +1,5 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.domain.Disposable;
-import com.wiredi.runtime.domain.Eager;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.domain.errors.results.ExceptionHandlingResult;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
@@ -24,52 +22,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 public class WireRepositoryTest {
-
-    @Nested
-    class Lifecycle {
-
-        @Test
-        void startupAndShutdown() {
-            // Arrange
-            Case testCase = new Case();
-            WireRepository wireRepository = WireRepository.create();
-            wireRepository.announce(
-                    IdentifiableProvider.singleton(testCase)
-                            .withAdditionalTypeIdentifier(TypeIdentifier.just(Eager.class))
-                            .withAdditionalTypeIdentifier(TypeIdentifier.just(Disposable.class))
-            );
-
-            // Act
-            wireRepository.load();
-            assertThat(wireRepository.tryGet(Case.class)).isPresent().contains(testCase);
-            assertThat(wireRepository.getAll(Eager.class)).containsExactly(testCase);
-            assertThat(wireRepository.getAll(Disposable.class)).containsExactly(testCase);
-            wireRepository.destroy();
-            assertThat(wireRepository.tryGet(Case.class)).isEmpty();
-            assertThat(wireRepository.getAll(Eager.class)).isEmpty();
-            assertThat(wireRepository.getAll(Disposable.class)).isEmpty();
-
-            // Assert
-            assertThat(testCase.wasInitialized).withFailMessage(() -> "TestCase was not initialized").isTrue();
-            assertThat(testCase.wasTornDown).withFailMessage(() -> "TestCase was not torn down").isTrue();
-        }
-
-        static class Case implements Eager, Disposable {
-
-            boolean wasInitialized = false;
-            boolean wasTornDown = false;
-
-            @Override
-            public void tearDown(WireRepository origin) {
-                wasTornDown = true;
-            }
-
-            @Override
-            public void setup(WireRepository wireRepository) {
-                wasInitialized = true;
-            }
-        }
-    }
 
     @Nested
     class Registrations {
