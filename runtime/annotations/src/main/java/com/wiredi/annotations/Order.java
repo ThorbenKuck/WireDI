@@ -40,6 +40,14 @@ public @interface Order {
     int AUTO_CONFIGURATION = -100;
 
     /**
+     * A value commonly used for default configuration.
+     * <p>
+     * Default configuration is commonly applied after all other configurations are applied
+     * and aims to provide configuration in the sense of "if not specified otherwise".
+     */
+    int DEFAULT_CONFIGURATION = 100;
+
+    /**
      * The order value for the annotated element (i.e method, or class).
      *
      * <p>Elements are ordered based on priority where a lower value has greater

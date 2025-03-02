@@ -4,6 +4,7 @@ import com.google.auto.service.AutoService;
 import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.annotations.stereotypes.Configuration;
+import com.wiredi.annotations.stereotypes.DefaultConfiguration;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.logger.Logger;
@@ -34,7 +35,7 @@ public class WireProcessor extends WireBaseProcessor {
 
 	@Override
 	protected List<Class<? extends Annotation>> targetAnnotations() {
-		return List.of(Wire.class, Configuration.class, AutoConfiguration.class);
+		return List.of(Wire.class, Configuration.class, AutoConfiguration.class, DefaultConfiguration.class);
 	}
 
 	@Override
