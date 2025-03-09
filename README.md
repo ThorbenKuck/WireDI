@@ -182,7 +182,8 @@ public class Main {
 ```
 
 In this example right here, we have two classes, A and B and A has a dependency to B.
-Since both classes are marked with`@Wire`, the framework can identify these classes and inject them safely into each other.
+Since both classes are marked with`@Wire`, the annotation processor generated providers for these classes and makes them available through the ServiceLoader.
+They then are automatically picked up by the WireRepository when "load" is called, which is done automatically when you create a WireRepository using "open."
 
 As you run this code, a lot happens behind the curtains.
 The annotation processor generates instance of `IdentifiableProvider` classes, which you can even see in the compiled sources.

@@ -1,26 +1,36 @@
 package com.wiredi.runtime.beans;
 
 import com.wiredi.logging.Logging;
+import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.ServiceLoader;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.async.DataAccess;
 import com.wiredi.runtime.beans.value.BeanValue;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
+import com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource;
 import com.wiredi.runtime.lang.Counter;
 import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static com.wiredi.runtime.domain.Ordered.ordered;
 import static com.wiredi.runtime.lang.Preconditions.is;
 
+/**
+ * The BeanContainer holds instances of {@link Bean} containers, which hold Component instances of same types.
+ * <p>
+ * A BeanContainer is empty by default, but by calling {@link #load(WireRepository)} it is filled with
+ * {@link IdentifiableProvider} instances that can be loaded using the {@link ServiceLoader}.
+ * It requires a {@link WireRepository} to correctly resolve conditions.
+ * <p>
+ * All methods of a BeanContainer are supposed to never return null.
+ * Even if a Bean is absent, instead of returning null an {@link EmptyModifiableBean} is returned.
+ */
 public class BeanContainer {
 
     private static final String ROUND_LOGGING_PREFIX = "Applied %s conditional providers in %s rounds.";
@@ -33,21 +43,52 @@ public class BeanContainer {
     @NotNull
     private final BeanContainerProperties properties;
     @NotNull
-    private final ServiceLoader loader;
+    private final List<@NotNull IdentifiableProviderSource> sources = new ArrayList<>();
     private volatile boolean loaded = false;
 
     public BeanContainer(
-            @NotNull BeanContainerProperties properties,
-            @NotNull ServiceLoader loader
+            @NotNull BeanContainerProperties properties
     ) {
-        this.properties = properties;
-        this.loader = loader;
+        this(properties, List.of(new ServiceLoaderIdentifiableProviderSource()));
     }
 
+    public BeanContainer(
+            @NotNull BeanContainerProperties properties,
+            @NotNull List<? extends IdentifiableProviderSource> sources
+    ) {
+        this.properties = properties;
+        this.sources.addAll(sources);
+    }
+
+    @NotNull
+    public List<@NotNull IdentifiableProviderSource> sources() {
+        return Collections.unmodifiableList(sources);
+    }
+
+    public void setSources(@NotNull List<? extends IdentifiableProviderSource> sources) {
+        this.sources.clear();
+        this.sources.addAll(sources);
+    }
+
+    public void addSource(@NotNull IdentifiableProviderSource source) {
+        this.sources.add(source);
+    }
+
+    public void addSources(@NotNull List<? extends IdentifiableProviderSource> sources) {
+        this.sources.addAll(sources);
+    }
+
+    @NotNull
     public BeanContainerProperties properties() {
         return properties;
     }
 
+    /**
+     * Clears the internally loaded and maintained beans.
+     * <p>
+     * It's not recommended to call this method during normal operations.
+     * Instead, the state of the {@link BeanContainer} should be managed by the {@link WireRepository#clear()} method.
+     */
     public void clear() {
         dataAccess.write(() -> {
             logger.debug("Clearing cached mappings");
@@ -56,7 +97,17 @@ public class BeanContainer {
         });
     }
 
-    public Timed load(WireRepository wireRepository) {
+    /**
+     * Loads all available {@link IdentifiableProvider}.
+     * <p>
+     * This method uses the {@link ServiceLoader} to load providers.
+     *
+     * @param wireRepository the repository maintaining this BeanContainer.
+     *                       It is required to resolve conditions
+     * @return the time it took to load the BeanContainer
+     */
+    @NotNull
+    public Timed load(@NotNull WireRepository wireRepository) {
         // pre-check to avoid unnecessary synchronization
         if (loaded) {
             return Timed.ZERO;
@@ -67,26 +118,26 @@ public class BeanContainer {
             // and then, one after another enter this
             // synchronized statement and then override
             // the same instances.
-            // We want to ensure under any and all
+            // We want to ensure under any
             // circumstances that we only load once.
             if (loaded) {
                 return Timed.ZERO;
             }
 
-
             Counter count = new Counter();
             logger.debug("Registering all known identifiable providers");
             Timed timed = Timed.of(() -> {
                 List<IdentifiableProvider> conditionalProviders = new ArrayList<>();
-                loader.identifiableProviders().forEach(provider -> {
-                    LoadCondition condition = provider.condition();
-                    if (condition != null) {
-                        conditionalProviders.add(provider);
-                    } else {
-                        count.increment();
-                        unsafeRegister(provider);
-                    }
-                });
+                sources.stream().flatMap(source -> source.load().stream())
+                        .forEach(provider -> {
+                            LoadCondition condition = provider.condition();
+                            if (condition != null) {
+                                conditionalProviders.add(provider);
+                            } else {
+                                count.increment();
+                                unsafeRegister(provider);
+                            }
+                        });
 
                 count.increment(applyConditionals(conditionalProviders, wireRepository));
                 loaded = true;
@@ -97,7 +148,10 @@ public class BeanContainer {
         });
     }
 
-    private int applyConditionals(List<IdentifiableProvider> conditionalProviders, WireRepository wireRepository) {
+    private int applyConditionals(
+            @NotNull List<IdentifiableProvider> conditionalProviders,
+            @NotNull WireRepository wireRepository
+    ) {
         if (conditionalProviders.isEmpty()) {
             return 0;
         }
@@ -106,7 +160,7 @@ public class BeanContainer {
         Counter additionalRounds = new Counter();
         int result = applyConditionals(conditionalProviders, wireRepository, additionalRounds);
         int warnThreshHold = properties.conditionalRoundThreshold();
-        if (additionalRounds.get() >= warnThreshHold) {
+        if (additionalRounds.get() > warnThreshHold) {
             logger.warn(() -> ROUND_LOGGING_PREFIX.formatted(result, additionalRounds.get()) + ROUND_WARNING_SUFFIX);
         } else {
             logger.debug(() -> ROUND_LOGGING_PREFIX.formatted(result, additionalRounds.get()));
@@ -115,9 +169,9 @@ public class BeanContainer {
     }
 
     private int applyConditionals(
-            List<IdentifiableProvider> identifiableProviders,
-            WireRepository wireRepository,
-            Counter round
+            @NotNull List<IdentifiableProvider> identifiableProviders,
+            @NotNull WireRepository wireRepository,
+            @NotNull Counter round
     ) {
         int applied = 0;
         round.increment();
@@ -143,15 +197,21 @@ public class BeanContainer {
         return applied;
     }
 
-    public final <T> void register(@NotNull final IdentifiableProvider<T> t) {
+    public final <T> void register(
+            @NotNull final IdentifiableProvider<T> t
+    ) {
         dataAccess.write(() -> unsafeRegister(t));
     }
 
-    public final void registerAll(@NotNull final List<@NotNull IdentifiableProvider> list) {
+    public final void registerAll(
+            @NotNull final List<@NotNull IdentifiableProvider> list
+    ) {
         dataAccess.write(() -> list.forEach(this::unsafeRegister));
     }
 
-    private <T> void unsafeRegister(@NotNull final IdentifiableProvider<T> t) {
+    private <T> void unsafeRegister(
+            @NotNull final IdentifiableProvider<T> t
+    ) {
         logger.trace(() -> "Registering instance of type " + t.getClass() + " with wired types " + t.additionalWireTypes() + " and qualifiers " + t.qualifiers());
         for (final TypeIdentifier<?> wiredType : t.additionalWireTypes()) {
             logger.trace(() -> "Registering " + t + " for " + wiredType);
@@ -164,31 +224,47 @@ public class BeanContainer {
         return loaded;
     }
 
-    public <T> Bean<T> access(TypeIdentifier<T> typeIdentifier) {
+    @NotNull
+    public <T> Bean<T> access(
+            @NotNull TypeIdentifier<T> typeIdentifier
+    ) {
         is(typeIdentifier.referenceConcreteType(), () -> "Cannot call access on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
         return dataAccess.readValue(() -> unsafeGet(typeIdentifier))
                 .orElse(ModifiableBean.empty());
     }
 
-    public <T> Bean<T> accessOrCreate(TypeIdentifier<T> typeIdentifier) {
+    @NotNull
+    public <T> Bean<T> accessOrCreate(
+            @NotNull TypeIdentifier<T> typeIdentifier
+    ) {
         is(typeIdentifier.referenceConcreteType(), () -> "Cannot call accessOrCreate on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
         return dataAccess.readValue(() -> unsafeGet(typeIdentifier))
                 .orElseGet(() -> dataAccess.writeValue(() -> (ModifiableBean<T>) unsafeGetOrCreate(typeIdentifier)));
     }
 
-    public <T> BeanValue<T> get(final TypeIdentifier<T> concreteType) {
+    @NotNull
+    public <T> BeanValue<T> get(
+            @NotNull final TypeIdentifier<T> concreteType
+    ) {
         is(concreteType.referenceConcreteType(), () -> "Cannot call get on a reference type (Bean, IdentifiableProvider): " + concreteType);
         return dataAccess.readValue(() -> unsafeGet(concreteType))
                 .get(concreteType, properties.wireConflictResolverSupplier());
     }
 
-    public <T> BeanValue<T> get(final TypeIdentifier<T> typeIdentifier, QualifierType qualifierType) {
+    @NotNull
+    public <T> BeanValue<T> get(
+            @NotNull final TypeIdentifier<T> typeIdentifier,
+            @NotNull QualifierType qualifierType
+    ) {
         is(typeIdentifier.referenceConcreteType(), () -> "Cannot call get on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
         return dataAccess.readValue(() -> unsafeGet(typeIdentifier))
                 .get(qualifierType);
     }
 
-    public <T> List<IdentifiableProvider<T>> getAll(final TypeIdentifier<T> typeIdentifier) {
+    @NotNull
+    public <T> List<IdentifiableProvider<T>> getAll(
+            @NotNull final TypeIdentifier<T> typeIdentifier
+    ) {
         is(typeIdentifier.referenceConcreteType(), () -> "Cannot call getAll on a reference type (Bean, IdentifiableProvider): " + typeIdentifier);
         ModifiableBean<T> bean = dataAccess.readValue(() -> unsafeGet(typeIdentifier));
         if (typeIdentifier.equals(bean.rootType())) {
@@ -198,11 +274,17 @@ public class BeanContainer {
         }
     }
 
-    private <T> ModifiableBean<T> unsafeGet(@NotNull final TypeIdentifier<T> type) {
+    @NotNull
+    private <T> ModifiableBean<T> unsafeGet(
+            @NotNull final TypeIdentifier<T> type
+    ) {
         return (ModifiableBean<T>) mapping.getOrDefault(type.erasure(), ModifiableBean.empty());
     }
 
-    private ModifiableBean<?> unsafeGetOrCreate(@NotNull final TypeIdentifier<?> type) {
+    @NotNull
+    private ModifiableBean<?> unsafeGetOrCreate(
+            @NotNull final TypeIdentifier<?> type
+    ) {
         return mapping.computeIfAbsent(type.erasure(), t -> new ModifiableBean<>(type));
     }
 

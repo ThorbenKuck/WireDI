@@ -25,7 +25,7 @@ class WiredApplicationTest {
                                 .withAdditionalTypeIdentifier(TypeIdentifier.just(Disposable.class))
                 );
             });
-            WireRepository wireRepository = application.repository();
+            WireRepository wireRepository = application.wireRepository();
 
             // Act
             assertThat(wireRepository.tryGet(Case.class)).isPresent().contains(testCase);

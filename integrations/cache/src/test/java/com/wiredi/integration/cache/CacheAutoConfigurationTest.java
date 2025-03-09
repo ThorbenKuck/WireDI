@@ -2,7 +2,6 @@ package com.wiredi.integration.cache;
 
 import com.wiredi.annotations.ActiveProfiles;
 import com.wiredi.runtime.WiredApplication;
-import com.wiredi.runtime.WiredApplicationInstance;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.cache.CacheManager;
@@ -17,7 +16,7 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerIsWired() {
         // Arrange
-        WireRepository wireRepository = WiredApplication.start().repository();
+        WireRepository wireRepository = WiredApplication.start().wireRepository();
 
         // Act
         // Assert
@@ -28,7 +27,7 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerCanBeWiredInADependency() {
         // Arrange
-        WireRepository wireRepository = WiredApplication.start().repository();
+        WireRepository wireRepository = WiredApplication.start().wireRepository();
 
         // Act
         // Assert

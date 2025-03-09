@@ -7,7 +7,6 @@ import com.wiredi.runtime.async.barriers.Barrier;
 import com.wiredi.runtime.async.barriers.MutableBarrier;
 import com.wiredi.runtime.banner.Banner;
 import com.wiredi.runtime.domain.Disposable;
-import com.wiredi.runtime.domain.Eager;
 import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -38,6 +37,8 @@ public class WiredApplicationInstance {
     private final Barrier barrier;
     @NotNull
     private final Banner banner;
+    private final ServiceLoader serviceLoader = ServiceLoader.getInstance();
+    private final List<WireRepositoryContextCallbacks> contextCallbacks = serviceLoader.contextCallbacks();
     private boolean isRunning = false;
 
     public WiredApplicationInstance(
@@ -52,8 +53,8 @@ public class WiredApplicationInstance {
 
     Timed runStartupRoutine() {
         isNot(isRunning, () -> "The WiredApplication is already started");
-        List<WireRepositoryContextCallbacks> contextCallbacks = wireRepository.getAll(WireRepositoryContextCallbacks.class);
         return Timed.of(() -> {
+                    contextCallbacks.addAll(wireRepository.getAll(WireRepositoryContextCallbacks.class));
                     contextCallbacks.forEach(it -> it.loadingStarted(wireRepository));
 
                     Timed.of(() -> {
@@ -67,20 +68,16 @@ public class WiredApplicationInstance {
                         logger.trace(() -> "Registering all known static types");
                         wireRepository.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
                         logger.debug(() -> "Loading WireRepository");
-                        wireRepository.load().then(time -> logger.info("WireRepository loaded in " + time));
-                    }
 
-                    Timed.of(() -> {
-                        logger.debug(() -> "Configuring Environment with Bean instances");
-                        environment.addExpressionResolvers(wireRepository.getAll(EnvironmentExpressionResolver.class));
-                        environment.resourceLoader().addProtocolResolvers(wireRepository.getAll(ResourceProtocolResolver.class));
-                        environment.propertyLoader().addPropertyFileLoaders(wireRepository.getAll(PropertyFileTypeLoader.class));
-                        wireRepository.getAll(EnvironmentConfiguration.class)
-                                .forEach(it -> it.configure(environment));
-                    }).then(timed -> contextCallbacks.forEach(callback -> callback.configuredEnvironment(timed, environment)));
+                        wireRepository.load(repository -> {
+                            logger.debug(() -> "Configuring Environment with Bean instances");
+                            environment.addExpressionResolvers(wireRepository.getAll(EnvironmentExpressionResolver.class));
+                            environment.resourceLoader().addProtocolResolvers(wireRepository.getAll(ResourceProtocolResolver.class));
+                            environment.propertyLoader().addPropertyFileLoaders(wireRepository.getAll(PropertyFileTypeLoader.class));
+                            wireRepository.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
 
-                    if (environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true)) {
-                        setupEagerClasses();
+                            return environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true);
+                        }).then(time -> logger.info("WireRepository loaded in " + time));
                     }
 
                     if (environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true)) {
@@ -121,15 +118,6 @@ public class WiredApplicationInstance {
                 .then(() -> isRunning = false);
     }
 
-    private void setupEagerClasses() {
-        logger.trace(() -> "Checking for eager classes");
-        final List<Eager> eagerInstances = wireRepository.getAll(Eager.class);
-        if (!eagerInstances.isEmpty()) {
-            logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
-            eagerInstances.parallelStream().forEach(it -> it.setup(wireRepository));
-        }
-    }
-
     private void synchronizeOnStates(@Nullable Duration timeout) {
         // Writing StateFull<?> right here leads to compile time errors, this
         // is why we explicitly skip the raw type inspection with the following comment
@@ -166,8 +154,16 @@ public class WiredApplicationInstance {
         barrier.traverse();
     }
 
-    public WireRepository repository() {
+    public WireRepository wireRepository() {
         return wireRepository;
+    }
+
+    public Banner banner() {
+        return banner;
+    }
+
+    public Environment environment() {
+        return environment;
     }
 
     static class ShutdownListenerProvider implements IdentifiableProvider<ShutdownListener> {

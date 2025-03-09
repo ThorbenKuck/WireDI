@@ -3,6 +3,11 @@ package com.wiredi.runtime;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.async.barriers.Barrier;
 import com.wiredi.runtime.async.barriers.MutableBarrier;
+import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.properties.PropertyLoader;
+import com.wiredi.runtime.resources.ResourceLoader;
+import com.wiredi.runtime.types.TypeMapper;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -30,11 +35,20 @@ public class WiredApplication {
     }
 
     public static WiredApplicationInstance start(@NotNull Consumer<WireRepository> configuration) {
-        WireRepository wireRepository = WireRepository.create();
+        return start(Environment.build(),configuration);
+    }
+
+    public static WiredApplicationInstance start(Environment environment, @NotNull Consumer<WireRepository> configuration) {
+        WireRepository wireRepository = WireRepository.create(environment);
         MutableBarrier barrier = Barrier.create();
 
         configuration.accept(wireRepository);
         wireRepository.announce(new WiredApplicationInstance.ShutdownListenerProvider(barrier));
+        wireRepository.announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
+        wireRepository.announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
+        wireRepository.announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
+        wireRepository.announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
+
         WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireRepository, barrier);
         wiredApplication.runStartupRoutine();
 

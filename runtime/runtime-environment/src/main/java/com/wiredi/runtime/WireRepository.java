@@ -1,8 +1,6 @@
 package com.wiredi.runtime;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.async.StateFull;
-import com.wiredi.runtime.async.state.State;
 import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.beans.BeanContainerProperties;
@@ -16,11 +14,8 @@ import com.wiredi.runtime.domain.provider.WrappingProvider;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
-import com.wiredi.runtime.properties.PropertyLoader;
 import com.wiredi.runtime.qualifier.QualifierType;
-import com.wiredi.runtime.resources.ResourceLoader;
 import com.wiredi.runtime.time.Timed;
-import com.wiredi.runtime.types.TypeMapper;
 import com.wiredi.runtime.values.Value;
 import jakarta.inject.Provider;
 import org.jetbrains.annotations.NotNull;
@@ -30,99 +25,48 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static com.wiredi.runtime.lang.Preconditions.is;
 
 /**
- * The WireRepository is the central repository that holds all beans.
+ * The WireRepository is the IOC container of WireDI.
+ * Its responsibility is to hold and maintain components, which are named "Wires".
  * <p>
- * A WireRepository can be constructed in mainly two ways:
- *
- * <pre><code>
- * class Example {
- *     public void emptyRepository() {
- *         WireRepository wireRepository = WireRepository.create();
- *     }
- *
- *     public void loadedRepository() {
- *         WireRepository wireRepository = WireRepository.open();
- *     }
- * }
- * </code></pre>
+ * This class specifies operations on how to interact with the {@link BeanContainer}.
  * <p>
- * A loaded Repository contains all {@link IdentifiableProvider} instances that are resolvable using the
- * {@link java.util.ServiceLoader}.
+ * Each {@link WireRepository} has a related {@link Environment} assigned during its creation.
  * <p>
- * An empty Repository is exactly that, completely empty.
+ * Apart from the {@link BeanContainer}, each WireRepository also has an {@link OnDemandInjector} instances that can
+ * be used to construct components at runtime and without the need to provide {@link IdentifiableProvider}.
+ * This injector uses this repository to resolve dependencies.
+ * As the {@link OnDemandInjector} requires reflection to operate, it's generally not recommended to use it.
+ * Instead, it's suggested to provide everything required as an {@link IdentifiableProvider}.
  * <p>
- * <h2>Loaded Repository</h2>
- * <p>
- * A loaded repository isn't only filled, it's also setup correctly. That means:
- * <ul>
- *     <li>The {@link Environment} is fully setup</li>
- *     <li>The {@link BeanContainer} is loaded and can uniquely resolve a {@link Bean}</li>
- *     <li>Any {@link Eager} class is loaded</li>
- *     <li>All {@link State} provided by {@link StateFull} instances in the {@link BeanContainer} have been successfully completed</li>
- * </ul>
- * This Repository can be used without any other additional configuration:
- * <pre><code>
- * WireRepository repository = WireRepository.open();
- * MyService service = repository.get(MyService.class);
- * </code></pre>
- * Constructing a loaded WireRepository using the <pre>open</pre> function, is synonymous to:
- * <pre><code>
- * WireRepository repository = WireRepository.create();
- * Timed loadTime = repository.load();
- * </code></pre>
- * <h2>Empty Repository</h2>
- * An empty repository is used if manually configuration is required before the default instances are loaded.
- * This could be a manual configuration of the Environment or the beans.
- * <p>
- * It might look like this:
- * <pre><code>
- * WireRepository repository = WireRepository.create();
- * preConfigure(repository.environment());
- * preConfigure(repository.beanContainer());
- * IdentifiableProvider myProvider = getMyProvider();
- * repository.announce(myProvider);
- * repository.load();
- * MyService service = repository.get(MyService.class);
- * </code></pre>
- * Optionally, you can call "load" at any point in time.
- * Calling `load` triggers the process of loading and autoconfiguration as described in the section "Loaded Repository".
- * <pre><code>
- * WireRepository repository = WireRepository.create();
- * configure(repository);
- * repository.load(); // Trigger the loading process
- * afterLoadConfiguration(repository); // Additional configuration after loading
- * MyService service = repository.get(MyService.class);
- * </code></pre>
+ * If you require a WireRepository with features such as {@link }
  *
  * @see BeanContainer
  * @see Environment
+ * @see OnDemandInjector
+ * @see WiredApplication
  */
 public class WireRepository {
 
     @NotNull
     private static final Logging logger = Logging.getInstance(WireRepository.class);
     @NotNull
-    private static final ServiceLoader loader = ServiceLoader.getInstance();
-    @NotNull
     private final BeanContainer beanContainer;
     @NotNull
     private final Value<OnDemandInjector> onDemandInjector = Value.lazy(() -> new OnDemandInjector(this));
     @NotNull
     private final ExceptionHandlerContext exceptionHandler = new ExceptionHandlerContext(this);
+    @NotNull
     private final Environment environment;
 
-    public WireRepository(@NotNull Environment environment) {
-        this(environment, new BeanContainerProperties(environment));
-    }
-
-    public WireRepository(@NotNull Environment environment, @NotNull BeanContainerProperties beanContainerProperties) {
+    public WireRepository(@NotNull Environment environment, @NotNull BeanContainer beanContainer) {
         this.environment = environment;
-        this.beanContainer = new BeanContainer(beanContainerProperties, loader);
+        this.beanContainer = beanContainer;
     }
 
     /**
@@ -134,19 +78,23 @@ public class WireRepository {
      */
     public static WireRepository open() {
         Environment environment = Environment.build();
-        return open(environment, new BeanContainerProperties(environment));
+        return open(environment, new BeanContainer(new BeanContainerProperties(environment)));
     }
 
     public static WireRepository open(BeanContainerProperties properties) {
-        return open(Environment.build(), properties);
+        return open(Environment.build(), new BeanContainer(properties));
     }
 
     public static WireRepository open(Environment environment) {
-        return open(environment, new BeanContainerProperties(environment));
+        return open(environment, new BeanContainer(new BeanContainerProperties(environment)));
     }
 
     public static WireRepository open(Environment environment, BeanContainerProperties properties) {
-        WireRepository repository = new WireRepository(environment, properties);
+        return open(environment, new BeanContainer(properties));
+    }
+
+    public static WireRepository open(Environment environment, BeanContainer beanContainer) {
+        WireRepository repository = create(environment, beanContainer);
         repository.load();
 
         return repository;
@@ -159,23 +107,23 @@ public class WireRepository {
      */
     public static WireRepository create() {
         Environment environment = Environment.build();
-        return create(environment, new BeanContainerProperties(environment));
+        return create(environment, new BeanContainer(new BeanContainerProperties(environment)));
     }
 
     public static WireRepository create(BeanContainerProperties properties) {
-        return create(Environment.build(), properties);
+        return create(Environment.build(), new BeanContainer(properties));
     }
 
     public static WireRepository create(Environment environment) {
-        return create(environment, new BeanContainerProperties(environment));
+        return create(environment, new BeanContainer(new BeanContainerProperties(environment)));
     }
 
     public static WireRepository create(Environment environment, BeanContainerProperties properties) {
-        return new WireRepository(environment, properties);
+        return create(environment, new BeanContainer(properties));
     }
 
-    public Environment environment() {
-        return environment;
+    public static WireRepository create(Environment environment, BeanContainer beanContainer) {
+        return new WireRepository(environment, beanContainer);
     }
 
     /**
@@ -214,6 +162,27 @@ public class WireRepository {
     @NotNull
     public BeanContainer beanContainer() {
         return beanContainer;
+    }
+
+    /**
+     * The {@link Environment} relating to this WireRepository.
+     * <p>
+     * If not explicitly defined while constructing this repository, it's a completely standalone environment.
+     * <p>
+     * The {@link Environment} of a repository is immutable and can't be changed.
+     * It must be explicitly defined when constructing the repository.
+     * For details about how to set the {@link Environment}, see the create and open functions.
+     *
+     * @return the environment of this repository
+     * @see #create(Environment)
+     * @see #create(Environment, BeanContainerProperties)
+     * @see #create(Environment, BeanContainer)
+     * @see #open(Environment)
+     * @see #open(Environment, BeanContainerProperties)
+     * @see #open(Environment, BeanContainer)
+     */
+    public Environment environment() {
+        return environment;
     }
 
     /**
@@ -267,10 +236,10 @@ public class WireRepository {
     /**
      * Announces an {@link IdentifiableProvider} to be maintained in this WireRepository.
      * <p>
-     * The provider will be respected in any later call {@code get} calls.
+     * The provider is respected in any later {@code get} calls.
      * <p>
      * Before the provider is registered, its {@link LoadCondition} is evaluated.
-     * If it does not match, the method will not register the provider and instead return false.
+     * If it doesn't match, the method will not register the provider and instead return false.
      * Otherwise, the provider will be passed to the {@link BeanContainer}, where it will be respected from now on.
      * <p>
      * This method exists to allow manual modifications of the WireRepository.
@@ -298,28 +267,51 @@ public class WireRepository {
         return true;
     }
 
+    /**
+     * Loads the wireRepository, and thereby the underlying {@link BeanContainer}.
+     *
+     * @return the time it took to load the WireRepository.
+     */
     public Timed load() {
+        return load((w) -> true);
+    }
+
+    /**
+     * Loads the wireRepository, and thereby the underlying {@link BeanContainer}.
+     * <p>
+     * If the {@code eagerDetermination} function returns true, the repository automatically loads all providers
+     * implementing the {@link Eager} interface.
+     *
+     * @return the time it took to load the WireRepository.
+     */
+    public Timed load(Function<WireRepository, Boolean> eagerDetermination) {
         is(isNotLoaded(), () -> "The WireRepository is already loaded");
+        logger.debug(() -> "Loading WireRepository");
         return Timed.of(() -> {
             announce(IdentifiableProvider.singleton(this, TypeIdentifier.just(WireRepository.class)));
             announce(IdentifiableProvider.singleton(beanContainer, TypeIdentifier.just(BeanContainer.class)));
             announce(IdentifiableProvider.singleton(beanContainer.properties(), TypeIdentifier.just(BeanContainerProperties.class)));
-
             announce(IdentifiableProvider.singleton(exceptionHandler, TypeIdentifier.just(ExceptionHandlerContext.class)));
 
-            announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
-            announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
-            announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
-            announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
             beanContainer.load(this);
-        });
+            if (eagerDetermination.apply(this)) {
+                logger.trace(() -> "Checking for eager classes");
+                final List<Eager> eagerInstances = getAll(Eager.class);
+                if (!eagerInstances.isEmpty()) {
+                    logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
+                    eagerInstances.parallelStream().forEach(it -> it.setup(this));
+                }
+            }
+        }).then(time -> logger.debug(() -> "The WireRepository has been loaded in " + time));
     }
 
-    public void clear() {
+    public Timed clear() {
         is(isLoaded(), () -> "The WiredApplication is not loaded");
-        logger.debug(() -> "Destroying all Beans of the WireRepository");
-        beanContainer.clear();
-        onDemandInjector.ifPresent(OnDemandInjector::clear);
+        logger.debug(() -> "Clearing the WireRepository");
+        return Timed.of(() -> {
+            beanContainer.clear();
+            onDemandInjector.ifPresent(OnDemandInjector::clear);
+        }).then(time -> logger.debug(() -> "The WireRepository has been cleared in " + time));
     }
 
     /**

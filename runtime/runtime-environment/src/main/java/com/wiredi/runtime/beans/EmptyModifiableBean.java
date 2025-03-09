@@ -6,6 +6,7 @@ import com.wiredi.runtime.domain.WireConflictResolver;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.qualifier.QualifierType;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.List;
@@ -40,22 +41,22 @@ public class EmptyModifiableBean extends ModifiableBean<Void> {
     }
 
     @Override
-    public List<IdentifiableProvider<Void>> getAll() {
+    public @NotNull List<IdentifiableProvider<Void>> getAll() {
         return Collections.emptyList();
     }
 
     @Override
-    public List<IdentifiableProvider<Void>> getAllUnqualified() {
+    public @NotNull List<IdentifiableProvider<Void>> getAllUnqualified() {
         return Collections.emptyList();
     }
 
     @Override
-    public List<IdentifiableProvider<Void>> getAllQualified() {
+    public @NotNull List<IdentifiableProvider<Void>> getAllQualified() {
         return Collections.emptyList();
     }
 
     @Override
-    public BeanValue<Void> get(QualifierType qualifierType) {
+    public @NotNull BeanValue<Void> get(QualifierType qualifierType) {
         return BeanValue.empty();
     }
 
@@ -80,7 +81,7 @@ public class EmptyModifiableBean extends ModifiableBean<Void> {
     }
 
     @Override
-    public BeanValue<Void> get(TypeIdentifier<Void> concreteType, Supplier<WireConflictResolver> conflictResolver) {
+    public @NotNull BeanValue<Void> get(TypeIdentifier<Void> concreteType, Supplier<WireConflictResolver> conflictResolver) {
         return BeanValue.empty();
     }
 

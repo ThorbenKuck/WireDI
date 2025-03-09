@@ -40,12 +40,12 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public TypeIdentifier<T> rootType() {
+    public @NotNull TypeIdentifier<T> rootType() {
         return this.rootType;
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAll() {
+    public @NotNull List<IdentifiableProvider<T>> getAll() {
         Set<IdentifiableProvider<T>> result = join(getAllUnqualified(), getAllQualified());
         if (primary != null) {
             result.add(primary);
@@ -54,19 +54,19 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAll(TypeIdentifier<T> concreteType) {
+    public @NotNull List<IdentifiableProvider<T>> getAll(TypeIdentifier<T> concreteType) {
         return new ArrayList<>(join(getAllQualified(concreteType), getAllUnqualified(concreteType)));
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAllUnqualified() {
+    public @NotNull List<IdentifiableProvider<T>> getAllUnqualified() {
         List<IdentifiableProvider<T>> result = new ArrayList<>(unqualifiedProviders);
         result.addAll(typedUnqualifiedProviders.values().stream().flatMap(it -> it.all().stream()).toList());
         return result;
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAllUnqualified(TypeIdentifier<T> concreteType) {
+    public @NotNull List<IdentifiableProvider<T>> getAllUnqualified(TypeIdentifier<T> concreteType) {
         List<IdentifiableProvider<T>> result = new ArrayList<>(unqualifiedProviders.stream()
                 .filter(it -> concreteType.isInstanceOf(it.type()))
                 .toList());
@@ -81,12 +81,12 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAllQualified() {
+    public @NotNull List<IdentifiableProvider<T>> getAllQualified() {
         return List.copyOf(new HashSet<>(qualifiedProviders.values()));
     }
 
     @Override
-    public List<IdentifiableProvider<T>> getAllQualified(TypeIdentifier<T> typeIdentifier) {
+    public @NotNull List<IdentifiableProvider<T>> getAllQualified(TypeIdentifier<T> typeIdentifier) {
         return qualifiedProviders.values()
                 .stream()
                 .filter(it -> typeIdentifier.isInstanceOf(it.type()))
@@ -94,7 +94,7 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public BeanValue<T> get(QualifierType qualifierType) {
+    public @NotNull BeanValue<T> get(QualifierType qualifierType) {
         return BeanValue.of(qualifiedProviders.get(qualifierType));
     }
 
@@ -123,7 +123,7 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public BeanValue<T> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
+    public @NotNull BeanValue<T> get(TypeIdentifier<T> concreteType, Supplier<WireConflictResolver> conflictResolver) {
         if (primary != null) {
             return BeanValue.of(primary);
         }
@@ -141,7 +141,7 @@ public abstract class AbstractBean<T> implements Bean<T> {
     }
 
     @Override
-    public BeanValue<T> get(Supplier<WireConflictResolver> conflictResolver) {
+    public @NotNull BeanValue<T> get(Supplier<WireConflictResolver> conflictResolver) {
         if (primary != null) {
             return BeanValue.of(primary);
         }
