@@ -298,8 +298,9 @@ public class WireRepository {
                 logger.trace(() -> "Checking for eager classes");
                 final List<Eager> eagerInstances = getAll(Eager.class);
                 if (!eagerInstances.isEmpty()) {
+                    final EagerInitializer initializer = tryGet(EagerInitializer.class).orElse(new EagerInitializer.ParallelStream());
                     logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
-                    eagerInstances.parallelStream().forEach(it -> it.setup(this));
+                    initializer.initialize(this, eagerInstances);
                 }
             }
         }).then(time -> logger.debug(() -> "The WireRepository has been loaded in " + time));
