@@ -49,12 +49,22 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>metrics</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>collections</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
                 <artifactId>lang</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>security</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -160,12 +170,22 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>metrics-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>jackson-integration</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
                 <artifactId>retry-integration</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>security-integration</artifactId>
                 <version>${revision}</version>
             </dependency>
 

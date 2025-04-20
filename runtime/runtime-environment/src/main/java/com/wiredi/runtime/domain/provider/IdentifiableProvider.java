@@ -1,12 +1,11 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.WireConflictResolver;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.qualifier.QualifierType;
-import jakarta.annotation.ManagedBean;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

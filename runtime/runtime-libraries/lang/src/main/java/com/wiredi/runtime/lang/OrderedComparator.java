@@ -1,4 +1,4 @@
-package com.wiredi.runtime.domain;
+package com.wiredi.runtime.lang;
 
 import jakarta.annotation.Nullable;
 

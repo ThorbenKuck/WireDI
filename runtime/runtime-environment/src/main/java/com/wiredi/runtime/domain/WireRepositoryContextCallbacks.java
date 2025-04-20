@@ -2,13 +2,11 @@ package com.wiredi.runtime.domain;
 
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.async.StateFull;
 import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.List;
 
 /**
  * This class is used by the {@link WireRepository} to

@@ -1,7 +1,7 @@
 package com.wiredi.runtime.environment;
 
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 
 /**

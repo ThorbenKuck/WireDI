@@ -9,6 +9,24 @@ import java.lang.annotation.*;
  * <p>
  * This annotation is used as metadata for the Ordered interface of the runtime-environment.
  * When you annotate a Wire candidate with {@literal @}Order, it is expected to implement this interface.
+ * <p>
+ * <b>Special Orders</b>
+ * <p>
+ * By default, all Ordered instances have order 0.
+ * This allows other Orders to append or prepend themselves.
+ * If you do not have special use cases, it is recommended to use 0 or a close number.
+ * <p>
+ * If you want to make sure that nothing can come before your instance,
+ * you can use {@link Integer#MIN_VALUE}, or {@link Order#FIRST}.
+ * This way there is no other Ordered instance before yours, except for instances that also have order first.
+ * <p>
+ * The same is true if you do not want to have instances after your instance.
+ * You can use {@link Order#LAST} or {@link Integer#MAX_VALUE}.
+ * <p>
+ * Another common order number is {@link Order#AUTO_CONFIGURATION}.
+ * This number is the common threshold for classes annotated with {@link com.wiredi.annotations.stereotypes.AutoConfiguration}.
+ * It allows for a sufficient distance to normal wire candidates, as well as still a lot of room for
+ * appending/prepending other wire candidates.
  */
 @Target({ElementType.METHOD, ElementType.TYPE})
 @Retention(RetentionPolicy.RUNTIME)

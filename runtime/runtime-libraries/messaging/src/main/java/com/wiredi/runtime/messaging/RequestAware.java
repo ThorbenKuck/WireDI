@@ -1,6 +1,6 @@
 package com.wiredi.runtime.messaging;
 
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 
 /**
  * An interface to listen to specific lifecycle events while processing messages.

@@ -14,7 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.wiredi.runtime.domain.Ordered.ordered;
+import static com.wiredi.runtime.lang.Ordered.ordered;
 
 public class ServiceLoader {
 

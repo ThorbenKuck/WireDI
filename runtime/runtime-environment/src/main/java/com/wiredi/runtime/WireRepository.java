@@ -5,7 +5,7 @@ import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.beans.BeanContainerProperties;
 import com.wiredi.runtime.domain.Eager;
-import com.wiredi.runtime.domain.OrderedComparator;
+import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;

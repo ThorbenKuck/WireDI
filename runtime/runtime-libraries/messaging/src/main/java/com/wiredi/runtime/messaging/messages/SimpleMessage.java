@@ -2,17 +2,11 @@ package com.wiredi.runtime.messaging.messages;
 
 import com.wiredi.runtime.lang.ThrowingConsumer;
 import com.wiredi.runtime.lang.ThrowingFunction;
-import com.wiredi.runtime.messaging.Message;
-import com.wiredi.runtime.messaging.MessageDetails;
-import com.wiredi.runtime.messaging.MessageHeader;
-import com.wiredi.runtime.messaging.MessageHeaders;
+import com.wiredi.runtime.messaging.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -29,22 +23,17 @@ import java.util.List;
  * @see Message
  * @see SimpleMessage
  */
-public class SimpleMessage<S extends MessageDetails> implements Message<S> {
+public class SimpleMessage<S extends MessageDetails> extends AbstractMessage<S> {
 
     private final byte[] body;
-    @NotNull
-    private final MessageHeaders headers;
-    @NotNull
-    private final S messageDetails;
 
     public SimpleMessage(
             byte[] body,
             @NotNull MessageHeaders headers,
             @NotNull S messageDetails
     ) {
-        this.headers = headers;
+        super(headers, messageDetails, false);
         this.body = body;
-        this.messageDetails = messageDetails;
     }
 
     /**
@@ -94,16 +83,6 @@ public class SimpleMessage<S extends MessageDetails> implements Message<S> {
     }
 
     /**
-     * Returns the message headers.
-     *
-     * @return the headers set for this message.
-     */
-    @Override
-    public @NotNull MessageHeaders headers() {
-        return headers;
-    }
-
-    /**
      * Returns the body of this message.
      *
      * @return the body of this message.
@@ -116,16 +95,6 @@ public class SimpleMessage<S extends MessageDetails> implements Message<S> {
     @Override
     public long bodySize() {
         return body.length;
-    }
-
-    /**
-     * Returns the details of this message.
-     *
-     * @return the details of this message.
-     */
-    @Override
-    public @NotNull S details() {
-        return messageDetails;
     }
 
     @Override
@@ -153,8 +122,8 @@ public class SimpleMessage<S extends MessageDetails> implements Message<S> {
     public <D extends MessageDetails, THROWABLE extends Throwable> @NotNull SimpleMessage<D> mapDetails(@NotNull ThrowingFunction<@NotNull S, @NotNull D, THROWABLE> mapper) throws THROWABLE {
         return new SimpleMessage<>(
                 body,
-                headers,
-                mapper.apply(messageDetails)
+                headers(),
+                mapper.apply(details())
         );
     }
 
@@ -170,12 +139,12 @@ public class SimpleMessage<S extends MessageDetails> implements Message<S> {
      * @see ThrowingConsumer
      */
     public <THROWABLE extends Throwable> @NotNull SimpleMessage<S> mapHeaders(@NotNull ThrowingConsumer<@NotNull MessageHeaders, THROWABLE> constructor) throws THROWABLE {
-        MessageHeaders copy = headers.copy().build();
+        MessageHeaders copy = headers().copy().build();
         constructor.accept(copy);
         return new SimpleMessage<>(
                 body,
                 copy,
-                messageDetails
+                details()
         );
     }
 
@@ -183,11 +152,11 @@ public class SimpleMessage<S extends MessageDetails> implements Message<S> {
     public String toString() {
         List<String> fieldValues = new ArrayList<>();
         fieldValues.add("body=" + Arrays.toString(body));
-        if (!headers.isEmpty()) {
-            fieldValues.add("headers=" + headers);
+        if (!headers().isEmpty()) {
+            fieldValues.add("headers=" + headers());
         }
-        if (messageDetails.isNotNone()) {
-            fieldValues.add("messageDetails=" + messageDetails);
+        if (details().isNotNone()) {
+            fieldValues.add("messageDetails=" + details());
         }
         return "Message{" +
                 String.join(", ", fieldValues) +

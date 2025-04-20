@@ -1,8 +1,12 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiableProvider<T> {
 

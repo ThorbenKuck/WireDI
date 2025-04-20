@@ -1,6 +1,6 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

@@ -1,5 +1,6 @@
 package com.wiredi.runtime.messaging;
 
+import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * Both serialized and deserialized instances are represented as a Message.
  * Serialized instances are messages containing raw byte-arrays.
  * <p>
- * Instances should consider to use {@link com.wiredi.annotations.Order} or {@link com.wiredi.runtime.domain.Ordered}
+ * Instances should consider to use {@link com.wiredi.annotations.Order} or {@link Ordered}
  * to define executions.
  * If multiple converters can (de)serialize messages, the first that is found will be asked to convert.
  * Ordering the converters allows for control over which converter will be asked first
@@ -20,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * @see Message
  * @see MessagingEngine
  * @see com.wiredi.annotations.Order
- * @see com.wiredi.runtime.domain.Ordered
+ * @see Ordered
  */
 public interface MessageConverter<T, S extends MessageDetails> {
 

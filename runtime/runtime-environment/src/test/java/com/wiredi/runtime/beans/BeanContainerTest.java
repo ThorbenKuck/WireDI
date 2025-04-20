@@ -2,7 +2,6 @@ package com.wiredi.runtime.beans;
 
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.OnDemandInjector;
-import com.wiredi.runtime.ServiceLoader;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
@@ -11,7 +10,6 @@ import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
-import com.wiredi.runtime.domain.provider.sources.FixedIdentifiableProviderSource;
 import com.wiredi.tests.CaptureOutput;
 import com.wiredi.tests.CapturedOutput;
 import org.jetbrains.annotations.NotNull;

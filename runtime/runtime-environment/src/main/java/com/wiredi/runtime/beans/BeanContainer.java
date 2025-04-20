@@ -1,7 +1,6 @@
 package com.wiredi.runtime.beans;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.ServiceLoader;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.async.DataAccess;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.wiredi.runtime.domain.Ordered.ordered;
+import static com.wiredi.runtime.lang.Ordered.ordered;
 import static com.wiredi.runtime.lang.Preconditions.is;
 
 /**

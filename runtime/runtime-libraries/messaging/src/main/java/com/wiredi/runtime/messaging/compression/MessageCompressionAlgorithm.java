@@ -1,12 +1,15 @@
 package com.wiredi.runtime.messaging.compression;
 
+import com.wiredi.runtime.messaging.Message;
+import com.wiredi.runtime.messaging.MessageDetails;
+
 import java.util.List;
 
 public interface MessageCompressionAlgorithm {
 
-    byte[] compress(byte[] bytes);
+    <T extends MessageDetails> Message<T> compress(Message<T> input);
 
-    byte[] decompress(byte[] bytes);
+    <T extends MessageDetails> Message<T> decompress(Message<T> input);
 
     List<String> identifiers();
 

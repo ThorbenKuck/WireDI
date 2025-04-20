@@ -1,6 +1,5 @@
-package com.wiredi.runtime.domain;
+package com.wiredi.runtime.lang;
 
-import com.wiredi.annotations.Order;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +18,7 @@ import java.util.List;
  * This interface is allowing for integration into the existing {@link Comparable} logic of java.
  * If multiple Ordered instances have the same order, the original order is preserved.
  * <p>
- * If any element in the collection does not implement this interface, it is considered to be a {@link Order#FIRST}.
+ * If any element in the collection does not implement this interface, it is considered to be a {@link Ordered#FIRST}.
  * <p>
  * <b>Relative orders</b>
  * <p>
@@ -27,34 +26,14 @@ import java.util.List;
  * However, sometimes you want to make sure that a certain element is ordered before or after another one.
  * For that you can use the {@link Ordered#before(Integer)} and {@link Ordered#after(Integer)} methods.
  * <p>
- * These methods neatly tie in with {@link Order#before()} and {@link Order#after()}.
- * <p>
- * <b>Special Orders</b>
- * <p>
- * By default, all Ordered instances have order 0.
- * This allows other Orders to append or prepend themselves.
- * If you do not have special use cases, it is recommended to use 0 or a close number.
- * <p>
- * If you want to make sure that nothing can come before your instance,
- * you can use {@link Integer#MIN_VALUE}, or {@link Order#FIRST}.
- * This way there is no other Ordered instance before yours, except for instances that also have order first.
- * <p>
- * The same is true if you do not want to have instances after your instance.
- * You can use {@link Order#LAST} or {@link Integer#MAX_VALUE}.
- * <p>
- * Another common order number is {@link Order#AUTO_CONFIGURATION}.
- * This number is the common threshold for classes annotated with {@link com.wiredi.annotations.stereotypes.AutoConfiguration}.
- * It allows for a sufficient distance to normal wire candidates, as well as still a lot of room for
- * appending/prepending other wire candidates.
  *
- * @see Order
  * @see OrderedComparator
  */
 public interface Ordered extends Comparable<Ordered> {
 
-    int LAST = Order.LAST;
-    int FIRST = Order.FIRST;
-    int DEFAULT = Order.DEFAULT;
+    int LAST = Integer.MAX_VALUE;
+    int FIRST = Integer.MIN_VALUE;
+    int DEFAULT = 0;
 
     static int compare(Ordered o1, Ordered o2) {
         return Integer.compare(o1.getOrder(), o2.getOrder());

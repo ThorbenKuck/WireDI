@@ -220,8 +220,10 @@ public class WiredApplicationInstance {
 
         @Override
         public void tearDown(WireRepository origin) {
-            logger.info(() -> "Application shutdown detected");
-            barrier.open();
+            if (barrier.isClosed()) {
+                logger.info(() -> "Application shutdown detected");
+                barrier.open();
+            }
         }
 
         @Override

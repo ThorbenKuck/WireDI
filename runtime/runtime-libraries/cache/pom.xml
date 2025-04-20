@@ -20,6 +20,10 @@
             <groupId>com.wiredi</groupId>
             <artifactId>lang</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>metrics</artifactId>
+        </dependency>
     </dependencies>
 
     <distributionManagement>

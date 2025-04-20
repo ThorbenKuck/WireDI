@@ -19,7 +19,9 @@
         <module>jackson</module>
         <module>logging</module>
         <module>messaging</module>
+        <module>metrics</module>
         <module>retry</module>
+        <module>security</module>
     </modules>
 
     <dependencyManagement>

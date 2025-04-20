@@ -7,7 +7,7 @@ import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.compiler.repository.CompilerRepositoryCallback;
 import com.wiredi.runtime.collections.TypeMap;
-import com.wiredi.runtime.domain.OrderedComparator;
+import com.wiredi.runtime.lang.OrderedComparator;
 
 import java.util.*;
 import java.util.function.Consumer;

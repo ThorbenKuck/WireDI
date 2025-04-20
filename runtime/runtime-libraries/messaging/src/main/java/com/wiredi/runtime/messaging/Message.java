@@ -180,7 +180,7 @@ public interface Message<D extends MessageDetails> {
      */
     @NotNull
     static Message<MessageDetails> just(@NotNull InputStream inputStream) {
-        return new InputStreamMessage<>(inputStream, -1, new MessageHeaders(), MessageDetails.NONE);
+        return new InputStreamMessage<>(inputStream, new MessageHeaders(), MessageDetails.NONE, true);
     }
 
     /**
@@ -322,4 +322,27 @@ public interface Message<D extends MessageDetails> {
      * @return the InputStream to read the body
      */
     @NotNull InputStream inputStream();
+
+    Message<D> copyWithPayload(InputStream inputStream);
+
+    Message<D> copyWithPayload(byte[] bytes);
+
+    /**
+     * Whether this message is chunked.
+     * <p>
+     * If true,
+     * processing systems should respect the behavior and prioritize using the {@link #inputStream()}} method
+     * over directly accessing the {@link #body()}.
+     *
+     * @return whether this message is chunked.
+     */
+    boolean isChunked();
+
+    /**
+     * Indicate if this Message is chunked.
+     *
+     * @param chunked the chunked state to set.
+     * @return this
+     */
+    Message<D> setChunked(boolean chunked);
 }

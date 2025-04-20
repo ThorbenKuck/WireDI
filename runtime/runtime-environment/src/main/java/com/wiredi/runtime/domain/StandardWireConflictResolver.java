@@ -2,6 +2,7 @@ package com.wiredi.runtime.domain;
 
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;

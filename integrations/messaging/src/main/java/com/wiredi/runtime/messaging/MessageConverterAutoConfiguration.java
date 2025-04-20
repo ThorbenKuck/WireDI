@@ -7,6 +7,7 @@ import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 import com.wiredi.runtime.messaging.compression.MessageCompression;
 import com.wiredi.runtime.messaging.compression.MessageCompressionAlgorithm;
 import com.wiredi.runtime.messaging.converters.ByteArrayMessageConverter;
+import com.wiredi.runtime.messaging.converters.ResourceMessageConverter;
 import com.wiredi.runtime.messaging.converters.StringMessageConverter;
 
 import java.util.List;
@@ -86,5 +87,10 @@ public class MessageConverterAutoConfiguration {
     @Provider
     public ByteArrayMessageConverter byteArrayMessageConverter() {
         return new ByteArrayMessageConverter();
+    }
+
+    @Provider
+    public ResourceMessageConverter resourceMessageConverter() {
+        return new ResourceMessageConverter();
     }
 }

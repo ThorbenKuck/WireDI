@@ -1,5 +1,7 @@
 package com.wiredi.runtime.domain;
 
+import com.wiredi.runtime.lang.Ordered;
+import com.wiredi.runtime.lang.OrderedComparator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;

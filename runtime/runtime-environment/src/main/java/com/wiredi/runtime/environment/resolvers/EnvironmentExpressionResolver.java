@@ -1,6 +1,6 @@
 package com.wiredi.runtime.environment.resolvers;
 
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.environment.Placeholder;
 

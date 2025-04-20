@@ -2,7 +2,7 @@ package com.wiredi.runtime.environment.builtin;
 
 import com.google.auto.service.AutoService;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.domain.Ordered;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import org.jetbrains.annotations.NotNull;
 

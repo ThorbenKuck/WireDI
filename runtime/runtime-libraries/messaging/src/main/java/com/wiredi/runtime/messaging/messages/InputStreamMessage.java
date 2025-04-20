@@ -7,10 +7,7 @@ import com.wiredi.runtime.messaging.MessageHeaders;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.UncheckedIOException;
+import java.io.*;
 
 /**
  * This is an implementation of the {@link Message} which takes the body from an input stream.
@@ -29,34 +26,19 @@ import java.io.UncheckedIOException;
  * @see Message
  * @see SimpleMessage
  */
-public class InputStreamMessage<D extends MessageDetails> implements Message<D> {
+public class InputStreamMessage<D extends MessageDetails> extends AbstractMessage<D> {
 
-    private final long bodySize;
     @NotNull
     private final InputStream inputStream;
-    @NotNull
-    private final MessageHeaders headers;
-    @NotNull
-    private final D messageDetails;
 
     public InputStreamMessage(
             @NotNull InputStream inputStream,
-            long bodySize,
             @NotNull MessageHeaders headers,
-            @NotNull D messageDetails
+            @NotNull D messageDetails,
+            boolean chunked
     ) {
-        this.bodySize = bodySize;
-        this.headers = headers;
+        super(headers, messageDetails, chunked);
         this.inputStream = inputStream;
-        this.messageDetails = messageDetails;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public @NotNull MessageHeaders headers() {
-        return headers;
     }
 
     /**
@@ -76,15 +58,11 @@ public class InputStreamMessage<D extends MessageDetails> implements Message<D> 
      */
     @Override
     public long bodySize() {
-        return bodySize;
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    @Override
-    public @NotNull D details() {
-        return messageDetails;
+        try {
+            return inputStream().available();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     /**
@@ -109,7 +87,6 @@ public class InputStreamMessage<D extends MessageDetails> implements Message<D> 
         private final InputStream inputStream;
         @NotNull
         private MessageDetails messageDetails = MessageDetails.NONE;
-        private long bodySize = -1;
 
         public Builder(InputStream inputStream) {
             this.inputStream = inputStream;
@@ -118,12 +95,6 @@ public class InputStreamMessage<D extends MessageDetails> implements Message<D> 
         @NotNull
         public MessageHeaders.Builder headers() {
             return headers;
-        }
-
-        @NotNull
-        public Builder<S> withBodySize(long bodySize) {
-            this.bodySize = bodySize;
-            return this;
         }
 
         @NotNull
@@ -170,9 +141,9 @@ public class InputStreamMessage<D extends MessageDetails> implements Message<D> 
         public InputStreamMessage<S> build() {
             return new InputStreamMessage<>(
                     inputStream,
-                    bodySize,
                     headers.build(),
-                    (S) messageDetails
+                    (S) messageDetails,
+                    true
             );
         }
     }

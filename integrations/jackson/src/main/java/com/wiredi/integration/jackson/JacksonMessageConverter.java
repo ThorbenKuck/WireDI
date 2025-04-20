@@ -28,10 +28,6 @@ public class JacksonMessageConverter implements MessageConverter<Object, Message
         this.objectMapper = objectMapper;
     }
 
-    public JacksonMessageConverter() {
-        this(new ObjectMapper().findAndRegisterModules());
-    }
-
     @Override
     public boolean canDeserialize(@NotNull Message<?> message, @NotNull Class<?> targetType) {
         return objectMapper.canDeserialize(SimpleType.constructUnsafe(targetType));

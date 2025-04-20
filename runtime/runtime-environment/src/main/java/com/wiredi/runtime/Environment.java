@@ -1,7 +1,7 @@
 package com.wiredi.runtime;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.domain.OrderedComparator;
+import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.environment.DefaultEnvironmentKeys;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.environment.Placeholder;
