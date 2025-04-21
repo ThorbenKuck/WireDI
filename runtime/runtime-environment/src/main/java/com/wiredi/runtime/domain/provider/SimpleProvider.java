@@ -160,6 +160,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         Buildable<T> withSingleton(boolean singleton);
         Buildable<T> withPrimary(boolean primary);
         Buildable<T> withCondition(LoadCondition condition);
+        Buildable<T> withCondition(LoadCondition.Builder conditionBuilder);
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType);
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData);
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer);
@@ -366,6 +367,18 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         /**
          * Sets a load condition for this provider.
          *
+         * @param conditionBuilder the load condition builder
+         * @return this builder
+         */
+        @Override
+        public Builder<T> withCondition(LoadCondition.Builder conditionBuilder) {
+            this.condition = conditionBuilder.build();
+            return this;
+        }
+
+        /**
+         * Sets a load condition for this provider.
+         *
          * @param conditionType the load condition
          * @return this builder
          */
@@ -383,7 +396,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          */
         @Override
         public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData) {
-            this.condition = LoadCondition.forEvaluator(conditionType)
+            this.condition = LoadCondition.of(conditionType)
                     .withAnnotation(annotationMetaData)
                     .build();
             return this;
@@ -397,7 +410,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          */
         @Override
         public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer) {
-            LoadCondition.Builder builder = LoadCondition.forEvaluator(conditionType);
+            LoadCondition.Builder builder = LoadCondition.of(conditionType);
             builderConsumer.accept(builder);
             this.condition = builder.build();
             return this;

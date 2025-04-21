@@ -2,9 +2,9 @@ package com.wiredi.runtime.domain.conditional.builtin;
 
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.AnnotationMetaData;
-import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.SimpleProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.domain.provider.condition.SingleLoadCondition;
+import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -18,18 +18,18 @@ class ConditionalOnMissingClassTest {
         WireRepository repository = WireRepository.create();
 
         // Create a provider with ConditionalOnMissingClass for a non-existent class
-        repository.announce(
-                IdentifiableProvider.singleton(new ConditionalOnClassTest.TestComponentWithExistingClass())
-                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnClass.class)
-                                .withField("className", "com.nonexistent.SomeClass")
-                                .build()))
-        );
+        SimpleProvider<TestComponent> provider = SimpleProvider.builder(new TestComponent())
+                .withCondition(
+                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnMissingClass.class)
+                                .withField("className", "com.nonexistent.SomeClass"))
+                ).build();
 
         // Act
+        repository.announce(provider);
         repository.load();
 
         // Assert
-        assertTrue(repository.contains(TypeIdentifier.of(TestComponentWithMissingClass.class)));
+        assertTrue(repository.contains(TypeIdentifier.of(TestComponent.class)));
     }
 
     @Test
@@ -38,24 +38,21 @@ class ConditionalOnMissingClassTest {
         WireRepository repository = WireRepository.create();
 
         // Create a provider with ConditionalOnMissingClass for String (which always exists)
-        repository.announce(
-                IdentifiableProvider.singleton(new ConditionalOnClassTest.TestComponentWithExistingClass())
-                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnClass.class)
-                                .withField("className", "java.lang.String")
-                                .build()))
-        );
+        SimpleProvider<TestComponent> provider = SimpleProvider.builder(new TestComponent())
+                .withCondition(
+                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnMissingClass.class)
+                                .withField("className", "java.lang.String"))
+                ).build();
 
         // Act
+        repository.announce(provider);
         repository.load();
 
         // Assert
-        assertFalse(repository.contains(TypeIdentifier.of(TestComponentWithExistingClass.class)));
+        assertFalse(repository.contains(TypeIdentifier.of(TestComponent.class)));
     }
 
     // Test components
-    static class TestComponentWithMissingClass {
-    }
-
-    static class TestComponentWithExistingClass {
+    static class TestComponent {
     }
 }

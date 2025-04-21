@@ -24,8 +24,28 @@ public interface LoadCondition {
      * @param evaluatorClass the condition evaluator class
      * @return a new builder instance
      */
-    static Builder forEvaluator(Class<? extends ConditionEvaluator> evaluatorClass) {
+    static Builder of(Class<? extends ConditionEvaluator> evaluatorClass) {
         return new Builder(evaluatorClass);
+    }
+
+    /**
+     * Creates a new builder for a condition using the specified evaluator.
+     *
+     * @param evaluatorClass the condition evaluator class
+     * @return a new builder instance
+     */
+    static LoadCondition of(Class<? extends ConditionEvaluator> evaluatorClass, AnnotationMetaData annotationMetaData) {
+        return new Builder(evaluatorClass).withAnnotation(annotationMetaData).build();
+    }
+
+    /**
+     * Creates a new builder for a condition using the specified evaluator.
+     *
+     * @param evaluatorClass the condition evaluator class
+     * @return a new builder instance
+     */
+    static LoadCondition of(Class<? extends ConditionEvaluator> evaluatorClass, AnnotationMetaData.Builder annotationMetaDataBuilder) {
+        return new Builder(evaluatorClass).withAnnotation(annotationMetaDataBuilder.build()).build();
     }
 
     default LoadCondition add(Class<? extends ConditionEvaluator> evaluatorType) {
@@ -101,6 +121,16 @@ public interface LoadCondition {
          */
         public Builder withAnnotation(AnnotationMetaData annotation) {
             this.annotation = annotation;
+            return this;
+        }
+
+        /**
+         * Adds a field to the annotation metadata.
+
+         * @return this builder
+         */
+        public Builder withAnnotation(AnnotationMetaData.Builder annotationBuilder) {
+            this.annotation = annotationBuilder.build();
             return this;
         }
 
