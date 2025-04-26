@@ -19,7 +19,7 @@ import org.jetbrains.annotations.NotNull;
 public final class TestClassIdentifiableProvider implements IdentifiableProvider<TestClass> {
     @NotNull
     public static final List<QualifierType> QUALIFIER = List.of(
-        QualifierType.newInstance("jakarta.inject.Named")
+        QualifierType.builder("jakarta.inject.Named")
             .add("value", "TestClass")
             .build()
     );

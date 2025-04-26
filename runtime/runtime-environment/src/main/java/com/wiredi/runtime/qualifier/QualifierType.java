@@ -1,33 +1,34 @@
 package com.wiredi.runtime.qualifier;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public record QualifierType(String name, Map<String, List<String>> values) {
+public record QualifierType(@NotNull String name, @NotNull Map<@NotNull String, @NotNull List<@NotNull String>> values) {
 
-    public QualifierType(String name, Map<String, List<String>> values) {
-        this.name = name;
-        this.values = Collections.unmodifiableMap(values);
+    @NotNull
+    public static QualifierType just(@NotNull String name) {
+        return builder(name).build();
     }
 
-    public static QualifierType just(String name) {
-        return newInstance(name).build();
+    @NotNull
+    public static QualifierType just(@NotNull Class<? extends Annotation> type) {
+        return builder(type).build();
     }
 
-    public static QualifierType just(Class<? extends Annotation> type) {
-        return newInstance(type).build();
-    }
-
-    public static Builder newInstance(String name) {
+    @NotNull
+    public static Builder builder(@NotNull String name) {
         return new Builder(name);
     }
 
-    public static Builder newInstance(Class<? extends Annotation> type) {
-        return newInstance(type.getName());
+    @NotNull
+    public static Builder builder(@NotNull Class<? extends Annotation> type) {
+        return builder(type.getName());
     }
 
-    public void forEach(BiConsumer<String, Object> consumer) {
+    public void forEach(@NotNull BiConsumer<@NotNull String, @NotNull Object> consumer) {
         values.forEach((key, values) -> {
             values.forEach(value -> consumer.accept(key, value));
         });
@@ -42,7 +43,7 @@ public record QualifierType(String name, Map<String, List<String>> values) {
     }
 
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         if (values.isEmpty()) {
             return "Qualifier(" + name + ")";
         } else {
@@ -52,14 +53,15 @@ public record QualifierType(String name, Map<String, List<String>> values) {
 
     public static class Builder {
 
-        private final String name;
-        private final Map<String, List<String>> values = new HashMap<>();
+        @NotNull private final String name;
+        @NotNull private final Map<@NotNull String, @NotNull List<@NotNull String>> values = new HashMap<>();
 
-        public Builder(String name) {
+        public Builder(@NotNull String name) {
             this.name = name;
         }
 
-        public Builder add(String name, Object... values) {
+        @NotNull
+        public Builder add(@NotNull String name, @NotNull Object... values) {
             // Support annotations and arrays
             for (Object value : values) {
                 if (value instanceof Class<?> c) {
@@ -74,24 +76,29 @@ public record QualifierType(String name, Map<String, List<String>> values) {
             return this;
         }
 
-        public Builder add(String name, Enum<?> value) {
+        @NotNull
+        public Builder add(@NotNull String name, @NotNull Enum<?> value) {
             return add(name, value.name());
         }
 
-        public Builder add(String name, Class<?> value) {
+        @NotNull
+        public Builder add(@NotNull String name, @NotNull Class<?> value) {
             return add(name, value.getName());
         }
 
-        public Builder add(String name, String value) {
+        @NotNull
+        public Builder add(@NotNull String name, @NotNull String value) {
             this.values.computeIfAbsent(name, (k) -> new ArrayList<>()).add(value);
             return this;
         }
 
-        public Builder addAll(Map<String, Object> values) {
+        @NotNull
+        public Builder addAll(@NotNull Map<@NotNull String, @NotNull Object> values) {
             values.forEach(this::add);
             return this;
         }
 
+        @NotNull
         public QualifierType build() {
             return new QualifierType(name, values);
         }

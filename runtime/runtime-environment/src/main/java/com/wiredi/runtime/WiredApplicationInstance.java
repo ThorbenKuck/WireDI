@@ -26,6 +26,41 @@ import java.util.Objects;
 import static com.wiredi.runtime.lang.Preconditions.is;
 import static com.wiredi.runtime.lang.Preconditions.isNot;
 
+/**
+ * Represents a running instance of a wired application.
+ * <p>
+ * This class is responsible for managing the lifecycle of a WireDI application, including:
+ * <ul>
+ *   <li>Starting up the application and loading the {@link WireRepository}</li>
+ *   <li>Synchronizing {@link StateFull} instances during startup</li>
+ *   <li>Managing the application's completion state through a {@link Barrier}</li>
+ *   <li>Shutting down the application and cleaning up resources</li>
+ * </ul>
+ * <p>
+ * Instances of this class are typically created by the {@link WiredApplication} class
+ * and shouldn't be created directly.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * // Start an application and get the instance
+ * WiredApplicationInstance instance = WiredApplication.start();
+ * 
+ * // Check if the application is running
+ * if (instance.isRunning()) {
+ *     // Do something while the application is running
+ * }
+ * 
+ * // Wait for the application to complete
+ * instance.awaitCompletion();
+ * 
+ * // Shut down the application
+ * instance.shutdown();
+ * }</pre>
+ * 
+ * @see WiredApplication
+ * @see WireRepository
+ * @see Barrier
+ */
 public class WiredApplicationInstance {
 
     private static final Logging logger = Logging.getInstance(WiredApplicationInstance.class);
@@ -41,6 +76,15 @@ public class WiredApplicationInstance {
     private final List<WireRepositoryContextCallbacks> contextCallbacks = serviceLoader.contextCallbacks();
     private boolean isRunning = false;
 
+    /**
+     * Creates a new WiredApplicationInstance.
+     * <p>
+     * This constructor is typically called by the {@link WiredApplication} class
+     * and should not be called directly.
+     *
+     * @param wireRepository the wire repository to use for this application instance
+     * @param barrier the barrier to use for managing the application's completion state
+     */
     public WiredApplicationInstance(
             @NotNull WireRepository wireRepository,
             @NotNull Barrier barrier
@@ -51,7 +95,24 @@ public class WiredApplicationInstance {
         this.banner = new Banner(wireRepository.environment());
     }
 
-    Timed runStartupRoutine() {
+    /**
+     * Runs the startup routine for this application instance.
+     * <p>
+     * This method is called by the {@link WiredApplication} class during application startup.
+     * It performs the following tasks:
+     * <ul>
+     *   <li>Loads the environment and prints the banner</li>
+     *   <li>Loads the wire repository if it's not already loaded</li>
+     *   <li>Synchronizes {@link StateFull} instances if configured to do so</li>
+     *   <li>Registers a shutdown hook to clean up resources when the JVM terminates</li>
+     * </ul>
+     * <p>
+     * This method is package-private, so that it can be run by the {@link WiredApplication} class,
+     * but it isn't recommended to run it directly.
+     *
+     * @return a {@link Timed} instance containing timing information for the startup routine
+     */
+    @NotNull Timed start() {
         isNot(isRunning, () -> "The WiredApplication is already started");
         return Timed.of(() -> {
                     contextCallbacks.addAll(wireRepository.getAll(WireRepositoryContextCallbacks.class));
@@ -91,6 +152,22 @@ public class WiredApplicationInstance {
                 .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireRepository)));
     }
 
+    /**
+     * Shuts down this application instance.
+     * <p>
+     * This method performs the following tasks:
+     * <ul>
+     *   <li>Calls {@link StateFull#dismantleState()} on all {@link StateFull} instances</li>
+     *   <li>Calls {@link Disposable#tearDown(WireRepository)} on all {@link Disposable} instances</li>
+     *   <li>Clears the environment</li>
+     *   <li>Notifies all context callbacks that the application is being destroyed</li>
+     *   <li>Clears the wire repository</li>
+     *   <li>Removes the shutdown hook if this method is not called from the shutdown hook</li>
+     * </ul>
+     *
+     * @return a {@link Timed} instance containing timing information for the shutdown process
+     * @throws IllegalStateException if the application is not running
+     */
     @NotNull
     public Timed shutdown() {
         is(isRunning, () -> "The WiredApplication is not started");
@@ -118,6 +195,14 @@ public class WiredApplicationInstance {
                 .then(() -> isRunning = false);
     }
 
+    /**
+     * Synchronizes on all {@link StateFull} instances in the wire repository.
+     * <p>
+     * This method waits for all {@link StateFull} instances to have their state set
+     * before returning. If a timeout is specified, it will wait for at most that duration.
+     *
+     * @param timeout the maximum duration to wait, or null to wait indefinitely
+     */
     private void synchronizeOnStates(@Nullable Duration timeout) {
         // Writing StateFull<?> right here leads to compile time errors, this
         // is why we explicitly skip the raw type inspection with the following comment
@@ -134,36 +219,92 @@ public class WiredApplicationInstance {
         }
     }
 
+    /**
+     * Checks if this application instance has completed.
+     * <p>
+     * An application is considered completed when its barrier is open.
+     * This typically happens when the application is shut down.
+     *
+     * @return true if the application has completed, false otherwise
+     */
     public boolean isCompleted() {
         return barrier.isOpen();
     }
 
+    /**
+     * Checks if this application instance is waiting for completion.
+     * <p>
+     * An application is considered to be waiting for completion when its barrier is closed.
+     * This is the normal state of a running application.
+     *
+     * @return true if the application is waiting for completion, false otherwise
+     */
     public boolean isWaitingForCompletion() {
         return barrier.isClosed();
     }
 
+    /**
+     * Checks if this application instance is running.
+     * <p>
+     * An application is considered running after its startup routine has completed
+     * and before it is shut down.
+     *
+     * @return true if the application is running, false otherwise
+     */
     public boolean isRunning() {
         return isRunning;
     }
 
+    /**
+     * Checks if this application instance is not running.
+     * <p>
+     * This is the opposite of {@link #isRunning()}.
+     *
+     * @return true if the application is not running, false otherwise
+     */
     public boolean isNotRunning() {
         return !isRunning;
     }
 
+    /**
+     * Waits for this application instance to complete.
+     * <p>
+     * This method blocks until the application's barrier is open,
+     * which typically happens when the application is shut down.
+     */
     public void awaitCompletion() {
         barrier.traverse();
     }
 
+    /**
+     * Gets the wire repository used by this application instance.
+     *
+     * @return the wire repository
+     */
     public WireRepository wireRepository() {
         return wireRepository;
     }
 
+    /**
+     * Gets the banner used by this application instance.
+     *
+     * @return the banner
+     */
     public Banner banner() {
         return banner;
     }
 
+    /**
+     * Gets the environment used by this application instance.
+     *
+     * @return the environment
+     */
     public Environment environment() {
         return environment;
+    }
+
+    public List<WireRepositoryContextCallbacks> getContextCallbacks() {
+        return contextCallbacks;
     }
 
     static class ShutdownListenerProvider implements IdentifiableProvider<ShutdownListener> {

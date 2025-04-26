@@ -28,12 +28,12 @@ public class CompositeOutputStream extends OutputStream {
     }
 
     @Override
-    public void write(@NotNull byte[] b) throws IOException {
+    public void write(byte @NotNull [] b) throws IOException {
         forEach(composite -> composite.write(b));
     }
 
     @Override
-    public void write(@NotNull byte[] b, int off, int len) throws IOException {
+    public void write(byte @NotNull [] b, int off, int len) throws IOException {
         forEach(composite -> composite.write(b, off, len));
     }
 
@@ -47,8 +47,8 @@ public class CompositeOutputStream extends OutputStream {
         forEach(OutputStream::close);
     }
 
-    private void forEach(ThrowingConsumer<OutputStream, IOException> consumer) throws IOException {
-        CompositeIOException compositeIOException = new CompositeIOException();
+    private void forEach(@NotNull ThrowingConsumer<@NotNull OutputStream, @NotNull IOException> consumer) throws IOException {
+        final CompositeIOException compositeIOException = new CompositeIOException();
         for (OutputStream composite : this.composites) {
             try {
                 consumer.accept(composite);

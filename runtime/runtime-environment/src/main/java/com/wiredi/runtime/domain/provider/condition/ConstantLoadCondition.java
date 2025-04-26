@@ -3,6 +3,7 @@ package com.wiredi.runtime.domain.provider.condition;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
+import org.jetbrains.annotations.NotNull;
 
 public class ConstantLoadCondition implements LoadCondition {
 
@@ -13,12 +14,12 @@ public class ConstantLoadCondition implements LoadCondition {
     }
 
     @Override
-    public final boolean matches(WireRepository wireRepository) {
+    public final boolean matches(@NotNull WireRepository wireRepository) {
         return condition;
     }
 
     @Override
-    public LoadCondition add(Class<? extends ConditionEvaluator> evaluatorType, AnnotationMetaData annotationMetaData) {
+    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetaData annotationMetaData) {
         throw new UnsupportedOperationException("Constant load conditions cannot be modified");
     }
 

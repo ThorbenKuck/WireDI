@@ -12,8 +12,22 @@ import java.util.function.Consumer;
 
 /**
  * A base class for implementing states.
+ * <p>
+ * This abstract class provides common functionality for state implementations, including:
+ * <ul>
+ *   <li>Maintaining a value and error state</li>
+ *   <li>Implementing the get(), awaitUntilSet(), isSet(), and ifPresent() methods</li>
+ *   <li>Managing callbacks for when the state is set</li>
+ *   <li>Providing methods for clearing the state and checking if it's "dirty" (has an error)</li>
+ * </ul>
+ * <p>
+ * Concrete implementations of this class should define how the state is set and how
+ * synchronization is handled.
  *
- * @param <T> the value maintained in this state.
+ * @param <T> the type of the value maintained in this state
+ * @see State
+ * @see ModifiableState
+ * @see ReadOnlyState
  */
 public abstract class AbstractState<T> implements State<T> {
 

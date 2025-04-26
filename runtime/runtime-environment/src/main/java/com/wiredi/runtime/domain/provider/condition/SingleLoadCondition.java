@@ -5,6 +5,7 @@ import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.conditional.Conditional;
 import com.wiredi.runtime.domain.conditional.context.ConditionContext;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
@@ -25,14 +26,14 @@ public class SingleLoadCondition extends AbstractLoadCondition {
     }
 
     @Override
-    public boolean matches(WireRepository wireRepository) {
+    public boolean matches(@NotNull WireRepository wireRepository) {
         ConditionContext context = ConditionContext.runtime(wireRepository, annotationMetaData);
         evaluate(wireRepository, context, evaluatorType);
         return context.isMatched();
     }
 
     @Override
-    public LoadCondition add(Class<? extends ConditionEvaluator> evaluatorType, AnnotationMetaData annotationMetaData) {
+    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetaData annotationMetaData) {
         return new BatchLoadCondition(
                 List.of(
                         new LoadConditionEvaluationStage(this.evaluatorType, this.annotationMetaData),

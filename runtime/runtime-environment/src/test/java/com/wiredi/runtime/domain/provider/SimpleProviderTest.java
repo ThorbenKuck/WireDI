@@ -7,6 +7,7 @@ import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnClassEvaluator
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -130,6 +131,20 @@ class SimpleProviderTest {
 
         // Act & Assert
         assertFalse(provider.isSingleton());
+    }
+
+    @Test
+    void shouldSupportSingletonProviders() {
+        // Arrange
+        WireRepository repository = WireRepository.create();
+        SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
+                .withInstance(TestComponent::new)
+                .withSingleton(true)
+                .build();
+
+        // Act & Assert
+        assertTrue(provider.isSingleton());
+        assertSame(provider.get(repository), provider.get(repository));
     }
 
     @Test

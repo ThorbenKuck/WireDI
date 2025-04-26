@@ -10,12 +10,35 @@ import java.time.Duration;
 
 /**
  * A state implementation that allows for modifications.
+ * <p>
+ * This class extends {@link AbstractState} and provides methods for setting the state value
+ * and marking it as dirty (with an error). It uses a {@link SemaphoreBarrier} for synchronization,
+ * allowing threads to wait until the state is set.
+ * <p>
+ * ModifiableState is designed to be used internally by classes that need to maintain and update a state.
+ * It shouldn't be exposed in public APIs and should be limited in scope to the enclosing class.
+ * Instead, it should be exposed as a {@link State} interface to external classes.
+ * <p>
+ * Example usage:
+ * <pre>{@code
+ * public class MyClass {
+ *     private final ModifiableState<MyStateValue> state = State.empty();
  *
- * This class should not be exposed in public apis and limited in scope to the enclosing class.
+ *     public void logic() {
+ *          // Execute business logic
+ *          state.set(new MyStateValue());
+ *     }
  *
- * @param <T>
+ *     public State<MyStateValue> state() {
+ *          return this.state;
+ *     }
+ * }
+ * }</pre>
+ *
+ * @param <T> the type of the value maintained in this state
  * @see State
  * @see ReadOnlyState
+ * @see AbstractState
  */
 public class ModifiableState<T> extends AbstractState<T> {
 

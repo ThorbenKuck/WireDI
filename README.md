@@ -6,7 +6,7 @@
 
 ## Links:
 
-- [Documentation](https://docs.thorbenkuck.de/wiredi)
+- [Documentation](https://wiredi.com/)
 - [Maven-Central](https://repo1.maven.org/maven2/com/github/thorbenkuck/wire-di-bootstrap/)
 
 This project started out as a proof of concept (originally named SimpleDI), to show that dependency injection (or more precisely IOC) could be done at compile time, while keeping the feature set from reflections.

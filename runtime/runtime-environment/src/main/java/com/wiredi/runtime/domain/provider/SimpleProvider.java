@@ -5,16 +5,21 @@ import com.wiredi.runtime.domain.AnnotationMetaData;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.lang.Ordered;
+import com.wiredi.runtime.lang.ThrowingBiFunction;
+import com.wiredi.runtime.lang.ThrowingFunction;
+import com.wiredi.runtime.lang.ThrowingSupplier;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.lang.reflect.UndeclaredThrowableException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 /**
  * A simple implementation of {@link IdentifiableProvider} that can be configured programmatically.
@@ -35,7 +40,7 @@ import java.util.function.Supplier;
  * // Create a conditional provider
  * SimpleProvider<MyService> conditionalProvider = SimpleProvider.builder(MyService.class)
  *     .withInstance(() -> new MyService())
- *     .withCondition(LoadConditionBuilder.forEvaluator(ConditionalOnClassEvaluator.class)
+ *     .withCondition(LoadCondition.builder(ConditionalOnClassEvaluator.class)
  *         .withField("className", "com.example.SomeClass")
  *         .build())
  *     .build();
@@ -48,7 +53,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
     private final TypeIdentifier<T> type;
     private final List<TypeIdentifier<?>> additionalTypes;
     private final List<QualifierType> qualifiers;
-    private final Supplier<T> instanceSupplier;
+    private final ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, ?> instanceSupplier;
     private final LoadCondition condition;
     private final int order;
     private final boolean singleton;
@@ -58,11 +63,16 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         this.type = builder.type;
         this.additionalTypes = List.copyOf(builder.additionalTypes);
         this.qualifiers = List.copyOf(builder.qualifiers);
-        this.instanceSupplier = builder.instanceSupplier;
         this.condition = builder.condition;
         this.order = builder.order;
         this.singleton = Objects.requireNonNullElse(builder.singleton, false);
         this.primary = builder.primary;
+
+        if (this.singleton) {
+            instanceSupplier = new CachingFunction<>(builder.instanceFunction);
+        } else {
+            instanceSupplier = builder.instanceFunction;
+        }
     }
 
     /**
@@ -91,7 +101,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
      * Creates a new builder for a SimpleProvider.
      *
      * @param instance the instance to use
-     * @param <T>  the type parameter
+     * @param <T>      the type parameter
      * @return a new builder
      */
     public static <T> Builder<T> builder(T instance) {
@@ -112,11 +122,6 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
     @Override
     public @NotNull List<QualifierType> qualifiers() {
         return qualifiers;
-    }
-
-    @Override
-    public @NotNull T get(@NotNull WireRepository wireRepository) {
-        return instanceSupplier.get();
     }
 
     @Override
@@ -141,29 +146,74 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
 
     @Override
     public @Nullable T get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> concreteType) {
-        return instanceSupplier.get();
+        try {
+            return instanceSupplier.apply(wireRepository, concreteType);
+        } catch (Throwable e) {
+            switch (e) {
+                case RuntimeException runtimeException -> throw runtimeException;
+                case Error error -> throw error;
+                case IOException ioException -> throw new UncheckedIOException(ioException);
+                default -> throw new UndeclaredThrowableException(e);
+            }
+        }
     }
 
-
-
     public interface Buildable<T> {
-        Builder<T> withInstance(Supplier<T> instanceSupplier);
         Builder<T> withInstance(T instance);
+
+        <E extends Throwable> Builder<T> withInstance(ThrowingSupplier<T, E> instanceSupplier);
+
+        <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireRepository, T, E> instanceFunction);
+
+        <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> instanceFunction);
+
         Buildable<T> withAdditionalType(TypeIdentifier<?> additionalType);
+
         Buildable<T> withAdditionalType(Class<?> additionalType);
+
         Buildable<T> withAdditionalTypes(Class<?>... additionalType);
+
         Buildable<T> withAdditionalTypes(TypeIdentifier<?>... additionalType);
+
         Buildable<T> withAdditionalTypes(List<TypeIdentifier<?>> additionalType);
+
         Buildable<T> withQualifier(QualifierType qualifier);
+
         Buildable<T> withQualifier(String qualifier);
+
         Buildable<T> withOrder(int order);
+
         Buildable<T> withSingleton(boolean singleton);
+
         Buildable<T> withPrimary(boolean primary);
+
         Buildable<T> withCondition(LoadCondition condition);
+
         Buildable<T> withCondition(LoadCondition.Builder conditionBuilder);
+
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType);
+
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData);
+
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer);
+    }
+
+    private class CachingFunction<E extends Throwable> implements ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> {
+
+        private final ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> delegate;
+        private T instance;
+
+        private CachingFunction(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public T apply(WireRepository wireRepository, TypeIdentifier<T> s) throws E {
+            if (instance == null) {
+                instance = delegate.apply(wireRepository, s);
+            }
+            return instance;
+        }
     }
 
     /**
@@ -175,7 +225,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         private final TypeIdentifier<T> type;
         private final Set<TypeIdentifier<?>> additionalTypes = new HashSet<>();
         private final Set<QualifierType> qualifiers = new HashSet<>();
-        private Supplier<T> instanceSupplier;
+        private ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, ?> instanceFunction;
         private LoadCondition condition = null;
         private int order = Ordered.DEFAULT;
         private Boolean singleton = null;
@@ -192,12 +242,52 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          * @return this builder
          */
         @Override
-        public Builder<T> withInstance(Supplier<T> instanceSupplier) {
-            if (this.instanceSupplier != null) {
+        public <E extends Throwable> Builder<T> withInstance(ThrowingSupplier<T, E> instanceSupplier) {
+            if (this.instanceFunction != null) {
                 throw new IllegalStateException("Instance supplier already set");
             }
 
-            this.instanceSupplier = instanceSupplier;
+            this.instanceFunction = (repository, typeIdentifier) -> instanceSupplier.get();
+            if (this.singleton == null) {
+                this.singleton = false;
+            }
+
+            return this;
+        }
+
+        /**
+         * Sets the instance supplier for this provider.
+         *
+         * @param instanceFunction the function that will create instances
+         * @return this builder
+         */
+        @Override
+        public <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireRepository, T, E> instanceFunction) {
+            if (this.instanceFunction != null) {
+                throw new IllegalStateException("Instance supplier already set");
+            }
+
+            this.instanceFunction = (repository, typeIdentifier) -> instanceFunction.apply(repository);
+            if (this.singleton == null) {
+                this.singleton = false;
+            }
+
+            return this;
+        }
+
+        /**
+         * Sets the instance supplier for this provider.
+         *
+         * @param instanceFunction the bifunction that will create instances
+         * @return this builder
+         */
+        @Override
+        public <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> instanceFunction) {
+            if (this.instanceFunction != null) {
+                throw new IllegalStateException("Instance supplier already set");
+            }
+
+            this.instanceFunction = instanceFunction;
             if (this.singleton == null) {
                 this.singleton = false;
             }
@@ -213,11 +303,11 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          */
         @Override
         public Builder<T> withInstance(T instance) {
-            if (this.instanceSupplier != null) {
+            if (this.instanceFunction != null) {
                 throw new IllegalStateException("Instance supplier already set");
             }
 
-            this.instanceSupplier = () -> instance;
+            this.instanceFunction = (repository, typeIdentifier) -> instance;
             if (this.singleton == null) {
                 this.singleton = true;
             }
@@ -330,6 +420,9 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
 
         /**
          * Sets whether this provider is a singleton.
+         * <p>
+         * If primary is true, the resulting SimpleProvider uses a statefull value to determine its state.
+         * Otherwise, the provider lazily resolves the supplier when demanded.
          *
          * @param singleton true if this provider should provide a singleton instance
          * @return this builder
@@ -396,7 +489,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          */
         @Override
         public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData) {
-            this.condition = LoadCondition.of(conditionType)
+            this.condition = LoadCondition.builder(conditionType)
                     .withAnnotation(annotationMetaData)
                     .build();
             return this;
@@ -410,7 +503,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          */
         @Override
         public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer) {
-            LoadCondition.Builder builder = LoadCondition.of(conditionType);
+            LoadCondition.Builder builder = LoadCondition.builder(conditionType);
             builderConsumer.accept(builder);
             this.condition = builder.build();
             return this;
@@ -422,7 +515,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          * @return the configured SimpleProvider
          */
         public SimpleProvider<T> build() {
-            if (instanceSupplier == null) {
+            if (instanceFunction == null) {
                 throw new IllegalStateException("No instance supplier set for SimpleProvider");
             }
             return new SimpleProvider<>(this);

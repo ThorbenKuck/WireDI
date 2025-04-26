@@ -4,6 +4,8 @@ import com.google.common.primitives.Primitives;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.collections.EnumSet;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.AnnotationMirror;
 import java.lang.annotation.Annotation;
@@ -14,33 +16,39 @@ import java.util.function.Consumer;
 public class AnnotationMetaData {
 
     private static final Logging LOGGER = Logging.getInstance(AnnotationMetaData.class);
-    private final Map<String, Object> fields;
+    @NotNull
+    private final Map<@NotNull String, @Nullable Object> fields;
+    @NotNull
     private final String className;
 
-    public AnnotationMetaData(String className, Map<String, Object> fields) {
+    public AnnotationMetaData(@NotNull String className, @NotNull Map<@NotNull String, @Nullable Object> fields) {
         this.fields = fields;
         this.className = className;
     }
 
     // ########### Builder ###########
-
-    public static Builder newInstance(String className) {
+    @NotNull
+    public static Builder newInstance(@NotNull String className) {
         return new Builder(className);
     }
 
-    public static Builder newInstance(Class<?> type) {
+    @NotNull
+    public static Builder newInstance(@NotNull Class<?> type) {
         return new Builder(type.getName());
     }
 
+    @NotNull
     public static AnnotationMetaData none() {
         return empty("");
     }
 
-    public static AnnotationMetaData empty(String className) {
+    @NotNull
+    public static AnnotationMetaData empty(@NotNull String className) {
         return new AnnotationMetaData(className, Collections.emptyMap());
     }
 
-    public static AnnotationMetaData of(AnnotationMirror mirror) {
+    @NotNull
+    public static AnnotationMetaData of(@NotNull AnnotationMirror mirror) {
         Builder builder = newInstance(mirror.getAnnotationType().asElement().toString());
         mirror.getElementValues().forEach((method, annotationValue) -> {
             Object fieldValue = annotationValue.getValue();
@@ -53,8 +61,8 @@ public class AnnotationMetaData {
         });
         return builder.build();
     }
-
-    public static <T extends Annotation> AnnotationMetaData of(T annotation) {
+    @NotNull
+    public static <T extends Annotation> AnnotationMetaData of(@NotNull T annotation) {
         Class<? extends Annotation> annotationType = annotation.getClass();
         Builder builder = newInstance(annotationType.getName());
 
@@ -77,8 +85,8 @@ public class AnnotationMetaData {
     }
 
     // ########### Accessors ###########
-
-    public Optional<String> get(String field) {
+    @NotNull
+    public Optional<String> get(@NotNull String field) {
         Object value = fields.get(field);
         if (value == null) {
             return Optional.empty();
@@ -91,8 +99,8 @@ public class AnnotationMetaData {
         LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a String, but got the value " + value);
         return Optional.empty();
     }
-
-    public String get(String field, String alternative) {
+    @NotNull
+    public String get(@NotNull String field, @NotNull String alternative) {
         Object value = fields.get(field);
         if (value == null) {
             return alternative;
@@ -105,209 +113,124 @@ public class AnnotationMetaData {
         LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a String, but got the value " + value);
         return alternative;
     }
-
-    public Optional<Boolean> getBoolean(String field) {
+    @NotNull
+    public Optional<Boolean> getBoolean(@NotNull String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
+        Optional<Boolean> result = switch (value) {
+            case Boolean b -> Optional.of(b);
+            case String s -> Optional.of(s).map(Boolean::valueOf);
+            case null, default -> Optional.empty();
+        };
+
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a boolean, but got the value " + value);
         }
 
-        if (value instanceof Boolean b) {
-            return Optional.of(b);
-        } else if (value instanceof String s) {
-            return Optional.of(s).map(Boolean::valueOf);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a boolean, but got the value " + value);
         return Optional.empty();
     }
 
-    public boolean getBoolean(String field, boolean alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Boolean b) {
-            return b;
-        } else if (value instanceof String s) {
-            return Boolean.parseBoolean(s);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a boolean, but got the value " + value);
-        return alternative;
+    public boolean getBoolean(@NotNull String field, boolean alternative) {
+        return getBoolean(field).orElse(alternative);
     }
 
     public Optional<Integer> getInt(String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
-        }
+        Optional<Integer> result = switch (value) {
+            case Integer i -> Optional.of(i);
+            case String s -> Optional.of(s).map(Integer::valueOf);
+            case null, default -> Optional.empty();
+        };
 
-        if (value instanceof Integer) {
-            return Optional.ofNullable((Integer) value);
-        } else if (value instanceof String) {
-            return Optional.ofNullable((String) value).map(Integer::valueOf);
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected an integer, but got the value " + value);
         }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected an integer, but got the value " + value);
         return Optional.empty();
     }
 
     public int getInt(String field, int alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Integer i) {
-            return i;
-        } else if (value instanceof String s) {
-            return Integer.parseInt(s);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected an integer, but got the value " + value);
-        return alternative;
+        return getInt(field).orElse(alternative);
     }
 
     public Optional<Long> getLong(String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
+        Optional<Long> result = switch (value) {
+            case Long i -> Optional.of(i);
+            case String s -> Optional.of(s).map(Long::parseLong);
+            case null, default -> Optional.empty();
+        };
+
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a long, but got the value " + value);
         }
 
-        if (value instanceof Long l) {
-            return Optional.of(l);
-        } else if (value instanceof String s) {
-            return Optional.of(Long.parseLong(s));
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a long, but got the value " + value);
         return Optional.empty();
     }
 
     public long getLong(String field, long alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Long l) {
-            return l;
-        } else if (value instanceof String s) {
-            return Long.parseLong(s);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a long, but got the value " + value);
-        return alternative;
+        return getLong(field).orElse(alternative);
     }
 
     public Optional<Float> getFloat(String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
+        Optional<Float> result = switch (value) {
+            case Float i -> Optional.of(i);
+            case String s -> Optional.of(s).map(Float::parseFloat);
+            case null, default -> Optional.empty();
+        };
+
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a float, but got the value " + value);
         }
 
-        if (value instanceof Float f) {
-            return Optional.of(f);
-        } else if (value instanceof String s) {
-            return Optional.of(Float.parseFloat(s));
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a float, but got the value " + value);
         return Optional.empty();
     }
 
     public float getFloat(String field, float alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Float f) {
-            return f;
-        } else if (value instanceof String s) {
-            return Float.parseFloat(s);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a float, but got the value " + value);
-        return alternative;
+        return getFloat(field).orElse(alternative);
     }
 
     public Optional<Double> getDouble(String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
+        Optional<Double> result = switch (value) {
+            case Double i -> Optional.of(i);
+            case String s -> Optional.of(s).map(Double::parseDouble);
+            case null, default -> Optional.empty();
+        };
+
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a double, but got the value " + value);
         }
 
-        if (value instanceof Double d) {
-            return Optional.of(d);
-        } else if (value instanceof String s) {
-            return Optional.of(Double.parseDouble(s));
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a double, but got the value " + value);
         return Optional.empty();
     }
 
     public double getDouble(String field, double alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Double d) {
-            return d;
-        } else if (value instanceof String s) {
-            return Double.parseDouble(s);
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a double, but got the value " + value);
-        return alternative;
+        return getDouble(field).orElse(alternative);
     }
 
     public Optional<Class<?>> getClass(String field) {
         Object value = fields.get(field);
-        if (value == null) {
-            return Optional.empty();
-        }
+        Optional<Class<?>> result = switch (value) {
+            case Class<?> c -> Optional.of(c);
+            case String s -> Optional.of(s).map(rawValue -> {
+                    try {
+                        return Class.forName(rawValue);
+                    } catch (ClassNotFoundException e) {
+                        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + " as a class. Actual value was a string and parsing the class name failed.", e);
+                        return null;
+                    }
+                });
+            case null, default -> Optional.empty();
+        };
 
-        if (value instanceof Class<?> c) {
-            return Optional.of(c);
-        } else if (value instanceof String s) {
-            return Optional.of(s).map(rawValue -> {
-                try {
-                    return Class.forName(rawValue);
-                } catch (ClassNotFoundException e) {
-                    LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + " as a class. Actual value was a string and parsing the class name failed.", e);
-                    return null;
-                }
-            });
+        if (result.isEmpty()) {
+            LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a class, but got the value " + value);
         }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a class, but got the value " + value);
         return Optional.empty();
     }
 
     public Class<?> getClass(String field, Class<?> alternative) {
-        Object value = fields.get(field);
-        if (value == null) {
-            return alternative;
-        }
-
-        if (value instanceof Class<?> c) {
-            return c;
-        } else if (value instanceof String s) {
-            try {
-                return Class.forName(s);
-            } catch (ClassNotFoundException e) {
-                LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + " as a class. Actual value was a string and parsing the class name failed.", e);
-                return null;
-            }
-        }
-
-        LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a class, but got the value " + value);
-        return alternative;
+        return getClass(field).orElse(alternative);
     }
 
     public <T extends Enum<T>> Optional<T> getEnum(String field, Class<T> enumType) {

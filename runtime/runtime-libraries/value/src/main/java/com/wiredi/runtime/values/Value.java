@@ -56,6 +56,20 @@ public interface Value<T> {
     }
 
     /**
+     * Constructs a new value of a supplier.
+     * <p>
+     * The resulting Value is stateless and just delegated to the supplier.
+     *
+     * @param supplier the supplier to invoke
+     * @param <T>      the type produced by the supplier
+     * @param <E>      the exception type that could be raised
+     * @return a new, stateless value
+     */
+    static <T, E extends Throwable> Value<@NotNull T> of(@NotNull ThrowingSupplier<@Nullable T, E> supplier) {
+        return new LazyStatelessValue<>(supplier);
+    }
+
+    /**
      * Constructs a value that can never hold a null value.
      * <p>
      * A value constructed like this cannot be filled with null.
