@@ -20,7 +20,7 @@ class ConditionalOnMissingClassTest {
         // Create a provider with ConditionalOnMissingClass for a non-existent class
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(new TestComponent())
                 .withCondition(
-                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnMissingClass.class)
+                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.builder(ConditionalOnMissingClass.class)
                                 .withField("className", "com.nonexistent.SomeClass"))
                 ).build();
 
@@ -40,7 +40,7 @@ class ConditionalOnMissingClassTest {
         // Create a provider with ConditionalOnMissingClass for String (which always exists)
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(new TestComponent())
                 .withCondition(
-                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnMissingClass.class)
+                        LoadCondition.of(ConditionalOnMissingClassEvaluator.class, AnnotationMetaData.builder(ConditionalOnMissingClass.class)
                                 .withField("className", "java.lang.String"))
                 ).build();
 

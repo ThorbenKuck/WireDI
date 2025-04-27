@@ -27,7 +27,6 @@ public class Injector {
 
     public Injector() {
         this(new InjectorConfiguration());
-        logger.info(() -> "Constructed a new Injector " + this);
     }
 
     public Injector(InjectorConfiguration configuration) {

@@ -62,7 +62,6 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
     private CompilerRepository repository;
 
     public WireBaseProcessor() {
-        logger.info(() -> "Initializing " + getClass().getSimpleName());
         injector.bind(Logger.class).toConstructor((caller, type) -> Logger.get(caller));
     }
 
@@ -117,7 +116,6 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
             );
 
             doInitialization();
-            logger.info(() -> getClass().getSimpleName() + " initialized");
         } catch (Throwable throwable) {
             logger.error(() -> "Error while setting up the annotation processor " + getClass().getName());
             logger.catching(throwable);
@@ -142,7 +140,6 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
     public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         if (roundEnv.processingOver()) {
-            logger.info(() -> getClass().getSimpleName() + " finalized");
             processingOver();
         } else {
             targetAnnotations().forEach(annotation -> {

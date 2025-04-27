@@ -79,7 +79,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
                     .add("just($S, $L)", methodName, rootMethodInvocation(proxyMethod))
                     .build();
         }
-        codeBlock.add("newInstance($S)\n", methodName).indent();
+        codeBlock.add("builder($S)\n", methodName).indent();
         proxyMethod.parameters().forEach(parameter -> {
             CodeBlock type = typeIdentifiers.newTypeIdentifier(parameter.asType());
             codeBlock.add(".withParameter($S, $L)\n", parameter.getSimpleName(), type);

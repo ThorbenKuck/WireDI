@@ -16,7 +16,7 @@ class ConditionalOnClassEvaluatorTest {
     @Test
     void shouldPassWhenClassExists() {
         // Arrange
-        AnnotationMetaData annotationMetaData = AnnotationMetaData.newInstance(ConditionalOnClass.class)
+        AnnotationMetaData annotationMetaData = AnnotationMetaData.builder(ConditionalOnClass.class)
                 .withField("className", "java.lang.String")
                 .build();
         when(context.annotationMetaData()).thenReturn(annotationMetaData);
@@ -29,7 +29,7 @@ class ConditionalOnClassEvaluatorTest {
     @Test
     void shouldFailWhenClassDoesNotExist() {
         // Arrange
-        AnnotationMetaData annotationMetaData = AnnotationMetaData.newInstance(ConditionalOnClass.class)
+        AnnotationMetaData annotationMetaData = AnnotationMetaData.builder(ConditionalOnClass.class)
                 .withField("className", "com.nonexistent.Class")
                 .build();
         when(context.annotationMetaData()).thenReturn(annotationMetaData);

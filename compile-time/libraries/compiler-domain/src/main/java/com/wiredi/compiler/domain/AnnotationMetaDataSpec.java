@@ -19,7 +19,7 @@ public class AnnotationMetaDataSpec {
         }
 
         CodeBlock.Builder metaDataInitializer = CodeBlock.builder()
-                .add("$T.newInstance($S)", AnnotationMetaData.class, metaData.className())
+                .add("$T.builder($S)", AnnotationMetaData.class, metaData.className())
                 .indent();
         metaData.forEach((field, value) -> appendField(metaDataInitializer, field, value));
         metaDataInitializer.add("\n.build()").unindent();

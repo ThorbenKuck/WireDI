@@ -49,7 +49,7 @@ public class QualifiersMethod implements StandaloneMethodFactory {
 			return CodeBlock.builder().add("$T.just($S)", QualifierType.class, qualifier.name()).build();
 		} else {
 			CodeBlock.Builder builder = CodeBlock.builder()
-					.add("$T.newInstance($S)", QualifierType.class, qualifier.name())
+					.add("$T.builder($S)", QualifierType.class, qualifier.name())
 					.indent();
 			qualifier.forEach((key, value) -> {
 				builder.add("\n.add($S, ", key);

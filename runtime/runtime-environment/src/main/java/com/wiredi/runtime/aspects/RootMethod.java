@@ -39,7 +39,7 @@ public class RootMethod implements AspectHandler {
         return new Builder(methodName).build(aspectHandler);
     }
 
-    public static Builder newInstance(String methodName) {
+    public static Builder builder(String methodName) {
         return new Builder(methodName);
     }
 

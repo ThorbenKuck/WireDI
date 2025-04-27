@@ -16,10 +16,10 @@ class RetryTemplateTest {
     @Test
     public void test() {
         // Arrange
-        RetryTemplate retryTemplate = RetryTemplate.newInstance()
+        RetryTemplate retryTemplate = RetryTemplate.builder()
                 .withFixedBackOff(100, TimeUnit.MILLISECONDS)
                 .withRetryPolicy(
-                        RetryPolicy.newInstance()
+                        RetryPolicy.builder()
                                 .withMaxRetries(2)
                                 .configureExceptionBarrier(barrier -> {
                                     barrier.retryIf().throwableHasType(NullPointerException.class);

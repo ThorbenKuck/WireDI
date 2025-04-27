@@ -27,7 +27,7 @@ public class RetryAspect {
             AnnotationMetaData retryAnnotation = context.findAnnotation(Retry.class).orElseThrow();
             AnnotationMetaData backoffAnnotation = retryAnnotation.getAnnotation("backoff", Backoff.DEFAULT_META_DATA);
 
-            RetryPolicy.Builder retryPolicyBuilder = RetryPolicy.newInstance()
+            RetryPolicy.Builder retryPolicyBuilder = RetryPolicy.builder()
                     .withDelay(Duration.of(
                             backoffAnnotation.getLong("value", 0),
                             backoffAnnotation.getEnum("backoffUnit", TimeUnit.MILLISECONDS).toChronoUnit()
@@ -36,7 +36,7 @@ public class RetryAspect {
             setMaxRetries(retryAnnotation, retryPolicyBuilder);
             setMaxTimeout(retryAnnotation, retryPolicyBuilder);
 
-            return RetryTemplate.newInstance()
+            return RetryTemplate.builder()
                     .withRetryPolicy(retryPolicyBuilder.build())
                     .withBackOff(backOffStrategy(backoffAnnotation))
                     .build();

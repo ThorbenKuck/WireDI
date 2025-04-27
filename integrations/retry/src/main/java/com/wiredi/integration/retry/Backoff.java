@@ -6,7 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 public @interface Backoff {
 
-    AnnotationMetaData DEFAULT_META_DATA = AnnotationMetaData.newInstance("Backoff")
+    AnnotationMetaData DEFAULT_META_DATA = AnnotationMetaData.builder("Backoff")
             .withField("multiplier", 0.0)
             .withField("value", 0L)
             .withEnum("backoffUnit", TimeUnit.MILLISECONDS)

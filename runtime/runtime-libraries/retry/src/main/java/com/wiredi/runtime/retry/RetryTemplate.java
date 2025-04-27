@@ -40,7 +40,7 @@ public class RetryTemplate {
     }
 
     @NotNull
-    public static Builder newInstance() {
+    public static Builder builder() {
         return new Builder();
     }
 

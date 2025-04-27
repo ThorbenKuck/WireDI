@@ -24,7 +24,7 @@ public class TypedPropertiesEnvironmentConfigurationIdentifiableProvider impleme
 
     private static final Value<LoadCondition> LOAD_CONDITION_VALUE = Value.async(() -> new EagerLoadCondition(
             new ConditionalOnPropertyEvaluator(),
-            AnnotationMetaData.newInstance(APPLY_TYPE_CONVERTERS_VALUE)
+            AnnotationMetaData.builder(APPLY_TYPE_CONVERTERS_VALUE)
                     .withField("key", APPLY_TYPE_CONVERTERS_VALUE)
                     .withField("havingValue", "true")
                     .withField("matchIfMissing", "true")

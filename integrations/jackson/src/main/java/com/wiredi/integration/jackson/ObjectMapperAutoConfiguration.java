@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.Module;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
+import com.wiredi.integration.jackson.pagination.PaginationModule;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 
@@ -17,6 +18,11 @@ import java.util.List;
         matchIfMissing = true
 )
 public class ObjectMapperAutoConfiguration {
+
+    @Provider
+    public PaginationModule pageableModule() {
+        return new PaginationModule();
+    }
 
     @Provider
     public ObjectMapper createObjectMapper(List<ObjectMapperConfigurer> configurers, List<Module> modules) {

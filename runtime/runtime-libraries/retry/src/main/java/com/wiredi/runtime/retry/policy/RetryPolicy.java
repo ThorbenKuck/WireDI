@@ -40,7 +40,7 @@ public class RetryPolicy {
         this.exceptionBarrier = exceptionBarrier;
     }
 
-    public static Builder newInstance() {
+    public static Builder builder() {
         return new Builder();
     }
 

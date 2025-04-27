@@ -17,7 +17,7 @@ public class BatchLoadCondition extends AbstractLoadCondition {
         this.evaluators = evaluators;
     }
 
-    public static Builder newInstance() {
+    public static Builder builder() {
         return new Builder();
     }
 

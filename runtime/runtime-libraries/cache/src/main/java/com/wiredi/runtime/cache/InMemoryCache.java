@@ -21,7 +21,7 @@ public class InMemoryCache<K, V> implements Cache<K, V>{
     private int size;
 
     public InMemoryCache(int capacity) {
-        this(InMemoryCacheConfiguration.newInstance().withCapacity(capacity).build());
+        this(InMemoryCacheConfiguration.builder().withCapacity(capacity).build());
     }
 
     public InMemoryCache() {

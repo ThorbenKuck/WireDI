@@ -67,7 +67,7 @@ public class ExecutionChainRegistry implements Eager {
      * @return a new {@link ExecutionChain} with all currently known {@link AspectHandler}
      */
     private ExecutionChain newChain(RootMethod rootMethod) {
-        return ExecutionChain.newInstance(rootMethod)
+        return ExecutionChain.builder(rootMethod)
                 .withProcessors(aspectHandlerList)
                 .build();
     }

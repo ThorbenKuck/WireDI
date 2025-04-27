@@ -51,7 +51,7 @@ public class ExecutionChain {
     }
 
     @NotNull
-    public static Builder newInstance(@NotNull RootMethod rootMethod) {
+    public static Builder builder(@NotNull RootMethod rootMethod) {
         return new Builder(rootMethod);
     }
 

@@ -28,12 +28,12 @@ public class AnnotationMetaData {
 
     // ########### Builder ###########
     @NotNull
-    public static Builder newInstance(@NotNull String className) {
+    public static Builder builder(@NotNull String className) {
         return new Builder(className);
     }
 
     @NotNull
-    public static Builder newInstance(@NotNull Class<?> type) {
+    public static Builder builder(@NotNull Class<?> type) {
         return new Builder(type.getName());
     }
 
@@ -49,7 +49,7 @@ public class AnnotationMetaData {
 
     @NotNull
     public static AnnotationMetaData of(@NotNull AnnotationMirror mirror) {
-        Builder builder = newInstance(mirror.getAnnotationType().asElement().toString());
+        Builder builder = builder(mirror.getAnnotationType().asElement().toString());
         mirror.getElementValues().forEach((method, annotationValue) -> {
             Object fieldValue = annotationValue.getValue();
             final String field = method.getSimpleName().toString();
@@ -64,7 +64,7 @@ public class AnnotationMetaData {
     @NotNull
     public static <T extends Annotation> AnnotationMetaData of(@NotNull T annotation) {
         Class<? extends Annotation> annotationType = annotation.getClass();
-        Builder builder = newInstance(annotationType.getName());
+        Builder builder = builder(annotationType.getName());
 
         Arrays.stream(annotationType.getDeclaredFields()).forEach(field -> {
             Object fieldValue;
@@ -126,7 +126,7 @@ public class AnnotationMetaData {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a boolean, but got the value " + value);
         }
 
-        return Optional.empty();
+        return result;
     }
 
     public boolean getBoolean(@NotNull String field, boolean alternative) {
@@ -144,7 +144,7 @@ public class AnnotationMetaData {
         if (result.isEmpty()) {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected an integer, but got the value " + value);
         }
-        return Optional.empty();
+        return result;
     }
 
     public int getInt(String field, int alternative) {
@@ -163,7 +163,7 @@ public class AnnotationMetaData {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a long, but got the value " + value);
         }
 
-        return Optional.empty();
+        return result;
     }
 
     public long getLong(String field, long alternative) {
@@ -182,7 +182,7 @@ public class AnnotationMetaData {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a float, but got the value " + value);
         }
 
-        return Optional.empty();
+        return result;
     }
 
     public float getFloat(String field, float alternative) {
@@ -201,7 +201,7 @@ public class AnnotationMetaData {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a double, but got the value " + value);
         }
 
-        return Optional.empty();
+        return result;
     }
 
     public double getDouble(String field, double alternative) {
@@ -226,7 +226,7 @@ public class AnnotationMetaData {
         if (result.isEmpty()) {
             LOGGER.warn("Tried to access annotation value " + field + " from annotation " + className + ". Expected a class, but got the value " + value);
         }
-        return Optional.empty();
+        return result;
     }
 
     public Class<?> getClass(String field, Class<?> alternative) {
@@ -306,27 +306,27 @@ public class AnnotationMetaData {
     }
 
     public Boolean requireBoolean(String field) {
-        return getBoolean(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getBoolean(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a boolean field named " + field));
     }
 
     public Integer requireInt(String field) {
-        return getInt(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getInt(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain an int field named " + field));
     }
 
     public Long requireLong(String field) {
-        return getLong(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getLong(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a long field named " + field));
     }
 
     public Float requireFloat(String field) {
-        return getFloat(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getFloat(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a float field named " + field));
     }
 
     public Double requireDouble(String field) {
-        return getDouble(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getDouble(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a double field named " + field));
     }
 
     public Class<?> requireClass(String field) {
-        return getClass(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getClass(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a class field named " + field));
     }
 
     public TypeIdentifier<?> requireType(String field) {
@@ -334,11 +334,11 @@ public class AnnotationMetaData {
     }
 
     public <T extends Enum<T>> T requireEnum(String field, Class<T> enumType) {
-        return getEnum(field, enumType).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getEnum(field, enumType).orElseThrow(() -> new IllegalStateException("The annotation did not contain an enum field named " + field));
     }
 
     public AnnotationMetaData requireAnnotation(String field) {
-        return getAnnotation(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain a field named " + field));
+        return getAnnotation(field).orElseThrow(() -> new IllegalStateException("The annotation did not contain an annotation field named " + field));
     }
 
     public boolean isOfType(Class<? extends Annotation> annotationType) {

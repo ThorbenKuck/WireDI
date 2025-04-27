@@ -50,7 +50,6 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
                 .sorted(OrderedComparator.INSTANCE)
                 .peek(it -> {
                     it.initialize();
-                    logger.debug(() -> "Initialized ProcessorPlugin: " + it.getClass().getSimpleName());
                 })
                 .collect(Collectors.toList());
         logger.info(() -> "Loaded " + result.size() + " ProcessorPlugins: " + result.stream().map(it -> it.getClass().getSimpleName()).toList());

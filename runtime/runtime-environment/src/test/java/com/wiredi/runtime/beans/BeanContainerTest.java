@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 // TODO: Implement and show that TypeIdentifier work as expected (i.e. search for List returns also List<String>, but not the other way around)
 class BeanContainerTest {
 
-    private static final AnnotationMetaData CONDITIONAL_ON_STRING = AnnotationMetaData.newInstance("ConditionalOnBean").withField("type", String.class).build();
-    private static final AnnotationMetaData CONDITIONAL_ON_FLOAT = AnnotationMetaData.newInstance("ConditionalOnBean").withField("type", Float.class).build();
-    private static final AnnotationMetaData CONDITIONAL_ON_DOUBLE = AnnotationMetaData.newInstance("ConditionalOnBean").withField("type", Double.class).build();
+    private static final AnnotationMetaData CONDITIONAL_ON_STRING = AnnotationMetaData.builder("ConditionalOnBean").withField("type", String.class).build();
+    private static final AnnotationMetaData CONDITIONAL_ON_FLOAT = AnnotationMetaData.builder("ConditionalOnBean").withField("type", Float.class).build();
+    private static final AnnotationMetaData CONDITIONAL_ON_DOUBLE = AnnotationMetaData.builder("ConditionalOnBean").withField("type", Double.class).build();
 
     @Test
     @CaptureOutput

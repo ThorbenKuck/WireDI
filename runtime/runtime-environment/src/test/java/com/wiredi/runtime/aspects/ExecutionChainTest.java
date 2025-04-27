@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 class ExecutionChainTest {
 
 	private final AnnotationMetaData annotationMetaData = AnnotationMetaData.empty(ExampleAnnotation.class.getName());
-	private final RootMethod rootMethod = RootMethod.newInstance("test")
+	private final RootMethod rootMethod = RootMethod.builder("test")
 			.withAnnotation(annotationMetaData)
 			.build(context -> context.requireParameter("param"));
 
@@ -28,7 +28,7 @@ class ExecutionChainTest {
 	public void test() {
 		// Arrange
 		// Act
-		String result = ExecutionChain.newInstance(rootMethod)
+		String result = ExecutionChain.builder(rootMethod)
 				.withProcessor(new AspectsAppender())
 				.withProcessor(new FromAppender())
 				.build()
@@ -46,7 +46,7 @@ class ExecutionChainTest {
 		String input = "Hello World";
 
 		// Act
-		String result = ExecutionChain.newInstance(rootMethod)
+		String result = ExecutionChain.builder(rootMethod)
 				.withProcessor(handler)
 				.withProcessor(handler)
 				.withProcessor(handler)
@@ -67,7 +67,7 @@ class ExecutionChainTest {
 		String input = "Hello World";
 
 		// Act
-		String result = ExecutionChain.newInstance(rootMethod)
+		String result = ExecutionChain.builder(rootMethod)
 				.withProcessor(handler)
 				.withProcessor(handler)
 				.withProcessor(handler)
@@ -84,7 +84,7 @@ class ExecutionChainTest {
 	public Stream<DynamicTest> testThatAnExecutionChainCanBeReused() {
 		int rounds = 10;
 
-		ExecutionChain executionChain = ExecutionChain.newInstance(rootMethod)
+		ExecutionChain executionChain = ExecutionChain.builder(rootMethod)
 				.withProcessor(new AspectsAppender())
 				.withProcessor(new FromAppender())
 				.build();
@@ -106,7 +106,7 @@ class ExecutionChainTest {
 	public void testPrependingList() {
 		// Arrange
 		// Act
-		String result = ExecutionChain.newInstance(rootMethod)
+		String result = ExecutionChain.builder(rootMethod)
 				.withProcessor(new AspectsAppender())
 				.withProcessor(new FromAppender())
 				.build()

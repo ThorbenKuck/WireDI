@@ -25,7 +25,7 @@ public class BatchConditionMethodFactory implements StandaloneMethodFactory {
     @Override
     public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
         CodeBlock.Builder initializer = CodeBlock.builder()
-                .add("$T.async(() -> $T.newInstance()", Value.class, BatchLoadCondition.class)
+                .add("$T.async(() -> $T.builder()", Value.class, BatchLoadCondition.class)
                 .indent();
 
         conditionEntries.forEach(entry -> initializer.add("\n.withEvaluationStage($T.class)", entry.annotationType())

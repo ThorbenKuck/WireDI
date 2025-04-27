@@ -68,7 +68,7 @@ public interface LoadCondition {
 
     @NotNull
     default LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType) {
-        return add(evaluatorType, AnnotationMetaData.newInstance(Conditional.class.getSimpleName())
+        return add(evaluatorType, AnnotationMetaData.builder(Conditional.class.getSimpleName())
                 .withField("value", evaluatorType)
                 .build());
     }

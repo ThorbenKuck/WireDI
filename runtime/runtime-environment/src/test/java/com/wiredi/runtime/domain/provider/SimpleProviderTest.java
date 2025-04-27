@@ -7,7 +7,6 @@ import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnClassEvaluator
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 
 import java.util.List;
 
@@ -166,7 +165,7 @@ class SimpleProviderTest {
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
                 .withCondition(
                         ConditionalOnClassEvaluator.class, builder -> builder.withAnnotation(
-                                AnnotationMetaData.newInstance(ConditionalOnClass.class)
+                                AnnotationMetaData.builder(ConditionalOnClass.class)
                                         .withField("className", "java.lang.String")
                                         .build()
                         ).build()

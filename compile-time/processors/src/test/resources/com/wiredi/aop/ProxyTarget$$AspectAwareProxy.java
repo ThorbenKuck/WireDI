@@ -34,7 +34,7 @@ final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectA
         this.wireRepository = wireRepository;
         this.executionChain = Value.async(() ->
                 executionChainRegistry.getExecutionChain(
-                        RootMethod.newInstance("toProxy")
+                        RootMethod.builder("toProxy")
                                 .withAnnotation(AnnotationMetaData.empty("com.wiredi.aop.Transactional"))
                                 .build(AspectHandler.wrap((c) -> super.toProxy()))
                 )

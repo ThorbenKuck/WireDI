@@ -10,8 +10,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 class ExecutionChainRegistryTest {
 
-    private final RootMethod FIRST_METHOD = RootMethod.newInstance("first").build(it -> it);
-    private final RootMethod SECOND_METHOD = RootMethod.newInstance("second").build(it -> it);
+    private final RootMethod FIRST_METHOD = RootMethod.builder("first").build(it -> it);
+    private final RootMethod SECOND_METHOD = RootMethod.builder("second").build(it -> it);
 
     @Test
     public void addingHandlerUpdatesRelevantChains() {

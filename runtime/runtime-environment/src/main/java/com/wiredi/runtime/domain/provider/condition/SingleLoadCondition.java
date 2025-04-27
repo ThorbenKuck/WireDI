@@ -15,7 +15,7 @@ public class SingleLoadCondition extends AbstractLoadCondition {
     private final Class<? extends ConditionEvaluator> evaluatorType;
 
     public SingleLoadCondition(Class<? extends ConditionEvaluator> evaluatorType) {
-        this(evaluatorType, AnnotationMetaData.newInstance(Conditional.class.getSimpleName())
+        this(evaluatorType, AnnotationMetaData.builder(Conditional.class.getSimpleName())
                 .withField("value", evaluatorType)
                 .build());
     }

@@ -22,9 +22,9 @@ class RetryTemplateTest {
     public void verifyThatRetriedExceptionsAreRetriedCorrectly() {
         // Arrange
         TestCode testCode = new TestCode(RetryTestException::new);
-        RetryTemplate retryTemplate = RetryTemplate.newInstance()
+        RetryTemplate retryTemplate = RetryTemplate.builder()
                 .withRetryPolicy(
-                        RetryPolicy.newInstance()
+                        RetryPolicy.builder()
                                 .configureExceptionBarrier(barrier -> barrier.retryIf()
                                         .throwableHasType(RetryTestException.class))
                                 .withMaxRetries(3)
@@ -43,9 +43,9 @@ class RetryTemplateTest {
     public void verifyThatANotConfiguredExceptionIsNotRetried() {
         // Arrange
         TestCode testCode = new TestCode(NullPointerException::new);
-        RetryTemplate retryTemplate = RetryTemplate.newInstance()
+        RetryTemplate retryTemplate = RetryTemplate.builder()
                 .withRetryPolicy(
-                        RetryPolicy.newInstance()
+                        RetryPolicy.builder()
                                 .configureExceptionBarrier(barrier -> barrier.retryIf()
                                         .throwableHasType(RetryTestException.class))
                                 .withMaxRetries(3)
@@ -66,9 +66,9 @@ class RetryTemplateTest {
         TestCode testCode = new TestCode(RetryTestException::new);
         Duration expectedDuration = Duration.ofMillis(60);
         Duration precision = Duration.ofMillis(2);
-        RetryTemplate retryTemplate = RetryTemplate.newInstance()
+        RetryTemplate retryTemplate = RetryTemplate.builder()
                 .withRetryPolicy(
-                        RetryPolicy.newInstance()
+                        RetryPolicy.builder()
                                 .configureExceptionBarrier(barrier -> barrier.retryIf()
                                         .throwableHasType(RetryTestException.class)
                                 )

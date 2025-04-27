@@ -8,7 +8,7 @@ public record InMemoryCacheConfiguration(
 
     public static InMemoryCacheConfiguration DEFAULT = new InMemoryCacheConfiguration(true, false, 50);
 
-    public static Builder newInstance() {
+    public static Builder builder() {
         return new Builder();
     }
 

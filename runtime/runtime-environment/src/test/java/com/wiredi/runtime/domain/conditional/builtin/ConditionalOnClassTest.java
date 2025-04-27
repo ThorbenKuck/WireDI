@@ -20,7 +20,7 @@ class ConditionalOnClassTest {
         // Create a provider with ConditionalOnClass for String (which always exists)
         repository.announce(
                 IdentifiableProvider.singleton(new TestComponentWithExistingClass())
-                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnClass.class)
+                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.builder(ConditionalOnClass.class)
                                 .withField("className", "java.lang.String")
                                 .build()))
         );
@@ -38,7 +38,7 @@ class ConditionalOnClassTest {
         WireRepository repository = WireRepository.create();
         repository.announce(
                 IdentifiableProvider.singleton(new TestComponentWithExistingClass())
-                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.newInstance(ConditionalOnClass.class)
+                        .withLoadCondition(new SingleLoadCondition(ConditionalOnClassEvaluator.class, AnnotationMetaData.builder(ConditionalOnClass.class)
                                 .withField("className", "com.nonexistent.SomeClass")
                                 .build()))
         );

@@ -24,7 +24,7 @@ class InMemoryCacheTest {
     public void verifyThatAHitPreventsFromCapacityBasedEvict() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                InMemoryCacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.builder()
                         .withCapacity(3)
                         .build()
         );
@@ -43,7 +43,7 @@ class InMemoryCacheTest {
     public void verifyThatAHitPreventsFromCapacityBasedEvictWithTwoHits() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                InMemoryCacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.builder()
                         .withCapacity(3)
                         .build()
         );
@@ -63,7 +63,7 @@ class InMemoryCacheTest {
     public void verifyThatReorderOnHitTwiceChangesTheEvictionTarget() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                InMemoryCacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.builder()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)
@@ -86,7 +86,7 @@ class InMemoryCacheTest {
     public void verifyThatReorderOnHitChangesTheEvictionTarget() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                InMemoryCacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.builder()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)
@@ -108,7 +108,7 @@ class InMemoryCacheTest {
     public void verifyThatFirstLowestHitIsInvalidated() {
         // Arrange
         InMemoryCache<String, String> cache = createCache(
-                InMemoryCacheConfiguration.newInstance()
+                InMemoryCacheConfiguration.builder()
                         .withReorderOnHit(true)
                         .withHitOnOverride(false)
                         .withCapacity(3)
