@@ -135,10 +135,6 @@ public class WiredApplication {
 
         configuration.accept(wireRepository);
         wireRepository.announce(new WiredApplicationInstance.ShutdownListenerProvider(barrier));
-        wireRepository.announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
-        wireRepository.announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
-        wireRepository.announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
-        wireRepository.announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
 
         WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireRepository, barrier);
         wiredApplication.start();

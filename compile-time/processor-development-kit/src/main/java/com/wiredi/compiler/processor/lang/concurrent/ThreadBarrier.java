@@ -1,5 +1,6 @@
 package com.wiredi.compiler.processor.lang.concurrent;
 
+import com.wiredi.compiler.errors.CompositeProcessingException;
 import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.Logger;
 
@@ -62,6 +63,11 @@ public class ThreadBarrier {
 						logger.debug(() -> "Started Thread Barrier Cycle");
 						runnable.run();
 						logger.debug(() -> "Finished successfully");
+					} catch (CompositeProcessingException multipleProcessingException) {
+						multipleProcessingException.getExceptions().forEach(processingException -> {
+							logger.error(processingException.getElement(), processingException::getMessage);
+						});
+						runnable.onError(multipleProcessingException);
 					} catch(ProcessingException processingException) {
 						logger.error(processingException.getElement(), processingException::getMessage);
 						runnable.onError(processingException);

@@ -1,6 +1,5 @@
 package com.wiredi.runtime.collections.pages;
 
-import com.wiredi.runtime.lang.ThrowingConsumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;

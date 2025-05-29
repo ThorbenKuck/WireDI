@@ -1,6 +1,7 @@
 package com.wiredi.compiler.processor.lang.processors;
 
 import com.wiredi.compiler.Injector;
+import com.wiredi.compiler.errors.CompositeProcessingException;
 import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.logger.messager.MessagerRegistration;
@@ -151,7 +152,7 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
             });
         }
         logger.debug(() -> "Writing all created classes in " + repository);
-        repository.flush();
+        repository.flush(filer);
         return true;
     }
 
@@ -232,6 +233,11 @@ public abstract class WireBaseProcessor extends AbstractProcessor {
                     try {
                         handle(rootElement);
                         markAsProcessed(rootElement);
+                    } catch (CompositeProcessingException e) {
+                        e.getExceptions().forEach(processingException -> {
+                            logger.error(processingException.getElement(), processingException::getMessage);
+                        });
+                        logger.catching(e);
                     } catch (ProcessingException e) {
                         logger.error(e.getElement(), e.getMessage());
                         logger.catching(e);

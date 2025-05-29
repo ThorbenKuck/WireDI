@@ -47,6 +47,7 @@ public class AspectAwareProxyFactory implements Factory<AspectAwareProxyEntity> 
 		eligibleMethods.forEach(proxyMethod -> entity.proxyMethod(proxyMethod, nameContext));
 
 		return entity.addWiredAnnotationFor(typeExtractor.getAllSuperTypes(typeElement).stream().map(types::erasure).toList())
+				.inheritAnnotationsFrom(typeElement)
 				.addConstructorInvocation(TypeUtils.findPrimaryConstructor(typeElement).orElse(null));
 	}
 }

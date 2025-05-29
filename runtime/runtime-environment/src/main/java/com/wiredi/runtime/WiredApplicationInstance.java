@@ -23,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import static com.wiredi.runtime.PropertyKeys.PRINT_DIAGNOSTICS;
 import static com.wiredi.runtime.lang.Preconditions.is;
 import static com.wiredi.runtime.lang.Preconditions.isNot;
 
@@ -137,19 +138,44 @@ public class WiredApplicationInstance {
                             environment.propertyLoader().addPropertyFileLoaders(wireRepository.getAll(PropertyFileTypeLoader.class));
                             wireRepository.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
 
-                            return environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true);
+                            return new WireRepository.LoadConfig(
+                                    environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true),
+                                    environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true),
+                                    environment.getProperty(PropertyKeys.AWAIT_STATES_TIMEOUT.getKey(), Duration.class)
+                                    .orElse(null)
+                            );
                         }).then(time -> logger.info("WireRepository loaded in " + time));
                     }
 
-                    if (environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true)) {
-                        Duration timeout = environment.getProperty(PropertyKeys.AWAIT_STATES_TIMEOUT.getKey(), Duration.class)
-                                .orElse(null);
-                        synchronizeOnStates(timeout);
-                    }
                     Runtime.getRuntime().addShutdownHook(shutdownHook);
                     isRunning = true;
                 })
-                .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireRepository)));
+                .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireRepository)))
+                .then(this::printDiagnostics);
+    }
+
+    private void printDiagnostics() {
+        logger.debug(() -> "Printing WireRepository Diagnostics");
+        if (environment.getProperty(PRINT_DIAGNOSTICS.getKey(), false)) {
+            StartupDiagnostics startupDiagnostics = wireRepository.startupDiagnostics();
+            StartupDiagnostics.TimingState state = startupDiagnostics.state();
+
+            if (!state.isEmpty()) {
+                List<String> lines = new ArrayList<>();
+                printState(state, 0, lines);
+                String diagnostics = String.join("\n", lines);
+                logger.info(() -> "Startup diagnostics:\n" + diagnostics);
+            }
+        }
+    }
+
+    private void printState(StartupDiagnostics.TimingState state, int depth, List<String> lines) {
+        lines.add(pad(" - " + state.name() + ": " + state.time(), depth));
+        state.children().forEach(child -> printState(child, depth + 1, lines));
+    }
+
+    private String pad(String string, int depth) {
+        return "  ".repeat(Math.max(0, depth)) + string;
     }
 
     /**
@@ -193,30 +219,6 @@ public class WiredApplicationInstance {
                 })
                 .then(timed -> logger.info(() -> "WireRepository destroyed in " + timed))
                 .then(() -> isRunning = false);
-    }
-
-    /**
-     * Synchronizes on all {@link StateFull} instances in the wire repository.
-     * <p>
-     * This method waits for all {@link StateFull} instances to have their state set
-     * before returning. If a timeout is specified, it will wait for at most that duration.
-     *
-     * @param timeout the maximum duration to wait, or null to wait indefinitely
-     */
-    private void synchronizeOnStates(@Nullable Duration timeout) {
-        // Writing StateFull<?> right here leads to compile time errors, this
-        // is why we explicitly skip the raw type inspection with the following comment
-        logger.trace(() -> "Synchronizing in states");
-        //noinspection rawtypes
-        final List<StateFull> stateFulls = wireRepository.getAll(TypeIdentifier.just(StateFull.class));
-        if (!stateFulls.isEmpty()) {
-            logger.debug(() -> "Synchronizing on " + stateFulls.size() + " StateFull instances.");
-            if (timeout != null) {
-                stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet(timeout));
-            } else {
-                stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet());
-            }
-        }
     }
 
     /**

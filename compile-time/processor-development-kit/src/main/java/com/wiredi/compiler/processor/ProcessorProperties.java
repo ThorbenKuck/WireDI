@@ -22,11 +22,19 @@ public class ProcessorProperties {
 	}
 
 	public void addOptions(Map<String, String> options) {
-		this.properties.setAll(options.entrySet().stream().collect(Collectors.toMap(it -> Key.format(it.getKey()), Map.Entry::getValue)));
+		this.properties.setAll(
+				options.entrySet()
+						.stream()
+						.collect(Collectors.toMap(it -> Key.format(it.getKey()), Map.Entry::getValue))
+		);
 	}
 
 	public boolean isEnabled(CompilerPropertyKeys propertyKey) {
 		return properties.getBoolean(propertyKey.getRawKey(), toBool(propertyKey.getDefaultValue(), false));
+	}
+
+	public boolean isEnabled(Key key, boolean defaultValue) {
+		return properties.getBoolean(key, defaultValue);
 	}
 
 	public boolean isDisabled(CompilerPropertyKeys propertyKey) {
@@ -39,6 +47,10 @@ public class ProcessorProperties {
 
 	public String getName(CompilerPropertyKeys extensionFileName) {
 		return properties.require(extensionFileName.getRawKey());
+	}
+
+	public String getName(Key key, String defaultValue) {
+		return properties.get(key, defaultValue);
 	}
 
 	public List<String> getAll(CompilerPropertyKeys propertyKey) {

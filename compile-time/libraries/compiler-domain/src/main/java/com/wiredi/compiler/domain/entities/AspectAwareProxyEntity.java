@@ -3,6 +3,7 @@ package com.wiredi.compiler.domain.entities;
 import com.squareup.javapoet.*;
 import com.wiredi.annotations.PrimaryWireType;
 import com.wiredi.annotations.Wire;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
 import com.wiredi.runtime.aspects.ExecutionChainRegistry;
@@ -17,10 +18,7 @@ import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.Nullable;
 
-import javax.lang.model.element.ExecutableElement;
-import javax.lang.model.element.Modifier;
-import javax.lang.model.element.TypeElement;
-import javax.lang.model.element.VariableElement;
+import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
 import java.util.ArrayList;
 import java.util.List;
@@ -185,6 +183,15 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
                         .addMember("proxy", "false")
                         .build()
         );
+
+        return this;
+    }
+
+    public AspectAwareProxyEntity inheritAnnotationsFrom(TypeElement typeElement) {
+        List<? extends AnnotationMirror> annotations = Annotations.findAll(typeElement, it -> !it.getAnnotationType().asElement().getSimpleName().toString().equals("Wire"));
+        annotations.forEach(annotationMirror -> {
+            builder.addAnnotation(AnnotationSpec.get(annotationMirror));
+        });
 
         return this;
     }

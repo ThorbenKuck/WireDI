@@ -1,10 +1,13 @@
 package com.wiredi.runtime;
 
 import com.wiredi.logging.Logging;
+import com.wiredi.runtime.async.StateFull;
 import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.beans.BeanContainerProperties;
 import com.wiredi.runtime.domain.Eager;
+import com.wiredi.runtime.environment.EnvironmentConfiguration;
+import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
 import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
@@ -14,14 +17,20 @@ import com.wiredi.runtime.domain.provider.WrappingProvider;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
+import com.wiredi.runtime.properties.PropertyLoader;
+import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.qualifier.QualifierType;
+import com.wiredi.runtime.resources.ResourceLoader;
+import com.wiredi.runtime.resources.ResourceProtocolResolver;
 import com.wiredi.runtime.time.Timed;
+import com.wiredi.runtime.types.TypeMapper;
 import com.wiredi.runtime.values.Value;
 import jakarta.inject.Provider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.UndeclaredThrowableException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -61,6 +70,8 @@ public class WireRepository {
     private final Value<OnDemandInjector> onDemandInjector = Value.lazy(() -> new OnDemandInjector(this));
     @NotNull
     private final ExceptionHandlerContext exceptionHandler = new ExceptionHandlerContext(this);
+    @NotNull
+    private final StartupDiagnostics startupDiagnostics = new StartupDiagnostics();
     @NotNull
     private final Environment environment;
 
@@ -216,6 +227,15 @@ public class WireRepository {
     }
 
     /**
+     * Returns the {@link StartupDiagnostics} linked to this WireRepository.
+     *
+     * @return The {@link StartupDiagnostics} linked to this WireRepository
+     */
+    public StartupDiagnostics startupDiagnostics() {
+        return startupDiagnostics;
+    }
+
+    /**
      * Announces a new object to be maintained in this WireRepository.
      * <p>
      * The announced {@code object} will be treated as a singleton instance when referenced, by wrapping it
@@ -273,37 +293,102 @@ public class WireRepository {
      * @return the time it took to load the WireRepository.
      */
     public Timed load() {
-        return load((w) -> true);
+        return load((w) -> LoadConfig.DEFAULT);
     }
 
     /**
      * Loads the wireRepository, and thereby the underlying {@link BeanContainer}.
      * <p>
-     * If the {@code eagerDetermination} function returns true, the repository automatically loads all providers
+     * If the {@code loadConfigFunction} function returns true, the repository automatically loads all providers
      * implementing the {@link Eager} interface.
      *
      * @return the time it took to load the WireRepository.
      */
-    public Timed load(Function<WireRepository, Boolean> eagerDetermination) {
+    public Timed load(Function<WireRepository, LoadConfig> loadConfigFunction) {
         is(isNotLoaded(), () -> "The WireRepository is already loaded");
         logger.debug(() -> "Loading WireRepository");
-        return Timed.of(() -> {
+        return startupDiagnostics.measure("WireRepository.load", () -> {
+            announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
+            announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
+            announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
+            announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
+            announce(IdentifiableProvider.singleton(startupDiagnostics, TypeIdentifier.just(StartupDiagnostics.class)));
+
             announce(IdentifiableProvider.singleton(this, TypeIdentifier.just(WireRepository.class)));
             announce(IdentifiableProvider.singleton(beanContainer, TypeIdentifier.just(BeanContainer.class)));
             announce(IdentifiableProvider.singleton(beanContainer.properties(), TypeIdentifier.just(BeanContainerProperties.class)));
             announce(IdentifiableProvider.singleton(exceptionHandler, TypeIdentifier.just(ExceptionHandlerContext.class)));
 
-            beanContainer.load(this);
-            if (eagerDetermination.apply(this)) {
-                logger.trace(() -> "Checking for eager classes");
-                final List<Eager> eagerInstances = getAll(Eager.class);
-                if (!eagerInstances.isEmpty()) {
-                    final EagerInitializer initializer = tryGet(EagerInitializer.class).orElse(new EagerInitializer.ParallelStream());
-                    logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
-                    initializer.initialize(this, eagerInstances);
+            startupDiagnostics.measure("BeanContainer.load", () -> beanContainer.load(this));
+            LoadConfig loadConfig = loadConfigFunction.apply(this);
+
+            if (loadConfig.initializeEagerBeans) {
+                startupDiagnostics.measure("WireRepository.initializeEagerBeans", this::initializeEagerBeans);
+            }
+
+            if (loadConfig.synchronizeOnStates) {
+                startupDiagnostics.measure("WireRepository.synchronizeOnStates", () -> synchronizeOnStates(loadConfig.stateFullMaxTimeout));
+            }
+        }).then(time -> logger.debug(() -> "The WireRepository has been loaded in " + time))
+                .then(startupDiagnostics::seal);
+    }
+
+    private Timed initializeEagerBeans() {
+        return Timed.of(() -> {
+            logger.trace(() -> "Checking for eager classes");
+            final List<Eager> eagerInstances = getAll(Eager.class);
+            if (!eagerInstances.isEmpty()) {
+                final EagerInitializer initializer = tryGet(EagerInitializer.class).orElse(new EagerInitializer.ParallelStream());
+                logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
+                initializer.initialize(this, eagerInstances);
+            }
+        });
+    }
+
+    /**
+     * Synchronizes on all {@link StateFull} instances in the wire repository.
+     * <p>
+     * This method waits for all {@link StateFull} instances to have their state set
+     * before returning. If a timeout is specified, it will wait for at most that duration.
+     *
+     * @param timeout the maximum duration to wait, or null to wait indefinitely
+     */
+    private Timed synchronizeOnStates(@Nullable Duration timeout) {
+        return Timed.of(() -> {
+            logger.trace(() -> "Synchronizing in states");
+            // Writing StateFull<?> right here leads to compile time errors, this
+            // is why we explicitly skip the raw type inspection with the following comment
+            //noinspection rawtypes
+            final List<StateFull> stateFulls = getAll(TypeIdentifier.just(StateFull.class));
+            if (!stateFulls.isEmpty()) {
+                logger.debug(() -> "Synchronizing on " + stateFulls.size() + " StateFull instances.");
+                if (timeout != null) {
+                    stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet(timeout));
+                } else {
+                    stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet());
                 }
             }
-        }).then(time -> logger.debug(() -> "The WireRepository has been loaded in " + time));
+        });
+    }
+
+    public record LoadConfig(
+            boolean initializeEagerBeans,
+            boolean synchronizeOnStates,
+            @Nullable Duration stateFullMaxTimeout
+    ) {
+        public static final LoadConfig DEFAULT = new LoadConfig();
+
+        public LoadConfig() {
+            this(true, true, null);
+        }
+
+        public LoadConfig initializeEagerBeans(boolean initializeEagerBeans) {
+            return new LoadConfig(initializeEagerBeans, synchronizeOnStates, stateFullMaxTimeout);
+        }
+
+        public LoadConfig synchronizeOnStates(boolean synchronizeOnStates) {
+            return new LoadConfig(initializeEagerBeans, synchronizeOnStates, stateFullMaxTimeout);
+        }
     }
 
     public Timed clear() {

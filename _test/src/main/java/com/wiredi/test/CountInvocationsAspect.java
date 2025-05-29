@@ -2,7 +2,7 @@ package com.wiredi.test;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.aspects.Aspect;
-import com.wiredi.aspects.ExecutionContext;
+import com.wiredi.runtime.aspects.ExecutionContext;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

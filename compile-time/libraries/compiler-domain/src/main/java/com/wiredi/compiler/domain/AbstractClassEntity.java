@@ -94,10 +94,35 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     }
 
     @Override
+    public T addMethod(MethodSpec method) {
+        String name = method.name;
+        if (methods.containsKey(name)) {
+            logger.error("Duplicate method name: " + name);
+        } else {
+            methods.put(name, method);
+        }
+        return (T) this;
+    }
+
+    @Override
     public T addMethod(String name, MethodFactory methodFactory) {
+        if (methods.containsKey(name)) {
+            logger.error("Duplicate method name: " + name);
+        }
+
         MethodSpec.Builder builder = MethodSpec.methodBuilder(name);
         methodFactory.append(builder, this);
         methods.put(name, builder.build());
+
+        return (T) this;
+    }
+
+    @Override
+    public T addField(FieldSpec fieldSpec) {
+        if (fields.containsKey(fieldSpec.name)) {
+            logger.error("Duplicate field name: " + fieldSpec.name);
+        }
+        fields.put(fieldSpec.name, fieldSpec);
 
         return (T) this;
     }

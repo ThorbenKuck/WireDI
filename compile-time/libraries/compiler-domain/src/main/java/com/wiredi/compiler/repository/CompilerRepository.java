@@ -26,21 +26,21 @@ public class CompilerRepository {
 
     private static final Logger logger = Logger.get(CompilerRepository.class);
 
-    private final Set<ClassEntity> classEntries = new HashSet<>();
+    private static final Set<ClassEntity> classEntries = new HashSet<>();
 
     private final Map<String, WireBridgeEntity> wireBridgeEntities = new ConcurrentHashMap<>();
 
     private final Set<CompilerRepositoryCallback> repositoryCallbacks = new HashSet<>();
 
     @Inject
-    private Filer filer;
+    private Elements elements;
 
     @Inject
-    private Elements elements;
-    @Inject
     private Types types;
+
     @Inject
     private WireRepositories wireRepositories;
+
     @Inject
     private TypeIdentifiers typeIdentifiers;
 
@@ -52,7 +52,7 @@ public class CompilerRepository {
         return types;
     }
 
-    public void flush() {
+    public void flush(Filer filer) {
         synchronized (classEntries) {
             if (!classEntries.isEmpty()) {
                 logger.info(() -> "Flushing compiler repository with " + classEntries.size() + " classes in " + this);

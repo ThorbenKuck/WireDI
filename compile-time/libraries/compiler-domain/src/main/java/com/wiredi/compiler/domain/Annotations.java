@@ -14,6 +14,7 @@ import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class Annotations {
 
@@ -138,6 +139,13 @@ public class Annotations {
         }
 
         return result;
+    }
+
+    public static List<? extends AnnotationMirror> findAll(Element element, Predicate<AnnotationMirror> include) {
+        return element.getAnnotationMirrors()
+                .stream()
+                .filter(include)
+                .toList();
     }
 
     public static boolean isMetaAnnotatedWith(Element element, Class<? extends Annotation> annotation) {

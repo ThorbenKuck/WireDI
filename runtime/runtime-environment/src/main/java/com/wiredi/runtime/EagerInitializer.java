@@ -10,7 +10,6 @@ import java.util.List;
  * Custom implementations can be provided to override the strategy on how eager classes are initialized.
  * The {@link WireRepository} tries to fetch a single instance from the BeanContainer.
  * If it finds a single instance, it's used.
- * Otherwise
  */
 public interface EagerInitializer {
 

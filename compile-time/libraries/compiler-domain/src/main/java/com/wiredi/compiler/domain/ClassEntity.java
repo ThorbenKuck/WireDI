@@ -72,6 +72,8 @@ public interface ClassEntity<T extends ClassEntity<?>> {
 
     // ######## Method modifications ########
 
+    T addMethod(MethodSpec method);
+
     T addMethod(String name, MethodFactory methodFactory);
 
     default T addMethod(StandaloneMethodFactory methodFactory) {
@@ -85,6 +87,8 @@ public interface ClassEntity<T extends ClassEntity<?>> {
     default T addMethod(String name, Consumer<MethodSpec.Builder> methodFactory) {
         return addMethod(StandaloneMethodFactory.wrap(name, methodFactory));
     }
+
+    T addField(FieldSpec fieldSpec);
 
     // ######## Field modifications ########
     T addField(TypeName type, String name, FieldFactory fieldFactory);

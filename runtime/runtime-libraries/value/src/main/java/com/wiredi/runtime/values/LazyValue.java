@@ -76,7 +76,6 @@ public class LazyValue<T> implements Value<T> {
     @Override
     public void set(@Nullable T t) {
         this.content = t;
-        this.supplier = null;
     }
 
     /**
