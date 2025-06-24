@@ -34,7 +34,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * If you required a "real deserialization logic", please use the messaging integration.
  *
  * @see TypeConverter
- * @see AbstractTypeConverter
+ * @see TypeConverterBase
  */
 public final class TypeMapper {
 

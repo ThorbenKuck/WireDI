@@ -5,6 +5,7 @@ import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public interface WireConflictResolver {
@@ -18,10 +19,10 @@ public interface WireConflictResolver {
 	 * @param <T>          the generic parameter of the expected time.
 	 * @return the resolved {@link IdentifiableProvider}
 	 * @throws DiInstantiationException if this method could not resolve a single {@link IdentifiableProvider}
-	 * @see #error(List, int, TypeIdentifier)
+	 * @see #error(Collection, int, TypeIdentifier)
 	 */
 	@NotNull <T> IdentifiableProvider<T> find(
-			@NotNull final List<IdentifiableProvider<T>> providerList,
+			@NotNull final Collection<IdentifiableProvider<T>> providerList,
 			@NotNull final TypeIdentifier<T> expectedType
 	);
 
@@ -40,7 +41,7 @@ public interface WireConflictResolver {
 	}
 
 	/**
-	 * Throws a DiInstantiationException, build by the {@link #buildError(List, int, TypeIdentifier)} method.
+	 * Throws a DiInstantiationException, build by the {@link #buildError(Collection, int, TypeIdentifier)} method.
 	 * <p>
 	 * The return value is {@link IdentifiableProvider}, to allow for authentic integration. However, please
 	 * note that this method will never return anything, but instead always throw an {@link DiInstantiationException}
@@ -50,12 +51,12 @@ public interface WireConflictResolver {
 	 * @param type  the searched for type
 	 * @param <T>   the generic type of the searched for type
 	 * @return NOTHING, will always throw an exception
-	 * @throws DiInstantiationException always, with a message build with {@link #buildError(List, int, TypeIdentifier)}
-	 * @see #buildError(List, int, TypeIdentifier)
+	 * @throws DiInstantiationException always, with a message build with {@link #buildError(Collection, int, TypeIdentifier)}
+	 * @see #buildError(Collection, int, TypeIdentifier)
 	 */
 	@NotNull
 	default <T> IdentifiableProvider<T> error(
-			@NotNull final List<IdentifiableProvider<T>> total,
+			@NotNull final Collection<IdentifiableProvider<T>> total,
 			final int match,
 			@NotNull final TypeIdentifier<T> type
 	) throws DiInstantiationException {
@@ -73,7 +74,7 @@ public interface WireConflictResolver {
 	 */
 	@NotNull
 	default <T> DiInstantiationException buildError(
-			@NotNull final List<IdentifiableProvider<T>> total,
+			@NotNull final Collection<IdentifiableProvider<T>> total,
 			final int match,
 			@NotNull final TypeIdentifier<T> type
 	) {

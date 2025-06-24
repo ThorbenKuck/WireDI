@@ -13,65 +13,32 @@
         <version>${revision}</version>
     </parent>
 
-    <properties>
-        <micrometer.version>1.12.3</micrometer.version>
-    </properties>
-
     <dependencies>
-        <dependency>
-            <groupId>com.wiredi</groupId>
-            <artifactId>metrics</artifactId>
-        </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>runtime-environment</artifactId>
             <scope>provided</scope>
         </dependency>
         <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>messaging</artifactId>
+        </dependency>
+        <dependency>
             <groupId>io.micrometer</groupId>
             <artifactId>micrometer-core</artifactId>
-            <version>${micrometer.version}</version>
+            <version>1.12.7</version>
         </dependency>
-
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing</artifactId>
+            <version>1.5.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>processors</artifactId>
+            <optional>true</optional>
+        </dependency>
     </dependencies>
-
-    <build>
-        <resources>
-            <resource>
-                <directory>src/main/resources</directory>
-            </resource>
-        </resources>
-
-        <pluginManagement>
-            <plugins>
-                <plugin>
-                    <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-compiler-plugin</artifactId>
-                    <version>${maven-compiler-plugin.version}</version>
-                    <configuration>
-                        <parameters>true</parameters>
-                        <annotationProcessorPaths>
-                            <processorPath>
-                                <groupId>com.wiredi</groupId>
-                                <artifactId>processors</artifactId>
-                                <version>${revision}</version>
-                            </processorPath>
-                            <annotationProcessorPath>
-                                <groupId>com.wiredi</groupId>
-                                <artifactId>processors</artifactId>
-                                <version>${revision}</version>
-                            </annotationProcessorPath>
-                            <path>
-                                <groupId>com.wiredi</groupId>
-                                <artifactId>processors</artifactId>
-                                <version>${revision}</version>
-                            </path>
-                        </annotationProcessorPaths>
-                    </configuration>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-    </build>
 
     <distributionManagement>
         <snapshotRepository>

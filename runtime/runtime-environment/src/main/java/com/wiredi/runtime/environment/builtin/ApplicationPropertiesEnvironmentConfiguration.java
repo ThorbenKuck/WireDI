@@ -2,11 +2,11 @@ package com.wiredi.runtime.environment.builtin;
 
 import com.google.auto.service.AutoService;
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.properties.TypedProperties;
-import com.wiredi.runtime.resources.builtin.ClassPathResource;
+import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.resources.exceptions.ResourceException;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,20 +23,22 @@ public class ApplicationPropertiesEnvironmentConfiguration implements Environmen
     public void configure(@NotNull Environment environment) {
         TypedProperties environmentProperties = environment.properties();
 
+        LOGGER.debug(() -> "Loading properties from file " + DEFAULT_PROPERTY_FILE_NAME + " and supported file types:" + environment.propertyLoader().supportedFileTypes());
         environmentProperties.getAll(DEFAULT_PROPERTIES, () -> environment.propertyLoader()
-                        .supportedFileTypes()
-                        .stream()
-                        .map(fileType -> DEFAULT_PROPERTY_FILE_NAME + "." + fileType)
-                        .toList()
-                ).forEach(propertyPath -> {
-                    ClassPathResource resource = new ClassPathResource(propertyPath);
-
-                    try {
-                        environment.appendPropertiesFrom(resource);
-                    } catch (ResourceException ignore) {
-                        LOGGER.debug(() -> "Failed to load properties from file " + resource.getFilename());
-                    }
-                });
+                .supportedFileTypes()
+                .stream()
+                .map(fileType -> DEFAULT_PROPERTY_FILE_NAME + "." + fileType)
+                .toList()
+        ).forEach(propertyPath -> {
+            Resource resource = environment.resourceLoader().firstHitInAllResolvers(propertyPath);
+            if (resource != null && resource.exists()) {
+                try {
+                    environment.appendPropertiesFrom(resource);
+                } catch (ResourceException ignore) {
+                    LOGGER.debug(() -> "Failed to load properties from file " + resource.getFilename());
+                }
+            }
+        });
 
         if (!environmentProperties.contains(ACTIVE_PROFILES)) {
             String defaultProfiles = environmentProperties

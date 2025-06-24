@@ -1,20 +1,37 @@
 package com.wiredi.tests;
 
+import com.wiredi.runtime.WiredApplicationInstance;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.WireRepository;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.*;
+import org.junit.jupiter.api.parallel.Execution;
 
-public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
+public class WireDIExtension implements TestInstanceFactory, TestInstancePreDestroyCallback, ParameterResolver {
+
+	private static final ExtensionContext.Namespace NAMESPACE = ExtensionContext.Namespace.create(WireDIExtension.class);
 
 	@Override
 	public Object createTestInstance(
 			TestInstanceFactoryContext factoryContext,
 			ExtensionContext extensionContext
 	) throws TestInstantiationException {
-		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
+		WiredApplicationInstance application = ExtensionCache.getOrCreate(extensionContext);
+		extensionContext.getStore(NAMESPACE).put(WiredApplicationInstance.class, application);
 
-		return repository.tryGet((Class<Object>) factoryContext.getTestClass())
-				.orElseGet(() -> repository.onDemandInjector().get(factoryContext.getTestClass()));
+		return application.wireRepository()
+				.tryGet((Class<Object>) factoryContext.getTestClass())
+				.orElseGet(() -> application.wireRepository().onDemandInjector().get(factoryContext.getTestClass()));
+	}
+
+	@Override
+	public void preDestroyTestInstance(ExtensionContext context) {
+		ExtensionContext.Store store = context.getStore(NAMESPACE);
+		WiredApplicationInstance applicationInstance = store.get(WiredApplicationInstance.class, WiredApplicationInstance.class);
+		if (applicationInstance != null) {
+			applicationInstance.shutdown();
+			store.remove(WiredApplicationInstance.class);
+		}
 	}
 
 	@Override
@@ -23,9 +40,9 @@ public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 			ExtensionContext extensionContext
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
-		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
+		WiredApplicationInstance applicationInstance = ExtensionCache.getOrCreate(extensionContext);
 
-		return repository.contains(typeIdentifier);
+		return applicationInstance.wireRepository().contains(typeIdentifier);
 	}
 
 	@Override
@@ -34,7 +51,8 @@ public class WireDIExtension implements TestInstanceFactory, ParameterResolver {
 			ExtensionContext extensionContext
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
-		WireRepository repository = ExtensionCache.getOrCreate(extensionContext);
+		WiredApplicationInstance applicationInstance = ExtensionCache.getOrCreate(extensionContext);
+		WireRepository repository = applicationInstance.wireRepository();
 
 		if (typeIdentifier.isNativeProvider()) {
 			return repository.getNativeProvider(typeIdentifier.getGenericTypes().getFirst());

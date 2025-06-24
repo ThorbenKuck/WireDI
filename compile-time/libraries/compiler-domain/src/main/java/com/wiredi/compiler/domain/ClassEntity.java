@@ -4,6 +4,7 @@ import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.entities.FieldFactory;
 import com.wiredi.compiler.domain.entities.methods.MethodFactory;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
+import com.wiredi.runtime.domain.annotations.AnnotationExcerpt;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.PackageElement;
@@ -30,7 +31,7 @@ public interface ClassEntity<T extends ClassEntity<?>> {
      */
     void invalidate();
 
-    <A extends Annotation> List<Annotations.Result<A>> findAnnotations(Class<A> type);
+    <A extends Annotation> List<AnnotationExcerpt<A>> findAnnotations(Class<A> type);
 
     boolean isValid();
 

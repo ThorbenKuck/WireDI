@@ -5,7 +5,8 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.aspects.Aspect;
 import com.wiredi.runtime.aspects.ExecutionContext;
 import com.wiredi.runtime.aspects.RootMethod;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 import com.wiredi.runtime.retry.RetryTemplate;
 import com.wiredi.runtime.retry.backoff.BackOffStrategy;
 import com.wiredi.runtime.retry.policy.RetryPolicy;
@@ -17,6 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 @Wire
 @Order(RetryAspect.ORDER)
+@ConditionalOnEnabled("wiredi.retry")
 public class RetryAspect {
 
     public static final int ORDER = Order.FIRST + 100;
@@ -24,8 +26,8 @@ public class RetryAspect {
 
     private static RetryTemplate getRetryTemplate(ExecutionContext context) {
         return retryTemplates.computeIfAbsent(context.getRootMethod(), (m) -> {
-            AnnotationMetaData retryAnnotation = context.findAnnotation(Retry.class).orElseThrow();
-            AnnotationMetaData backoffAnnotation = retryAnnotation.getAnnotation("backoff", Backoff.DEFAULT_META_DATA);
+            AnnotationMetadata retryAnnotation = context.findAnnotation(Retry.class).orElseThrow();
+            AnnotationMetadata backoffAnnotation = retryAnnotation.getAnnotation("backoff", Backoff.DEFAULT_META_DATA);
 
             RetryPolicy.Builder retryPolicyBuilder = RetryPolicy.builder()
                     .withDelay(Duration.of(
@@ -43,7 +45,7 @@ public class RetryAspect {
         });
     }
 
-    private static void setMaxTimeout(AnnotationMetaData retryAnnotation, RetryPolicy.Builder retryPolicyBuilder) {
+    private static void setMaxTimeout(AnnotationMetadata retryAnnotation, RetryPolicy.Builder retryPolicyBuilder) {
         long maxTimeout = retryAnnotation.getLong("maxTimeout", -1);
         if (maxTimeout < 0) {
             retryPolicyBuilder.withoutMaxTimeout();
@@ -55,7 +57,7 @@ public class RetryAspect {
         }
     }
 
-    private static void setMaxRetries(AnnotationMetaData retryAnnotation, RetryPolicy.Builder retryPolicyBuilder) {
+    private static void setMaxRetries(AnnotationMetadata retryAnnotation, RetryPolicy.Builder retryPolicyBuilder) {
         long maxRetries = retryAnnotation.getLong("maxRetries", -1);
         if (maxRetries < 0) {
             retryPolicyBuilder.withIndefiniteAttempts();
@@ -64,7 +66,7 @@ public class RetryAspect {
         }
     }
 
-    private static BackOffStrategy<?> backOffStrategy(AnnotationMetaData backoffAnnotation) {
+    private static BackOffStrategy<?> backOffStrategy(AnnotationMetadata backoffAnnotation) {
         long value = backoffAnnotation.getLong("value", 0);
         if (value < 0) {
             return BackOffStrategy.none();

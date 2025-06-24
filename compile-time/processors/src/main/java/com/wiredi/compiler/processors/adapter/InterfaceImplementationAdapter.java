@@ -2,8 +2,9 @@ package com.wiredi.compiler.processors.adapter;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.ClassEntity;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.processor.plugins.CompilerEntityPlugin;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
+import org.slf4j.Logger;import com.wiredi.compiler.processor.plugins.CompilerEntityPlugin;
 import com.wiredi.compiler.processor.plugins.ProcessorPluginContext;
 import com.wiredi.compiler.repository.CompilerRepository;
 import jakarta.inject.Inject;
@@ -20,7 +21,7 @@ public class InterfaceImplementationAdapter {
     @Inject
     private CompilerRepository compilerRepository;
 
-    private final Logger logger = Logger.get(InterfaceImplementationAdapter.class);
+    private final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(InterfaceImplementationAdapter.class);
 
     public void handle(@NotNull TypeElement typeElement, @Nullable Wire annotation) {
         for (CompilerEntityPlugin wireProcessorPlugin : pluginContext.wireProcessorPlugins) {

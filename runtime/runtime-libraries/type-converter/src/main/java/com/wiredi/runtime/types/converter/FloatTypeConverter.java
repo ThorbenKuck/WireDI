@@ -1,11 +1,11 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.util.List;
 
-public class FloatTypeConverter extends AbstractTypeConverter<Float> {
+public class FloatTypeConverter extends TypeConverterBase<Float> {
 
     public static final FloatTypeConverter INSTANCE = new FloatTypeConverter();
 

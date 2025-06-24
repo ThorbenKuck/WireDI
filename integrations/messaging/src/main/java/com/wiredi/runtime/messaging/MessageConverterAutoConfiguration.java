@@ -2,6 +2,7 @@ package com.wiredi.runtime.messaging;
 
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 import com.wiredi.runtime.messaging.compression.MessageCompression;
@@ -13,11 +14,7 @@ import com.wiredi.runtime.messaging.converters.StringMessageConverter;
 import java.util.List;
 
 @AutoConfiguration
-@ConditionalOnProperty(
-        key = "wiredi.conversions.autoconfigure",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnEnabled("wiredi.autoconfig.conversions")
 public class MessageConverterAutoConfiguration {
 
     @Provider

@@ -1,4 +1,6 @@
 package com.wiredi.processor.tck.domain.provide.coffee;
 
-public interface Coffee {
+import com.wiredi.runtime.lang.Ordered;
+
+public interface Coffee extends Ordered {
 }

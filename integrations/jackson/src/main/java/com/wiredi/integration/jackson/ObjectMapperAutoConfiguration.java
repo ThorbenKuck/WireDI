@@ -5,18 +5,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.integration.jackson.pagination.PaginationModule;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
-import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 
 import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnMissingBean(type = ObjectMapper.class)
-@ConditionalOnProperty(
-        key = "wiredi.jackson.autoconfigure",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnEnabled("wiredi.autoconfig.jackson")
 public class ObjectMapperAutoConfiguration {
 
     @Provider

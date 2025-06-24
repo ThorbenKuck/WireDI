@@ -6,8 +6,7 @@ import com.wiredi.annotations.aspects.Aspect;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.values.AspectHandlerMethod;
 import com.wiredi.compiler.domain.values.FactoryMethod;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.processor.lang.utils.TypeElements;
+import org.slf4j.Logger;import com.wiredi.compiler.processor.lang.utils.TypeElements;
 
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.TypeMirror;

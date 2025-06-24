@@ -14,7 +14,7 @@ import java.util.Optional;
 public class WireInformation {
 
     /**
-     * The root class, which contains the annotation
+     * The root class, which contains the instance
      */
     private final TypeElement annotationRootType;
     private final PackageElement targetPackage;
@@ -40,7 +40,7 @@ public class WireInformation {
             @NotNull List<TypeElement> wiredToElements,
             @Nullable ExecutableElement builderMethod
     ) {
-        this.annotationRootType = Objects.requireNonNull(annotationRootType, "The annotation root is required");
+        this.annotationRootType = Objects.requireNonNull(annotationRootType, "The instance root is required");
         this.targetPackage = targetPackage;
         this.primaryConstructor = primaryConstructor;
         this.wirePriority = wirePriority;

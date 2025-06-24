@@ -1,14 +1,14 @@
 package com.wiredi.processor.integration;
 
+import com.wiredi.compiler.processor.lang.WireDiRootAnnotationProcessor;
 import com.wiredi.compiler.tests.files.FileManagerState;
 import com.wiredi.compiler.tests.junit.CompilerTest;
 import com.wiredi.compiler.tests.junit.CompilerSetup;
 import com.wiredi.compiler.tests.result.Compilation;
-import com.wiredi.compiler.processors.WireProcessor;
 
 import static com.wiredi.compiler.tests.Assertions.assertThat;
 
-@CompilerSetup(processors = WireProcessor.class, rootFolder = "com.wiredi.inherited")
+@CompilerSetup(processors = WireDiRootAnnotationProcessor.class, rootFolder = "com.wiredi.inherited")
 @CompilerTest(classes = "ExampleConfiguration")
 public class InheritedAnnotationWireProcessorTest extends AbstractProcessorTest {
 

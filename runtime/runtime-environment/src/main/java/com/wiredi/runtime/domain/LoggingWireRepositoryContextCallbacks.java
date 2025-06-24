@@ -4,17 +4,14 @@ import com.google.auto.service.AutoService;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.async.StateFull;
-import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@AutoService(WireRepositoryContextCallbacks.class)
-public class LoggingWireRepositoryContextCallbacks implements WireRepositoryContextCallbacks {
+@AutoService(WireRepositoryContextCallback.class)
+public class LoggingWireRepositoryContextCallbacks implements WireRepositoryContextCallback {
 
     private static final Logging logger = Logging.getInstance(WireRepository.class);
     private static final AtomicBoolean LOGGED_PROCESSORS_WARNING = new AtomicBoolean(false);
@@ -33,8 +30,8 @@ public class LoggingWireRepositoryContextCallbacks implements WireRepositoryCont
 
         try {
             Class.forName("com.wiredi.compiler.processors.WireProcessor");
-            System.err.println("It appears as if you have the WireDi annotation processors in you classpath. It is recommended to have the processors only available during compilation.");
-            logger.warn("It appears as if you have the WireDi annotation processors in you classpath. It is recommended to have the processors only available during compilation.");
+            System.err.println("It appears as if you have the WireDi instance processors in you classpath. It is recommended to have the processors only available during compilation.");
+            logger.warn("It appears as if you have the WireDi instance processors in you classpath. It is recommended to have the processors only available during compilation.");
         } catch (ClassNotFoundException ignored) {
             // This exception means that the class is not found, so no further actions are required.
             // We will not logg this or preserve this, as this is what we want to happen.

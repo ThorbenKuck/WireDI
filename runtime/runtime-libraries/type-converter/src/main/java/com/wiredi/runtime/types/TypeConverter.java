@@ -2,6 +2,7 @@ package com.wiredi.runtime.types;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -19,10 +20,10 @@ import java.util.List;
  * Optionally,
  * implementations can override {@link #supports(Class)} to signal if they can convert any specific implementation.
  * <p>
- * To make using this class easier, you can resort to the {@link AbstractTypeConverter}
+ * To make using this class easier, you can resort to the {@link TypeConverterBase}
  *
  * @param <T>
- * @see AbstractTypeConverter
+ * @see TypeConverterBase
  * @see TypeMapper
  */
 public interface TypeConverter<T> {
@@ -68,7 +69,7 @@ public interface TypeConverter<T> {
      *
      * @return a list of all supported input types.
      */
-    default List<Class<?>> supportedSources() {
+    default Collection<Class<?>> supportedSources() {
         return Collections.emptyList();
     }
 }

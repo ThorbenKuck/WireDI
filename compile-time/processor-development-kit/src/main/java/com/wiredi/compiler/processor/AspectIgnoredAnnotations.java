@@ -1,11 +1,16 @@
 package com.wiredi.compiler.processor;
 
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.runtime.Environment;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
+import com.wiredi.compiler.processor.lang.AnnotationProcessorResourceResolver;
+import com.wiredi.runtime.resources.ResolverContext;
+import org.slf4j.Logger;import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.resources.Resource;
+import com.wiredi.runtime.resources.ResourceProtocolResolver;
 import jakarta.annotation.PostConstruct;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.processing.Filer;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
@@ -23,17 +28,25 @@ import java.util.regex.Pattern;
 
 public class AspectIgnoredAnnotations {
 
-    private static final Logger logger = Logger.get(AspectIgnoredAnnotations.class);
-    private static final String FILE_NAME = "compiler:aop-ignored.types";
-    private static final String DEFAULT_FILE_NAME = "compiler:default.aop-ignored.types";
+    private static final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(AspectIgnoredAnnotations.class);
+    private static final String FILE_NAME = "aop-ignored.types";
+    private static final String DEFAULT_FILE_NAME = "default.aop-ignored.types";
 
+    private static final List<String> DEFAULT_IGNORED_ANNOTATIONS = List.of(
+            "p:java.lang.[a-zA-Z]+",
+            "p:[jakrtvx]+.annotation.PostConstruct",
+            "p:[jakrtvx]+.annotation.PreDestroy",
+            "p:[jakrtvx]+.inject.[a-zA-Z]+"
+    );
     private final List<Predicate<String>> ignoredPredicates = new ArrayList<>();
     private final Types types;
     private final Environment environment;
+    private final Filer filer;
 
-    public AspectIgnoredAnnotations(Types types, Environment environment) {
+    public AspectIgnoredAnnotations(Types types, Environment environment, Filer filer) {
         this.types = types;
         this.environment = environment;
+        this.filer = filer;
     }
 
     /**
@@ -42,7 +55,7 @@ public class AspectIgnoredAnnotations {
      * This file should contain a list annotations. All these listed annotations should not trigger
      * an aspect oriented proxy to proxy the method.
      * <p>
-     * The file can contain both fully qualified annotation names and regex. The list might look
+     * The file can contain both fully qualified instance names and regex. The list might look
      * like this:
      * <pre><code>
      * my.package.Annotation
@@ -67,13 +80,19 @@ public class AspectIgnoredAnnotations {
      */
     @PostConstruct
     protected void postConstruct() {
-        Resource resource = environment.loadResource(FILE_NAME);
+        ResourceProtocolResolver protocolResolver = environment.resourceLoader().getResolver("compiler");
+        logger.debug("Supported protocol resolvers: {}", environment.resourceLoader().supportedProtocols());
+        if (protocolResolver == null) {
+            logger.debug("Could not find a protocol resolver for the compiler namespace. Using default.");
+            protocolResolver = new AnnotationProcessorResourceResolver(filer);
+        }
+        Resource resource = protocolResolver.resolve(new ResolverContext("compiler", FILE_NAME));
         if (resource.exists()) {
             try {
                 setupIgnoredAnnotations(resource);
             } catch (IOException e) {
                 loadDefaultIgnoredAnnotations();
-                logger.catching(e);
+                logger.error("Unable to setup ignored annotations for aspects", e);
             }
         } else {
             loadDefaultIgnoredAnnotations();
@@ -82,8 +101,7 @@ public class AspectIgnoredAnnotations {
 
     public void loadDefaultIgnoredAnnotations() {
         try {
-            Resource defaultResource = environment.loadResource(DEFAULT_FILE_NAME);
-            setupIgnoredAnnotations(defaultResource);
+            setupIgnoredAnnotations(DEFAULT_IGNORED_ANNOTATIONS);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -95,33 +113,38 @@ public class AspectIgnoredAnnotations {
         }
         logger.debug(() -> "Trying to load ignored annotations from " + resource.getFilename());
         try (BufferedReader reader = new BufferedReader(resource.openReader())) {
-            while (reader.ready()) {
-                String line = reader.readLine().trim();
-                if (!line.startsWith("#")) {
-                    if (line.startsWith("p:")) {
-                        line = line.substring("p:".length());
-                    } else {
-                        line = Pattern.quote(line);
-                    }
+            List<String> lines = reader.lines().toList();
+            setupIgnoredAnnotations(lines);
+        }
+    }
 
-                    ignoredPredicates.add(Pattern.compile(line).asMatchPredicate());
-                } else if (line.startsWith("#include ")) {
-                    String toInclude = line.replaceFirst(Pattern.quote("#include "), "");
-                    Resource subResource = environment.loadResource(toInclude, "compiler");
-                    if (subResource.exists()) {
-                        logger.debug(() -> "Including separate file to include ignored annotations: " + subResource.getFilename());
-                        setupIgnoredAnnotations(subResource);
-                    }
-                } else if (line.startsWith("#require ")) {
-                    String toInclude = line.replaceFirst(Pattern.quote("#require "), "");
-                    Resource subResource = environment.loadResource(toInclude, "compiler");
-                    if (!subResource.exists()) {
-                        throw new IllegalStateException("Could not include the ignored file types, as the file \"" + toInclude + "\" is not available in the annotation processors filer");
-                    }
+    public void setupIgnoredAnnotations(List<String> lines) throws IOException {
+        for (String line : lines) {
+            if (!line.startsWith("#")) {
+                if (line.startsWith("p:")) {
+                    line = line.substring("p:".length());
+                } else {
+                    line = Pattern.quote(line);
+                }
+
+                ignoredPredicates.add(Pattern.compile(line).asMatchPredicate());
+            } else if (line.startsWith("#include ")) {
+                String toInclude = line.replaceFirst(Pattern.quote("#include "), "");
+                Resource subResource = environment.loadResource(toInclude, "compiler");
+                if (subResource.exists()) {
                     logger.debug(() -> "Including separate file to include ignored annotations: " + subResource.getFilename());
                     setupIgnoredAnnotations(subResource);
                 }
+            } else if (line.startsWith("#require ")) {
+                String toInclude = line.replaceFirst(Pattern.quote("#require "), "");
+                Resource subResource = environment.loadResource(toInclude, "compiler");
+                if (!subResource.exists()) {
+                    throw new IllegalStateException("Could not include the ignored file types, as the file \"" + toInclude + "\" is not available in the instance processors filer");
+                }
+                logger.debug(() -> "Including separate file to include ignored annotations: " + subResource.getFilename());
+                setupIgnoredAnnotations(subResource);
             }
+
         }
     }
 

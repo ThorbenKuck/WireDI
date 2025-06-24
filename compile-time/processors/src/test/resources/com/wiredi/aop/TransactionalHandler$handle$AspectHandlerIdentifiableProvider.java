@@ -5,6 +5,7 @@ import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
 import java.lang.Override;
@@ -20,7 +21,8 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
     private static final TypeIdentifier<TransactionalHandler$handle$AspectHandler> PRIMARY_WIRE_TYPE = TypeIdentifier.of(TransactionalHandler$handle$AspectHandler.class);
 
     private static final List<TypeIdentifier<?>> ADDITIONAL_WIRE_TYPES = List.of(
-            TypeIdentifier.of(AspectHandler.class)
+            TypeIdentifier.of(AspectHandler.class),
+            TypeIdentifier.of(Ordered.class)
     );
 
     private final Value<TransactionalHandler$handle$AspectHandler> instance = Value.empty();

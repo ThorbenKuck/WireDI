@@ -12,8 +12,8 @@ import java.util.List;
 public class OverwrittenTestClass implements TckTestCase {
 
 	protected final TckCondition overwrittenMethodsWillOnlyBeInvokedOnce = TckCondition.shouldNotFail("A method annotated with @Inject that overrides another method annotated with @Inject will only be injected once per injection request per instance");
-	protected final TckCondition overwritingMethodPreventsInjection = TckCondition.shouldNotFail("A method with no @Inject annotation that overrides a method annotated with @Inject will not be injected.");
-	protected final TckCondition overwritingMethodEnablesInjection = TckCondition.mustSucceed("A method with @Inject annotation that overrides a method annotated with no @Inject will be injected but only in the overwriting method.");
+	protected final TckCondition overwritingMethodPreventsInjection = TckCondition.shouldNotFail("A method with no @Inject instance that overrides a method annotated with @Inject will not be injected.");
+	protected final TckCondition overwritingMethodEnablesInjection = TckCondition.mustSucceed("A method with @Inject instance that overrides a method annotated with no @Inject will be injected but only in the overwriting method.");
 	protected final TckCondition overwrittenMethodDefinesOtherQualifiers = TckCondition.shouldNotFail("If one injectable method overrides another, the overriding method's parameters do not automatically inherit qualifiers from the overridden method's parameters.");
 	protected final TckCondition notOverwrittenMethodWithInjectIsInvoked = TckCondition.mustSucceed("A method annotated with @Inject that is not overwritten should be called");
 	protected final TckCondition injectWithoutParameterIsInvoked = TckCondition.mustSucceed("A method annotated with @Inject that has no parameter is still invoked");
@@ -30,7 +30,7 @@ public class OverwrittenTestClass implements TckTestCase {
 
 	@Inject
 	public void injectInOverwrittenOnly() {
-		overwritingMethodPreventsInjection.failure("The overwritten method was invoked, though the overwriting class shadows the annotation");
+		overwritingMethodPreventsInjection.failure("The overwritten method was invoked, though the overwriting class shadows the instance");
 		overwrittenMethodsWillOnlyBeInvokedOnce.failure("The overwritten method should not be called");
 	}
 

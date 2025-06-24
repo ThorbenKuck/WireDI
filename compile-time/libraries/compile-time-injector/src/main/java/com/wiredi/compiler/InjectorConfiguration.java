@@ -2,6 +2,7 @@ package com.wiredi.compiler;
 
 import com.wiredi.runtime.lang.ReflectionsHelper;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -9,20 +10,23 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class InjectorConfiguration {
 
     private final List<Class<? extends Annotation>> injectionQualifiers = new ArrayList<>();
     private final List<Class<? extends Annotation>> postConstructQualifiers = new ArrayList<>();
+    private final List<Class<? extends Annotation>> preDestroyQualifiers = new ArrayList<>();
+    private final Map<Class<?>, Set<Method>> postConstructMethods = new HashMap<>();
+    private final Map<Class<?>, Set<Method>> preDestroyMethods = new HashMap<>();
+    private final Map<Class<?>, Set<Method>> injectionMethods = new HashMap<>();
+    private final Map<Class<?>, Set<Field>> injectionFields = new HashMap<>();
     private boolean singletonFirst = true;
 
     public InjectorConfiguration() {
         injectionQualifiers.add(Inject.class);
         postConstructQualifiers.add(PostConstruct.class);
+        preDestroyQualifiers.add(PreDestroy.class);
     }
 
     /**
@@ -46,37 +50,48 @@ public class InjectorConfiguration {
         return this;
     }
 
-    public InjectorConfiguration clear() {
-        injectionQualifiers.clear();
-        postConstructQualifiers.clear();
-        return this;
-    }
-
     public Set<Field> findAllInjectionFields(Object instance) {
-        Set<Field> fields = new HashSet<>();
-        injectionQualifiers.forEach(qualifier -> {
-            fields.addAll(ReflectionsHelper.findAllAnnotatedFields(instance, qualifier));
-        });
+        return injectionFields.computeIfAbsent(instance.getClass(), t -> {
+            Set<Field> fields = new HashSet<>();
+            injectionQualifiers.forEach(qualifier -> {
+                fields.addAll(ReflectionsHelper.findAllAnnotatedFields(instance, qualifier));
+            });
 
-        return fields;
+            return fields;
+        });
     }
 
     public Set<Method> findAllInjectionMethods(Object instance) {
-        Set<Method> fields = new HashSet<>();
-        injectionQualifiers.forEach(qualifier -> {
-            fields.addAll(ReflectionsHelper.findAllAnnotatedMethods(instance, qualifier));
-        });
+        return injectionMethods.computeIfAbsent(instance.getClass(), t -> {
+            Set<Method> fields = new HashSet<>();
+            injectionQualifiers.forEach(qualifier -> {
+                fields.addAll(ReflectionsHelper.findAllAnnotatedMethods(instance, qualifier));
+            });
 
-        return fields;
+            return fields;
+        });
     }
 
     public Set<Method> findAllPostConstructMethods(Object instance) {
-        Set<Method> fields = new HashSet<>();
-        postConstructQualifiers.forEach(qualifier -> {
-            fields.addAll(ReflectionsHelper.findAllAnnotatedMethods(instance, qualifier));
-        });
+        return postConstructMethods.computeIfAbsent(instance.getClass(), t -> {
+            Set<Method> fields = new HashSet<>();
+            postConstructQualifiers.forEach(qualifier -> {
+                fields.addAll(ReflectionsHelper.findAllAnnotatedMethods(instance, qualifier));
+            });
 
-        return fields;
+            return fields;
+        });
+    }
+
+    public Set<Method> findAllPreDestroyMethods(Object instance) {
+        return preDestroyMethods.computeIfAbsent(instance.getClass(), t -> {
+            Set<Method> fields = new HashSet<>();
+            preDestroyQualifiers.forEach(qualifier -> {
+                fields.addAll(ReflectionsHelper.findAllAnnotatedMethods(instance, qualifier));
+            });
+
+            return fields;
+        });
     }
 
     public boolean isSingleton(Class<?> type) {

@@ -4,10 +4,12 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.entities.FieldFactory;
 import com.wiredi.compiler.domain.entities.methods.MethodFactory;
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.runtime.domain.annotations.AnnotationExcerpt;
 import jakarta.annotation.Generated;
 import jakarta.annotation.Nullable;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeMirror;
@@ -22,6 +24,7 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
 
     @NotNull
     protected final TypeSpec.Builder builder;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
     @NotNull
     private final String className;
     @NotNull
@@ -32,6 +35,7 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     private final Map<String, MethodSpec> methods = new HashMap<>();
     @NotNull
     private final Map<String, FieldSpec> fields = new HashMap<>();
+    private final Annotations annotations;
     @Nullable
     private MethodSpec constructor;
     @Nullable
@@ -41,11 +45,13 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     public AbstractClassEntity(
             @NotNull Element source,
             @NotNull TypeMirror rootElement,
-            @NotNull String className
+            @NotNull String className,
+            @NotNull Annotations annotations
     ) {
         this.rootElement = rootElement;
         this.source = source;
         this.className = className;
+        this.annotations = annotations;
         this.builder = createBuilder(rootElement)
                 .addAnnotation(generatedAnnotation())
                 .addOriginatingElement(source);
@@ -57,14 +63,14 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     }
 
     @Override
-    public <A extends Annotation> List<Annotations.Result<A>> findAnnotations(Class<A> type) {
-        List<Annotations.Result<A>> annotations = Annotations.findAll(type, source);
+    public <A extends Annotation> List<AnnotationExcerpt<A>> findAnnotations(Class<A> type) {
+        List<AnnotationExcerpt<A>> annotations = this.annotations.findAll(type, source);
         if (source instanceof ExecutableElement) {
             Element element = source;
-            while(!(element instanceof TypeElement)) {
+            while (!(element instanceof TypeElement)) {
                 element = element.getEnclosingElement();
             }
-            annotations.addAll(Annotations.findAll(type, element));
+            annotations.addAll(this.annotations.findAll(type, element));
         }
         return annotations;
     }
@@ -152,8 +158,6 @@ public abstract class AbstractClassEntity<T extends ClassEntity<T>> implements C
     public Optional<PackageElement> packageElement() {
         return Optional.ofNullable(this.packageElement);
     }
-
-    private final Logger logger = Logger.get(getClass());
 
     @Override
     public T setPackage(PackageElement packageElement) {

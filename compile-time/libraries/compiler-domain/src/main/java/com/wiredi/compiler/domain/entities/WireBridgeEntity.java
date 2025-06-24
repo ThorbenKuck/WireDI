@@ -2,6 +2,7 @@ package com.wiredi.compiler.domain.entities;
 
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.injection.FieldInjectionPoint;
@@ -27,9 +28,10 @@ public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 	public WireBridgeEntity(
 			@NotNull TypeElement rootElement,
 			@NotNull String className,
-			@NotNull WireRepositories wireRepositories
-	) {
-		super(rootElement, rootElement.asType(), className);
+			@NotNull WireRepositories wireRepositories,
+			@NotNull Annotations annotations
+			) {
+		super(rootElement, rootElement.asType(), className, annotations);
 		this.wireRepositories = wireRepositories;
 	}
 

@@ -13,10 +13,10 @@ import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
 import com.wiredi.compiler.domain.entities.methods.aspecthandler.AppliesToMethod;
 import com.wiredi.compiler.domain.entities.methods.aspecthandler.ProcessMethod;
 import com.wiredi.compiler.domain.entities.methods.identifiableprovider.*;
+import com.wiredi.compiler.domain.properties.PropertyContext;
 import com.wiredi.compiler.domain.values.AspectHandlerMethod;
 import com.wiredi.compiler.domain.values.FactoryMethod;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.processor.TypeExtractor;
+import org.slf4j.Logger;import com.wiredi.compiler.processor.TypeExtractor;
 import com.wiredi.compiler.processor.business.IdentifiableProviderService;
 import com.wiredi.compiler.processor.business.InjectionPointService;
 import com.wiredi.compiler.repository.CompilerRepository;
@@ -31,7 +31,7 @@ import java.util.Optional;
 
 public class IdentifiableProviderFactory implements Factory<IdentifiableProviderEntity> {
 
-    private static final Logger logger = Logger.get(IdentifiableProviderFactory.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(IdentifiableProviderFactory.class);
 
     @Inject
     private CompilerRepository compilerRepository;
@@ -60,6 +60,9 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
     @Inject
     private Elements elements;
 
+    @Inject
+    private PropertyContext propertyContext;
+
     @Override
     public IdentifiableProviderEntity create(TypeElement typeElement) {
 
@@ -71,7 +74,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
                 .addMethod(new PrimaryMethod(false))
                 .addMethod(new SingletonMethod(true))
                 .addMethod(new GetMethod(true, typeElement.asType()))
-                .addMethod(new CreateInstanceForPropertyBindingMethod(propertyBinding, typeElement, wireRepositories, compilerRepository, environment));
+                .addMethod(new CreateInstanceForPropertyBindingMethod(propertyBinding, typeElement, wireRepositories, compilerRepository, environment, propertyContext));
     }
 
     public IdentifiableProviderEntity create(TypeElement typeElement, @Nullable Wire annotation) {
@@ -96,6 +99,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
     private IdentifiableProviderEntity handleFactoryMethod(TypeElement typeElement, FactoryMethod factoryMethod) {
         var returnType = (TypeElement) types.asElement(factoryMethod.returnType());
 
+        logger.debug("Creating IdentifiableProvider for type {}", returnType);
         IdentifiableProviderEntity entity = compilerRepository.newIdentifiableProvider(factoryMethod.method(), providerClassName(factoryMethod), factoryMethod.returnType())
                 .addMethod(new TypeMethod(typeIdentifiers, factoryMethod.returnType()))
                 .addMethod(new PrimaryMethod(Annotations.isAnnotatedWith(factoryMethod.method(), Primary.class)))

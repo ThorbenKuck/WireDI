@@ -28,11 +28,6 @@ import java.util.stream.Collectors;
  */
 public interface Key {
 
-    @NotNull
-    static Builder build() {
-        return new Builder();
-    }
-
     static String joinWithSeparator(
             @NotNull final String delimiter,
             @NotNull final String prefix,
@@ -83,50 +78,4 @@ public interface Key {
 
     @NotNull
     Key withSuffix(@NotNull final String suffix);
-
-    final class Builder {
-        @NotNull
-        private final List<@NotNull String> content = new ArrayList<>();
-        @NotNull
-        private final CharSequence delimiter;
-
-        public Builder(@NotNull final CharSequence delimiter) {
-            this.delimiter = delimiter;
-        }
-
-        public Builder() {
-            this.delimiter = ".";
-        }
-
-        @NotNull
-        public Builder append(@NotNull final String s) {
-            String current = s;
-            if (current.startsWith(".")) {
-                current = current.substring(1);
-            }
-            if (current.endsWith(".")) {
-                current = current.substring(0, current.length() - 1);
-            }
-
-            content.add(current);
-            return this;
-        }
-
-        @NotNull
-        private String build() {
-            return content.stream()
-                    .filter(String::isBlank)
-                    .collect(Collectors.joining(delimiter));
-        }
-
-        @NotNull
-        public Key formatted() {
-            return Key.format(build());
-        }
-
-        @NotNull
-        public Key preFormatted() {
-            return Key.just(build());
-        }
-    }
 }

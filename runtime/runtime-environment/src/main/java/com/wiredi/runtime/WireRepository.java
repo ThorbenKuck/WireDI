@@ -6,10 +6,11 @@ import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.beans.BeanContainer;
 import com.wiredi.runtime.beans.BeanContainerProperties;
 import com.wiredi.runtime.domain.Eager;
-import com.wiredi.runtime.environment.EnvironmentConfiguration;
-import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
+import com.wiredi.runtime.domain.ScopeRegistry;
+import com.wiredi.runtime.domain.conditional.ConditionEvaluation;
+import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.lang.OrderedComparator;
-import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
+import com.wiredi.runtime.domain.WireRepositoryContextCallback;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -18,10 +19,8 @@ import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
 import com.wiredi.runtime.properties.PropertyLoader;
-import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.resources.ResourceLoader;
-import com.wiredi.runtime.resources.ResourceProtocolResolver;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.types.TypeMapper;
 import com.wiredi.runtime.values.Value;
@@ -74,10 +73,16 @@ public class WireRepository {
     private final StartupDiagnostics startupDiagnostics = new StartupDiagnostics();
     @NotNull
     private final Environment environment;
+    @NotNull
+    private final ScopeRegistry scopeRegistry = new ScopeRegistry(this);
 
     public WireRepository(@NotNull Environment environment, @NotNull BeanContainer beanContainer) {
         this.environment = environment;
         this.beanContainer = beanContainer;
+    }
+
+    public ScopeRegistry scopeRegistry() {
+        return scopeRegistry;
     }
 
     /**
@@ -265,7 +270,7 @@ public class WireRepository {
      * This method exists to allow manual modifications of the WireRepository.
      * One of the use cases for this is the integration of existing IOC containers into WireDI.
      * <p>
-     * You can combine this method with the {@link WireRepositoryContextCallbacks} to register the IdentifiableProvider
+     * You can combine this method with the {@link WireRepositoryContextCallback} to register the IdentifiableProvider
      * at the correct point in time.
      *
      * @param identifiableProvider The provider to maintain
@@ -278,7 +283,9 @@ public class WireRepository {
     public <T> boolean announce(@NotNull IdentifiableProvider<T> identifiableProvider) {
         LoadCondition condition = identifiableProvider.condition();
         if (condition != null) {
-            if (!condition.matches(this)) {
+            ConditionEvaluation.Context context = new ConditionEvaluation.Context(this, identifiableProvider);
+            condition.test(context);
+            if (!context.isMatched()) {
                 return false;
             }
         }
@@ -358,15 +365,11 @@ public class WireRepository {
             logger.trace(() -> "Synchronizing in states");
             // Writing StateFull<?> right here leads to compile time errors, this
             // is why we explicitly skip the raw type inspection with the following comment
-            //noinspection rawtypes
-            final List<StateFull> stateFulls = getAll(TypeIdentifier.just(StateFull.class));
+            final List<StateFull<?>> stateFulls = getAll(TypeIdentifier.just(StateFull.class).cast());
+            final StateFullInitializer stateFullInitializer = tryGet(StateFullInitializer.class).orElse(new StateFullInitializer.ParallelStream());
             if (!stateFulls.isEmpty()) {
                 logger.debug(() -> "Synchronizing on " + stateFulls.size() + " StateFull instances.");
-                if (timeout != null) {
-                    stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet(timeout));
-                } else {
-                    stateFulls.parallelStream().forEach(stateFull -> stateFull.getState().awaitUntilSet());
-                }
+                stateFullInitializer.initialize(this, stateFulls, timeout);
             }
         });
     }
@@ -411,11 +414,12 @@ public class WireRepository {
     }
 
     public boolean contains(@NotNull final TypeIdentifier<?> type) {
-        if (type.isAssignableFrom(IdentifiableProvider.class)) {
-            return beanContainer.get(type.getGenericTypes().getFirst()).isPresent();
-        } else {
-            return !beanContainer.getAll(type).isEmpty();
-        }
+        return scopeRegistry.getDefaultScope().contains(QualifiedTypeIdentifier.unqualified(type));
+//        if (type.isAssignableFrom(IdentifiableProvider.class)) {
+//            return beanContainer.get(type.getGenericTypes().getFirst()).isPresent();
+//        } else {
+//            return !beanContainer.getAll(type).isEmpty();
+//        }
     }
 
     /* ############ Try Get methods ############ */

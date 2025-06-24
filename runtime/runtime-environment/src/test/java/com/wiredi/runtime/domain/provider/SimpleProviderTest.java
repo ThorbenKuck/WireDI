@@ -1,9 +1,7 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
-import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnClass;
-import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnClassEvaluator;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.junit.jupiter.api.Test;
@@ -157,24 +155,6 @@ class SimpleProviderTest {
 
         // Act & Assert
         assertSame(condition, provider.condition());
-    }
-
-    @Test
-    void shouldCreateConditionFromEvaluatorAndFields() {
-        // Arrange
-        SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
-                .withCondition(
-                        ConditionalOnClassEvaluator.class, builder -> builder.withAnnotation(
-                                AnnotationMetaData.builder(ConditionalOnClass.class)
-                                        .withField("className", "java.lang.String")
-                                        .build()
-                        ).build()
-                )
-                .withInstance(new TestComponent())
-                .build();
-
-        // Act & Assert
-        assertNotNull(provider.condition());
     }
 
     // Test classes

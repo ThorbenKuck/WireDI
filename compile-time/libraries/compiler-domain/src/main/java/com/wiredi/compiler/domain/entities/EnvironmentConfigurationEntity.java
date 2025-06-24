@@ -3,9 +3,11 @@ package com.wiredi.compiler.domain.entities;
 import com.google.auto.service.AutoService;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.runtime.Environment;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
+import org.slf4j.Logger;import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.resources.ResourceLoader;
@@ -26,10 +28,10 @@ public class EnvironmentConfigurationEntity extends AbstractClassEntity<Environm
 	private final List<EnvironmentModification> entries = new ArrayList<>();
 	private final ResourceLoader resourceLoader = ResourceLoader.open(ClassPathResourceProtocolResolver.INSTANCE, FileSystemResourceProtocolResolver.INSTANCE);
 	private final TypeElement typeElement;
-	private static final Logger logger = Logger.get(EnvironmentConfigurationEntity.class);
+	private static final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(EnvironmentConfigurationEntity.class);
 
-	public EnvironmentConfigurationEntity(TypeElement element) {
-		super(element, element.asType(), element.getSimpleName().toString() + "EnvironmentConfiguration");
+	public EnvironmentConfigurationEntity(TypeElement element, Annotations annotations) {
+		super(element, element.asType(), element.getSimpleName().toString() + "EnvironmentConfiguration", annotations);
 		this.typeElement = element;
 	}
 

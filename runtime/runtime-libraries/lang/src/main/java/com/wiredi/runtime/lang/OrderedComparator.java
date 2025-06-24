@@ -2,10 +2,7 @@ package com.wiredi.runtime.lang;
 
 import jakarta.annotation.Nullable;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class OrderedComparator implements Comparator<Ordered> {
 
@@ -15,17 +12,21 @@ public class OrderedComparator implements Comparator<Ordered> {
      * As this class is stateless, it can be used as a classical singleton pattern.
      * <p>
      * Still, this is not recommended to be used in normal business code.
-     * Instead, favor the methods of the {@link Ordered} interface, like {@link Ordered#ordered(List)},
+     * Instead, favor the methods of the {@link Ordered} interface, like {@link Ordered#ordered(Collection)},
      * or methods in here, like {@link #sort(Ordered[])}.
      */
     public static final OrderedComparator INSTANCE = new OrderedComparator();
 
-    public static <T extends Ordered> List<T> sorted(List<T> list) {
-        if (list.size() <= 1) {
-            return list;
+    public static <T extends Ordered> Collection<T> sorted(Collection<T> collection) {
+        if (collection.size() <= 1) {
+            if (collection instanceof List<T> tList) {
+                return tList;
+            } else {
+                return new ArrayList<>(collection);
+            }
         }
 
-        return list.stream()
+        return collection.stream()
                 .sorted(INSTANCE)
                 .toList();
     }

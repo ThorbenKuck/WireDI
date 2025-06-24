@@ -3,6 +3,7 @@ package com.wiredi.integration.cache;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.runtime.ObjectReference;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 import com.wiredi.runtime.security.SecurityContext;
@@ -17,6 +18,7 @@ import java.util.List;
 
 @AutoConfiguration
 @ConditionalOnMissingBean(type = SecurityContext.class)
+@ConditionalOnEnabled("wiredi.autoconfig.security")
 @ConditionalOnProperty(
         key = "wiredi.security.autoconfigure",
         havingValue = "true",

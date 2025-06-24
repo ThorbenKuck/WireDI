@@ -1,11 +1,11 @@
 package com.wiredi.runtime.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.time.Instant;
 
-public class InstantTypeConverter extends AbstractTypeConverter<Instant> {
+public class InstantTypeConverter extends TypeConverterBase<Instant> {
 
     public InstantTypeConverter() {
         super(Instant.class);

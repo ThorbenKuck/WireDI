@@ -6,8 +6,7 @@ import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.injection.InjectionPoints;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.domain.injection.constructor.ConstructorInjectionPoint;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.repository.CompilerRepository;
+import org.slf4j.Logger;import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +18,7 @@ import java.util.List;
 
 public class CreateInstanceForWireMethod extends CreateInstanceMethodFactory {
 
-    private static final Logger LOGGER = Logger.get(CreateInstanceForWireMethod.class);
+    private static final Logger LOGGER = org.slf4j.LoggerFactory.getLogger(CreateInstanceForWireMethod.class);
     private final InjectionPoints injectionPoints;
     private final WireRepositories wireRepositories;
     private final CompilerRepository compilerRepository;

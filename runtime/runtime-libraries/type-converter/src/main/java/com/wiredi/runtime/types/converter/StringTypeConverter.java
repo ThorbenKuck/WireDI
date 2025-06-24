@@ -1,15 +1,11 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
-import com.wiredi.runtime.types.TypeConverter;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.wiredi.runtime.types.TypeConverterBase;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-import java.util.List;
 
-public class StringTypeConverter extends AbstractTypeConverter<String> {
+public class StringTypeConverter extends TypeConverterBase<String> {
 
     public static final StringTypeConverter INSTANCE = new StringTypeConverter();
 

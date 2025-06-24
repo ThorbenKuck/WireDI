@@ -36,8 +36,8 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
 
     private final boolean asyncExecutionChainConstruction;
 
-    public AspectAwareProxyEntity(TypeElement element, TypeIdentifiers typeIdentifiers, boolean asyncExecutionChainConstruction) {
-        super(element, element.asType(), element.getSimpleName() + "$$AspectAwareProxy");
+    public AspectAwareProxyEntity(TypeElement element, TypeIdentifiers typeIdentifiers, boolean asyncExecutionChainConstruction, Annotations annotations) {
+        super(element, element.asType(), element.getSimpleName() + "$$AspectAwareProxy", annotations);
         this.typeIdentifiers = typeIdentifiers;
         this.asyncExecutionChainConstruction = asyncExecutionChainConstruction;
     }

@@ -2,7 +2,7 @@ package com.wiredi.compiler.processor;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.Annotations;
-import com.wiredi.compiler.logger.Logger;
+import org.slf4j.Logger;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.TypeElement;
@@ -21,7 +21,7 @@ import static com.wiredi.compiler.processor.CompilerPropertyKeys.ADDITIONAL_WIRE
 public class TypeExtractor {
 
     private static final List<TypeKind> NON_SUPER_TYPES = List.of(TypeKind.NONE, TypeKind.NULL, TypeKind.VOID);
-    private static final Logger logger = Logger.get(TypeExtractor.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TypeExtractor.class);
     private final Types types;
     private final Annotations annotations;
     private final ProcessorProperties properties;
@@ -84,7 +84,7 @@ public class TypeExtractor {
         List<String> ignore = properties.getAll(CompilerPropertyKeys.ADDITIONAL_WIRE_TYPES_IGNORE);
 
         return typeMirrors.stream()
-                .filter(it -> !ignore.contains(it.toString()))
+                .filter(superType -> ignore.stream().noneMatch(path -> superType.toString().startsWith(path)))
                 .collect(Collectors.toList());
     }
 }

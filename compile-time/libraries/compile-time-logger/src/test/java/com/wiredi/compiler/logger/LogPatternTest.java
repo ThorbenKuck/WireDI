@@ -1,5 +1,7 @@
 package com.wiredi.compiler.logger;
 
+import com.wiredi.compiler.logger.pattern.CompiledLogPattern;
+import com.wiredi.compiler.logger.pattern.ParsedPattern;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -9,10 +11,8 @@ class LogPatternTest {
 	@Test
 	public void test() {
 		// Arrange
-		String key1 = "This is key 1";
-		String key2 = "This is key 2";
 		String message = "This is quite a long an annoying message that should not be trimmed";
-		final LogPattern logPattern = new LogPattern("${key1:15.15} [${key2:5.5}] [${key2:-5.5}] : ${message}");
+		final LogPattern logPattern = new LogPattern(ParsedPattern.parse("${key1:l15.15} [${key2:5.5}] [${key2:-5.5}] : ${message}"));
 		LogPattern pattern = logPattern.newInstance()
 				.context("key1", "This is key 1")
 				.context("key2", "This is key 2")
@@ -23,9 +23,9 @@ class LogPatternTest {
 
 		// Assert
 		var formatted = compile.format();
-		assertThat(compile.layout()).isEqualTo("%15.15s [%5.5s] [%-5.5s] : %s");
-		assertThat(compile.arguments()).containsExactly(key1, key2, key2, message);
-		assertThat(formatted).isEqualTo("  This is key 1 [This ] [This ] : This is quite a long an annoying message that should not be trimmed");
+		assertThat(compile.layout()).isEqualTo("%s [%s] [%s] : %s");
+		assertThat(compile.arguments()).containsExactly("This is key 1  ", "This ", "This ", message);
+		assertThat(formatted).isEqualTo("This is key 1   [This ] [This ] : This is quite a long an annoying message that should not be trimmed");
 	}
 
 	@Test
@@ -44,6 +44,6 @@ class LogPatternTest {
 		var message = logPattern.compile().format();
 
 		// Assert
-		assertThat(message).isEqualTo("[ INFO] [        main] [class com.wiredi.compiler.logg] [          ] [                    ] : A log message");
+		assertThat(message).isEqualTo("[INFO ] [main        ] [compiler.logger.LogPatternTest] [          ] [                    ] : A log message");
 	}
 }

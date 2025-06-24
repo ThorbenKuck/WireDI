@@ -3,7 +3,7 @@ package com.wiredi.runtime.beans;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.OnDemandInjector;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBeanEvaluator;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
@@ -24,9 +24,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 // TODO: Implement and show that TypeIdentifier work as expected (i.e. search for List returns also List<String>, but not the other way around)
 class BeanContainerTest {
 
-    private static final AnnotationMetaData CONDITIONAL_ON_STRING = AnnotationMetaData.builder("ConditionalOnBean").withField("type", String.class).build();
-    private static final AnnotationMetaData CONDITIONAL_ON_FLOAT = AnnotationMetaData.builder("ConditionalOnBean").withField("type", Float.class).build();
-    private static final AnnotationMetaData CONDITIONAL_ON_DOUBLE = AnnotationMetaData.builder("ConditionalOnBean").withField("type", Double.class).build();
+    private static final AnnotationMetadata CONDITIONAL_ON_STRING = AnnotationMetadata.builder("ConditionalOnBean").withField("type", String.class).build();
+    private static final AnnotationMetadata CONDITIONAL_ON_FLOAT = AnnotationMetadata.builder("ConditionalOnBean").withField("type", Float.class).build();
+    private static final AnnotationMetadata CONDITIONAL_ON_DOUBLE = AnnotationMetadata.builder("ConditionalOnBean").withField("type", Double.class).build();
 
     @Test
     @CaptureOutput
@@ -63,7 +63,7 @@ class BeanContainerTest {
         assertThat(container.size()).isEqualTo(3);
     }
 
-    class Base implements IdentifiableProvider<String> {
+    static class Base implements IdentifiableProvider<String> {
 
         @Override
         public @NotNull TypeIdentifier<? super String> type() {
@@ -81,7 +81,7 @@ class BeanContainerTest {
         }
     }
 
-    class FirstCondition implements IdentifiableProvider<Integer> {
+    static class FirstCondition implements IdentifiableProvider<Integer> {
 
         @Override
         public @NotNull TypeIdentifier<? super Integer> type() {
@@ -107,7 +107,7 @@ class BeanContainerTest {
         }
     }
 
-    class SecondCondition implements IdentifiableProvider<Float> {
+    static class SecondCondition implements IdentifiableProvider<Float> {
 
         @Override
         public @NotNull TypeIdentifier<? super Float> type() {
@@ -130,7 +130,7 @@ class BeanContainerTest {
         }
     }
 
-    class NeverMetCondition implements IdentifiableProvider<Integer> {
+    static class NeverMetCondition implements IdentifiableProvider<Integer> {
 
         @Override
         public @NotNull TypeIdentifier<? super Integer> type() {

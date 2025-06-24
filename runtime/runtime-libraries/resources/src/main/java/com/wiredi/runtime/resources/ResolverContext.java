@@ -9,4 +9,7 @@ import org.jetbrains.annotations.Nullable;
  * @param protocol the protocol
  * @param path the path
  */
-public record ResolverContext(@Nullable String protocol, @NotNull String path) {}
+public record ResolverContext(
+        @Nullable String protocol,
+        @NotNull String path
+) {}

@@ -1,7 +1,7 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.lang.Ordered;
@@ -193,7 +193,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
 
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType);
 
-        Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData);
+        Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetadata annotationMetaData);
 
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer);
     }
@@ -488,7 +488,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          * @return this builder
          */
         @Override
-        public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetaData annotationMetaData) {
+        public Builder<T> withCondition(Class<? extends ConditionEvaluator> conditionType, AnnotationMetadata annotationMetaData) {
             this.condition = LoadCondition.builder(conditionType)
                     .withAnnotation(annotationMetaData)
                     .build();

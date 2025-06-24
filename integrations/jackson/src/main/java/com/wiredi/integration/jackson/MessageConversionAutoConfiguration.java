@@ -5,15 +5,11 @@ import com.wiredi.annotations.Order;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBean;
-import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 
 @AutoConfiguration
 @ConditionalOnBean(type = ObjectMapper.class)
-@ConditionalOnProperty(
-        key = "wiredi.jackson.autoconfigure",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnEnabled("wiredi.autoconfig.jackson")
 public class MessageConversionAutoConfiguration {
 
     @Provider

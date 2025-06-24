@@ -7,15 +7,14 @@ import com.wiredi.annotations.Order;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
-import com.wiredi.compiler.logger.Logger;
-
+import org.slf4j.Logger;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 
 public class OrderMethod implements StandaloneMethodFactory {
 
-    private static final Logger logger = Logger.get(OrderMethod.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(OrderMethod.class);
     private final CodeBlock initializer;
 
     public OrderMethod(Order annotation, Types types) {

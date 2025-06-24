@@ -1,16 +1,20 @@
 package com.wiredi.compiler;
 
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.compiler.constructors.SingletonInstanceTypeConstructor;
 import com.wiredi.compiler.constructors.TypeConstructor;
+import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.lang.ReflectionsHelper;
 import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.function.Supplier;
 
 /**
@@ -20,10 +24,12 @@ import java.util.function.Supplier;
  */
 public class Injector {
 
-    private static final Logger logger = Logger.get(Injector.class);
+    private static final Logger logger = LoggerFactory.getLogger(Injector.class);
     private final TypeMap<TypeConstructor<?, ?>> constructors = new TypeMap<>();
     private final TypeMap<Class<?>> typeTranslations = new TypeMap<>();
     private final InjectorConfiguration configuration;
+    private final List<Runnable> teardownCallbacks = new ArrayList<>();
+    private ProcessingEnvironment currentEnvironment;
 
     public Injector() {
         this(new InjectorConfiguration());
@@ -147,6 +153,10 @@ public class Injector {
             ReflectionsHelper.invokeMethod(instance, method, getArgumentsFor(method));
         });
 
+        configuration.findAllPreDestroyMethods(instance).forEach(method -> {
+            teardownCallbacks.add(() -> ReflectionsHelper.invokeMethod(instance, method, getArgumentsFor(method)));
+        });
+
         return instance;
     }
 
@@ -162,16 +172,6 @@ public class Injector {
         return Arrays.stream(method.getParameters())
                 .map(it -> get(it.getType()))
                 .toArray();
-    }
-
-    /**
-     * Clears all local states.
-     * <p>
-     * Note: This method does not clear the state of the configurations.
-     */
-    public void clear() {
-        typeTranslations.clear();
-        constructors.clear();
     }
 
     /**
@@ -247,6 +247,13 @@ public class Injector {
         }
 
         return null;
+    }
+
+    public void tearDown() {
+        teardownCallbacks.forEach(Runnable::run);
+        typeTranslations.clear();
+        constructors.clear();
+        teardownCallbacks.clear();
     }
 
     public class BindStage<T> {

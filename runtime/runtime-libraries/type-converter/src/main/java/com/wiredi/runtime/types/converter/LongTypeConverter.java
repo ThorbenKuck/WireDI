@@ -1,12 +1,11 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
-public class LongTypeConverter extends AbstractTypeConverter<Long> {
+public class LongTypeConverter extends TypeConverterBase<Long> {
 
 	public static final LongTypeConverter INSTANCE = new LongTypeConverter();
 

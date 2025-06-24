@@ -3,6 +3,7 @@ package com.wiredi.runtime.lang;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -49,9 +50,9 @@ public interface Ordered extends Comparable<Ordered> {
      * @param input the list to sort.
      * @param <T>   the type of order.
      * @return a new, ordered list.
-     * @see OrderedComparator#sorted(List)
+     * @see OrderedComparator#sorted(java.util.Collection)
      */
-    static <T extends Ordered> List<T> ordered(List<T> input) {
+    static <T extends Ordered> Collection<T> ordered(Collection<T> input) {
         return OrderedComparator.sorted(input);
     }
 

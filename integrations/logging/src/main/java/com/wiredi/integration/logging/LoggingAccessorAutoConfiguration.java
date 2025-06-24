@@ -3,17 +3,14 @@ package com.wiredi.integration.logging;
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.logging.LoggingAccessor;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnEnabled;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnMissingBean;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnProperty;
 
 import java.util.List;
 
 @AutoConfiguration
-@ConditionalOnProperty(
-        key = "wiredi.jackson.autoconfigure",
-        havingValue = "true",
-        matchIfMissing = true
-)
+@ConditionalOnEnabled("wiredi.autoconfig.logging")
 public class LoggingAccessorAutoConfiguration {
 
     @Provider

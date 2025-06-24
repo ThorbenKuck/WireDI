@@ -1,10 +1,13 @@
 package com.wiredi.runtime.domain.provider.sources;
 
 import com.wiredi.logging.Logging;
+import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
+import com.wiredi.runtime.lang.OrderedComparator;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.ServiceLoader;
 
@@ -21,38 +24,21 @@ import java.util.ServiceLoader;
 public class ServiceLoaderIdentifiableProviderSource implements IdentifiableProviderSource {
 
     private static final Logging logger = Logging.getInstance(ServiceLoaderIdentifiableProviderSource.class);
-    private final ServiceLoader<IdentifiableProvider> serviceLoader;
-    private boolean ignoreClassNotFound = false;
+    private final ServiceFiles<IdentifiableProvider> serviceLoader;
 
-    public ServiceLoaderIdentifiableProviderSource(ServiceLoader<IdentifiableProvider> serviceLoader) {
+    public ServiceLoaderIdentifiableProviderSource(ServiceFiles<IdentifiableProvider> serviceLoader) {
         this.serviceLoader = serviceLoader;
     }
 
     public ServiceLoaderIdentifiableProviderSource() {
-        this(ServiceLoader.load(IdentifiableProvider.class));
+        this.serviceLoader = ServiceFiles.getInstance(IdentifiableProvider.class);
     }
 
     @Override
-    public List<IdentifiableProvider<?>> load() {
+    public Collection<IdentifiableProvider<?>> load() {
         final List<IdentifiableProvider<?>> content = new ArrayList<>();
         logger.trace(() -> "Starting to load IdentifiableProviders");
-        if (ignoreClassNotFound) {
-            serviceLoader.stream()
-                    .forEach(provider -> {
-                        try {
-                            content.add(provider.get());
-                        } catch (Throwable throwable) {
-                            if (throwable.getCause() instanceof ClassNotFoundException) {
-                                logger.warn(() -> "The " + provider.type() + " provider could not be loaded, as it caused: " + throwable.getMessage(), throwable);
-                            } else {
-                                throw throwable;
-                            }
-                        }
-                    });
-        } else {
-            serviceLoader.forEach(content::add);
-        }
-
-        return content;
+        serviceLoader.instances().forEach(content::add);
+        return OrderedComparator.sorted(content);
     }
 }

@@ -20,12 +20,15 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see ExecutionChain
  * @see AspectHandler
  */
-public class ExecutionChainRegistry implements Eager {
+public class ExecutionChainRegistry {
 
     private static final Logging logger = Logging.getInstance(ExecutionChainRegistry.class);
-    private final DataAccess DATAACCESS = new DataAccess();
-    private final List<AspectHandler> aspectHandlerList = new ArrayList<>();
+    private final List<AspectHandler> aspectHandlerList;
     private final Map<RootMethod, ExecutionChain> executionChains = new ConcurrentHashMap<>();
+
+    public ExecutionChainRegistry(List<AspectHandler> aspectHandlerList) {
+        this.aspectHandlerList = new ArrayList<>(aspectHandlerList);
+    }
 
     /**
      * Returns the internally maintained {@link ExecutionChain} for the {@link RootMethod}, or creates a new one if
@@ -39,28 +42,6 @@ public class ExecutionChainRegistry implements Eager {
     }
 
     /**
-     * Updates internally maintained {@link AspectHandler} instances.
-     * <p>
-     * The handlers are passed to all internally maintained {@link ExecutionChain}.
-     * These {@link AspectHandler} should respect the {@link AspectHandler#appliesTo(RootMethod)} method.
-     *
-     * @param newHandlers the new handlers to apply to all execution chains
-     */
-    public void setAspectHandlers(List<AspectHandler> newHandlers) {
-        DATAACCESS.write(() -> unsafeSetAspectHandlers(newHandlers));
-    }
-
-    /**
-     * Inherited from eager, used to set up aspect handlers available in the {@link WireRepository}
-     *
-     * @param wireRepository the WireRepository the current bean is instantiated at.
-     */
-    @Override
-    public void setup(WireRepository wireRepository) {
-        DATAACCESS.write(() -> unsafeSetAspectHandlers(aspectHandlerList));
-    }
-
-    /**
      * Creates a new chain instance.
      *
      * @param rootMethod the root method which identifies the {@link ExecutionChain}
@@ -70,20 +51,5 @@ public class ExecutionChainRegistry implements Eager {
         return ExecutionChain.builder(rootMethod)
                 .withProcessors(aspectHandlerList)
                 .build();
-    }
-
-    /**
-     * Sets all {@link AspectHandler} instances in all {@link ExecutionChain}, without any locks
-     *
-     * @param newHandlers the new handlers to set in the {@link ExecutionChain executionChains}
-     */
-    private void unsafeSetAspectHandlers(List<AspectHandler> newHandlers) {
-        if (!aspectHandlerList.isEmpty()) {
-            logger.info(() -> "Clearing " + aspectHandlerList.size() + " aspect handlers");
-            aspectHandlerList.clear();
-        }
-
-        aspectHandlerList.addAll(newHandlers);
-        executionChains.forEach((rootMethod, chain) -> chain.setHandlers(newHandlers));
     }
 }

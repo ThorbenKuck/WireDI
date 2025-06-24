@@ -1,7 +1,7 @@
 package com.wiredi.runtime.domain.provider.condition;
 
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.domain.conditional.ConditionEvaluation;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,14 +22,13 @@ public class AnyLoadCondition implements LoadCondition {
     }
 
     @Override
-    public boolean matches(@NotNull WireRepository wireRepository) {
+    public void test(ConditionEvaluation.Context context) {
         for (LoadCondition child : children) {
-            if (child.matches(wireRepository)) {
-                return true;
+            child.test(context);
+            if (!context.isMatched()) {
+                return;
             }
         }
-
-        return false;
     }
 
     @Override
@@ -39,7 +38,7 @@ public class AnyLoadCondition implements LoadCondition {
     }
 
     @Override
-    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetaData annotationMetaData) {
+    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetadata annotationMetaData) {
         return or(new SingleLoadCondition(evaluatorType, annotationMetaData));
     }
 

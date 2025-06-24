@@ -7,7 +7,7 @@ import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
 import com.wiredi.runtime.aspects.ExecutionChainRegistry;
 import com.wiredi.runtime.aspects.RootMethod;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
 import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
@@ -35,7 +35,7 @@ final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectA
         this.executionChain = Value.async(() ->
                 executionChainRegistry.getExecutionChain(
                         RootMethod.builder("toProxy")
-                                .withAnnotation(AnnotationMetaData.empty("com.wiredi.aop.Transactional"))
+                                .withAnnotation(AnnotationMetadata.empty("com.wiredi.aop.Transactional"))
                                 .build(AspectHandler.wrap((c) -> super.toProxy()))
                 )
 

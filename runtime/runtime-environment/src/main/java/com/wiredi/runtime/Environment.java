@@ -13,6 +13,7 @@ import com.wiredi.runtime.properties.TypedProperties;
 import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.resources.ResourceLoader;
+import com.wiredi.runtime.resources.ResourceProtocolResolver;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.types.TypeConverter;
 import com.wiredi.runtime.types.TypeMapper;
@@ -51,31 +52,24 @@ public class Environment {
     private static final String PLACE_HOLDER_START = "{";
     private static final String PLACE_HOLDER_END = "}";
     private static final PlaceholderResolver placeholderResolver = new PlaceholderResolver(PLACE_HOLDER_START, PLACE_HOLDER_END);
-    private static final Key TAKE_ENVIRONMENT_PROPERTIES_KEY = Key.just("environment.autoconfiguration.take-environment-properties");
-    private static final Key TAKE_SYSTEM_PROPERTIES_KEY = Key.just("environment.autoconfiguration.take-system-properties");
+    private final SortedSet<EnvironmentConfiguration> configurations = new TreeSet<>(OrderedComparator.INSTANCE);
     private final Map<Character, EnvironmentExpressionResolver> expressionResolvers;
     private final TypeMapper typeMapper = TypeMapper.newPreconfigured();
     private final TypedProperties properties = new TypedProperties(typeMapper);
     private final ResourceLoader resourceLoader = new ResourceLoader();
     private final PropertyLoader propertyLoader = new PropertyLoader();
-    private final ServiceLoader loader;
+    private final ServiceFiles<EnvironmentExpressionResolver> environmentExpressionResolverServiceFiles = ServiceFiles.getInstance(EnvironmentExpressionResolver.class);
+    private final ServiceFiles<ResourceProtocolResolver> resourceProtocolResolverServiceFiles = ServiceFiles.getInstance(ResourceProtocolResolver.class);
+    private final ServiceFiles<PropertyFileTypeLoader> propertyFileTypeLoaderServiceFiles = ServiceFiles.getInstance(PropertyFileTypeLoader.class);
+    private final ServiceFiles<EnvironmentConfiguration> environmentConfigurationServiceFiles = ServiceFiles.getInstance(EnvironmentConfiguration.class);
     private boolean loaded = false;
-
-    public Environment(ServiceLoader loader, EnvironmentExpressionResolver... expressionResolvers) {
-        this(loader, Arrays.asList(expressionResolvers));
-    }
 
     public Environment(EnvironmentExpressionResolver... expressionResolvers) {
         this(Arrays.asList(expressionResolvers));
     }
 
     public Environment(List<EnvironmentExpressionResolver> expressionResolvers) {
-        this(ServiceLoader.getInstance(), expressionResolvers);
-    }
-
-    public Environment(ServiceLoader loader, List<EnvironmentExpressionResolver> expressionResolvers) {
         this.expressionResolvers = expressionResolvers.stream().collect(Collectors.toMap(EnvironmentExpressionResolver::expressionIdentifier, Function.identity()));
-        this.loader = loader;
     }
 
     public Environment() {
@@ -169,6 +163,11 @@ public class Environment {
         this.loaded = false;
     }
 
+    public Environment addConfiguration(EnvironmentConfiguration configuration) {
+        this.configurations.add(configuration);
+        return this;
+    }
+
     /**
      * This method configures this Environment instance based on the {@link java.util.ServiceLoader}.
      * <p>
@@ -187,28 +186,11 @@ public class Environment {
             return Timed.ZERO;
         }
         return Timed.of(() -> {
-            addExpressionResolvers(loader.environmentExpressionResolvers());
-            resourceLoader.addProtocolResolvers(loader.protocolResolvers());
-            propertyLoader.addPropertyFileLoaders(loader.propertyFileLoaders());
-            loader.environmentConfigurations()
-                    .stream()
-                    .sorted(OrderedComparator.INSTANCE)
-                    .forEach(config -> config.configure(this));
-
-            if (properties.getBoolean(TAKE_ENVIRONMENT_PROPERTIES_KEY, true)) {
-                logger.debug("Appending all JVM environment variables to the environment");
-                System.getenv().forEach((key, value) -> {
-                    properties.set(Key.format(key), resolve(value));
-                });
-            }
-
-            if (properties.getBoolean(TAKE_SYSTEM_PROPERTIES_KEY, true)) {
-                logger.debug("Adding all system variables to the environment");
-                System.getProperties()
-                        .stringPropertyNames().forEach(property -> {
-                            properties.set(Key.format(property), resolve(System.getProperty(property)));
-                        });
-            }
+            addExpressionResolvers(environmentExpressionResolverServiceFiles.instances());
+            resourceLoader.addProtocolResolvers(resourceProtocolResolverServiceFiles.instances());
+            propertyLoader.addPropertyFileLoaders(propertyFileTypeLoaderServiceFiles.instances());
+            configurations.addAll(environmentConfigurationServiceFiles.instances());
+            configurations.forEach(config -> config.configure(this));
             this.loaded = true;
         }).then(time -> logger.debug("Environment autoconfigured in " + time));
     }
@@ -297,6 +279,10 @@ public class Environment {
     }
 
     public void setProperties(Properties properties) {
+        this.properties.setAll(properties);
+    }
+
+    public void setProperties(TypedProperties properties) {
         this.properties.setAll(properties);
     }
 

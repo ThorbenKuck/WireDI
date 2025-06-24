@@ -7,7 +7,7 @@ import com.wiredi.runtime.async.barriers.Barrier;
 import com.wiredi.runtime.async.barriers.MutableBarrier;
 import com.wiredi.runtime.banner.Banner;
 import com.wiredi.runtime.domain.Disposable;
-import com.wiredi.runtime.domain.WireRepositoryContextCallbacks;
+import com.wiredi.runtime.domain.WireRepositoryContextCallback;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
@@ -73,8 +73,7 @@ public class WiredApplicationInstance {
     private final Barrier barrier;
     @NotNull
     private final Banner banner;
-    private final ServiceLoader serviceLoader = ServiceLoader.getInstance();
-    private final List<WireRepositoryContextCallbacks> contextCallbacks = serviceLoader.contextCallbacks();
+    private final List<WireRepositoryContextCallback> contextCallbacks;
     private boolean isRunning = false;
 
     /**
@@ -94,6 +93,9 @@ public class WiredApplicationInstance {
         this.environment = wireRepository.environment();
         this.barrier = barrier;
         this.banner = new Banner(wireRepository.environment());
+        contextCallbacks = ServiceFiles.getInstance(WireRepositoryContextCallback.class)
+                .initialize(wireRepository.onDemandInjector())
+                .instances();
     }
 
     /**
@@ -116,7 +118,7 @@ public class WiredApplicationInstance {
     @NotNull Timed start() {
         isNot(isRunning, () -> "The WiredApplication is already started");
         return Timed.of(() -> {
-                    contextCallbacks.addAll(wireRepository.getAll(WireRepositoryContextCallbacks.class));
+                    contextCallbacks.addAll(wireRepository.getAll(WireRepositoryContextCallback.class));
                     contextCallbacks.forEach(it -> it.loadingStarted(wireRepository));
 
                     Timed.of(() -> {
@@ -198,7 +200,7 @@ public class WiredApplicationInstance {
     public Timed shutdown() {
         is(isRunning, () -> "The WiredApplication is not started");
         return Timed.of(() -> {
-                    List<WireRepositoryContextCallbacks> contextCallbacks = wireRepository.getAll(WireRepositoryContextCallbacks.class);
+                    List<WireRepositoryContextCallback> contextCallbacks = wireRepository.getAll(WireRepositoryContextCallback.class);
                     logger.debug(() -> "Destroying all Beans of the WireRepository");
                     wireRepository.getAll(TypeIdentifier.just(StateFull.class))
                             .parallelStream()
@@ -305,7 +307,7 @@ public class WiredApplicationInstance {
         return environment;
     }
 
-    public List<WireRepositoryContextCallbacks> getContextCallbacks() {
+    public List<WireRepositoryContextCallback> getContextCallbacks() {
         return contextCallbacks;
     }
 

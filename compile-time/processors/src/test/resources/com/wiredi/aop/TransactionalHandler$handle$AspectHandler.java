@@ -4,7 +4,7 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionContext;
 import com.wiredi.runtime.aspects.RootMethod;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import jakarta.annotation.Generated;
 import java.lang.Object;
 import java.lang.Override;
@@ -29,7 +29,7 @@ public final class TransactionalHandler$handle$AspectHandler implements AspectHa
         return delegate.handle(context);
     }
 
-    public final boolean appliesTo(@NotNull final AnnotationMetaData annotation,
+    public final boolean appliesTo(@NotNull final AnnotationMetadata annotation,
             @NotNull final RootMethod rootMethod) {
         return annotation.className().equals("com.wiredi.aop.Transactional");
     }

@@ -2,11 +2,12 @@ package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
 import com.wiredi.compiler.errors.ProcessingException;
-import com.wiredi.compiler.logger.LogLevel;
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.compiler.logger.slf4j.MessagerContext;
 import com.wiredi.runtime.qualifier.QualifierType;
 import jakarta.inject.Qualifier;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.Element;
@@ -15,7 +16,7 @@ import java.util.*;
 
 public class Qualifiers {
 
-	private static final Logger logger = Logger.get(Qualifiers.class);
+	private static final Logger logger = LoggerFactory.getLogger(Qualifiers.class);
 
 	public static List<QualifierType> allQualifiersOf(Element element) {
 		List<QualifierType> result = new ArrayList<>();
@@ -25,8 +26,11 @@ public class Qualifiers {
 				.map(Qualifiers::allQualifiersOf)
 				.forEach(result::addAll);
 
-		if (logger.isEnabled(LogLevel.DEBUG)) {
-			result.forEach(qualifier -> logger.debug(element, "Found qualifier " + qualifier));
+		if (logger.isDebugEnabled()) {
+			MessagerContext.runNested(it -> {
+				it.setElement(element);
+				result.forEach(qualifier -> logger.debug("Found qualifier {}", qualifier));
+			});
 		}
 
 		return result;

@@ -65,7 +65,7 @@ class JacksonConfigurationTest {
     public void verifyThatTheAutoConfigurationCanBeDisabledWhenUsingTheCorrectProperty() {
         // Arrange
         WireRepository repository = WireRepository.create();
-        repository.environment().setProperty(Key.just("wiredi.jackson.autoconfigure"), "false");
+        repository.environment().setProperty(Key.just("wiredi.autoconfig.jackson.enabled"), "false");
         repository.load();
 
         // Act

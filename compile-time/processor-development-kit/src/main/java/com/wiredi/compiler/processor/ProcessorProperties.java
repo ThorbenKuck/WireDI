@@ -1,6 +1,8 @@
 package com.wiredi.compiler.processor;
 
+import com.wiredi.compiler.CompilerEnvironment;
 import com.wiredi.compiler.processor.lang.AnnotationProcessorResource;
+import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.properties.PropertyLoader;
 import com.wiredi.runtime.properties.TypedProperties;
 import com.wiredi.runtime.properties.Key;
@@ -13,12 +15,11 @@ import java.util.stream.Collectors;
 
 public class ProcessorProperties {
 
-	private static final String FILE_NAME = "wire-di.processor.properties";
-	private static final PropertyLoader propertyLoader = new PropertyLoader(new PropertiesPropertyFileTypeLoader(), new YamlPropertyFileTypeLoader());
+	private static final Environment environment = CompilerEnvironment.get();
 	private final TypedProperties properties;
 
 	public ProcessorProperties(Filer filer) {
-		properties = propertyLoader.safeLoad(new AnnotationProcessorResource(filer, FILE_NAME));
+		properties = environment.properties();
 	}
 
 	public void addOptions(Map<String, String> options) {
@@ -54,7 +55,7 @@ public class ProcessorProperties {
 	}
 
 	public List<String> getAll(CompilerPropertyKeys propertyKey) {
-		return properties.getAll(propertyKey.getRawKey());
+		return properties.getAll(propertyKey.getRawKey(), (List<String>) propertyKey.getDefaultValue());
 	}
 
 	public TypedProperties getSource() {

@@ -24,6 +24,9 @@ import java.util.function.BiConsumer;
 public class MessageHeaders implements Iterable<MessageHeader> {
 
     @NotNull
+    public static final MessageHeaders EMPTY = new MessageHeaders(Collections.emptyMap());
+
+    @NotNull
     private final Map<@NotNull String, @NotNull List<@NotNull MessageHeader>> values;
 
     public MessageHeaders() {

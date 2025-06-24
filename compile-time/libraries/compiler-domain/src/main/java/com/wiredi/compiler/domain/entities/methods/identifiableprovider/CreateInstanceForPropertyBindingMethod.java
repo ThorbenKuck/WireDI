@@ -1,15 +1,17 @@
 package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 
 import com.squareup.javapoet.*;
+import com.wiredi.annotations.DeprecationLevel;
+import com.wiredi.annotations.properties.*;
 import com.wiredi.annotations.properties.Name;
-import com.wiredi.annotations.properties.Property;
-import com.wiredi.annotations.properties.PropertyBinding;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.WireRepositories;
+import com.wiredi.compiler.domain.properties.ItemDeprecation;
+import com.wiredi.compiler.domain.properties.PropertyContext;
 import com.wiredi.compiler.errors.ProcessingException;
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireRepository;
@@ -31,24 +33,27 @@ import java.util.stream.Collectors;
 
 public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethodFactory {
 
-    private static final Logger logger = Logger.get(CreateInstanceForPropertyBindingMethod.class);
+    private static final CompileTimeLogger logger = CompileTimeLogger.getLogger(CreateInstanceForPropertyBindingMethod.class);
     private final PropertyBinding annotation;
     private final TypeElement typeElement;
     private final Environment environment;
     private final TypeMirror stringType;
     private final TypeMirror collectionType;
+    private final PropertyContext propertyContext;
 
     public CreateInstanceForPropertyBindingMethod(
             PropertyBinding annotation,
             TypeElement typeElement,
             WireRepositories wireRepositories,
             CompilerRepository compilerRepository,
-            Environment environment
+            Environment environment,
+            PropertyContext propertyContext
     ) {
         super(compilerRepository, wireRepositories);
         this.annotation = annotation;
         this.typeElement = typeElement;
         this.environment = environment;
+        this.propertyContext = propertyContext;
         this.stringType = elements().getTypeElement(String.class.getName()).asType();
         this.collectionType = elements().getTypeElement(Collection.class.getName()).asType();
     }
@@ -130,6 +135,66 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         return builder.build();
     }
 
+    private <T> T firstNotNull(T... values) {
+        for (T value : values) {
+            if (value != null) {
+                return value;
+            }
+        }
+
+        return null;
+    }
+
+    private String getDescription(Element element) {
+        Description description = element.getAnnotation(Description.class);
+        if (description != null && !description.value().isBlank()) {
+            logger.info(() -> "Found description " + description.value() + " for " + element.getEnclosingElement() + "." + element);
+            return description.value();
+        }
+
+        Property property = element.getAnnotation(Property.class);
+        if (property != null && !property.description().isBlank()) {
+            logger.info(() -> "Found description " + property.description() + " for " + element.getEnclosingElement() + "." + element);
+            return property.description();
+        }
+        logger.info(() -> "Unable to find description for " + element.getEnclosingElement() + "." + element + " (" + element.getAnnotationMirrors() + ")");
+        return elements().getDocComment(element);
+    }
+
+    @Nullable
+    private String getValue(String value) {
+        if (value.isBlank()) {
+            return null;
+        }
+
+        return value;
+    }
+
+    @Nullable
+    private ItemDeprecation deprecation(Element element) {
+        Deprecated deprecated = element.getAnnotation(Deprecated.class);
+        if (deprecated != null) {
+            return new ItemDeprecation(
+                    null,
+                    null,
+                    getValue(deprecated.since()),
+                    DeprecationLevel.WARNING.getValue()
+            );
+        }
+
+        DeprecatedProperty deprecatedProperty = element.getAnnotation(DeprecatedProperty.class);
+        if (deprecatedProperty != null) {
+            return new ItemDeprecation(
+                    getValue(deprecatedProperty.reason()),
+                    getValue(deprecatedProperty.replacement()),
+                    getValue(deprecatedProperty.since()),
+                    deprecatedProperty.level().getValue()
+            );
+        }
+
+        return null;
+    }
+
     private CodeBlock runtimeConstructorInvocation(
             TypeElement typeElement,
             String prefix
@@ -137,6 +202,36 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         List<PropertyInjectionPoint> injectionPoints = constructorInjectionPoints(typeElement, prefix);
         List<FieldWithSetter> allFieldsWithSetters = findAllFieldsWithSetters(typeElement);
         CodeBlock.Builder builder = CodeBlock.builder();
+
+        logger.info(() -> "Setting up runtime constructor invocation for property injections");
+
+        for (PropertyInjectionPoint injectionPoint : injectionPoints) {
+            String key = injectionPoint.key.value();
+            String propertyTypeClassName = classNameOf(injectionPoint.element).toString();
+            logger.info(() -> "Found property " + key + " of type " + propertyTypeClassName + " for " + typeElement);
+
+            propertyContext.addProperty(key, item -> item.withDescription(getDescription(injectionPoint.element))
+                    .withType(propertyTypeClassName)
+                    .withSourceType(typeElement.asType().toString())
+                    .withDefaultValue(injectionPoint.defaultValue)
+                    .withDeprecation(deprecation(injectionPoint.element))
+            );
+        }
+
+        for (FieldWithSetter fieldWithSetter : allFieldsWithSetters) {
+            String key = fieldWithSetter.determinePropertyKey().value();
+            String propertyTypeClassName = classNameOf(fieldWithSetter.field).toString();
+            logger.info(() -> "Found property " + key + " of type " + propertyTypeClassName + " for " + typeElement);
+
+            propertyContext.addProperty(key, item -> item
+                    .withDescription(firstNotNull(getDescription(fieldWithSetter.field), getDescription(fieldWithSetter.setter)))
+                    .withType(propertyTypeClassName)
+                    .withSourceType(typeElement.asType().toString())
+                    .withDefaultValue(fieldWithSetter.determineDefaultValue())
+                    .withSourceMethod(fieldWithSetter.setter.getSimpleName().toString())
+                    .withDeprecation(firstNotNull(deprecation(fieldWithSetter.field), deprecation(fieldWithSetter.setter)))
+            );
+        }
 
         if (allFieldsWithSetters.isEmpty()) {
             return builder.add("new $T(\n", typeElement.asType())
@@ -258,7 +353,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
 
     private boolean isNestedClass(Element element) {
         if (element.getEnclosingElement().getKind() == ElementKind.CLASS) {
-            Logger.get(CreateInstanceForPropertyBindingMethod.class).info("The class " + element + " is a subclass of " + element.getEnclosingElement());
+            org.slf4j.LoggerFactory.getLogger(CreateInstanceForPropertyBindingMethod.class).info("The class " + element + " is a subclass of " + element.getEnclosingElement());
             return true;
         }
 
@@ -372,7 +467,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         }
 
         public boolean hasAnnotation(String annotationType) {
-            Logger.get(CreateInstanceForPropertyBindingMethod.class).info(() -> "Checking for annotation " + annotationType + " on " + field + " and " + setter);
+            logger.info(() -> "Checking for instance " + annotationType + " on " + field + " and " + setter);
             return Annotations.hasByName(field, annotationType)
                     || Annotations.hasByName(setter, annotationType);
         }

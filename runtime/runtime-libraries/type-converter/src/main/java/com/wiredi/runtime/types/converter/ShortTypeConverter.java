@@ -1,12 +1,11 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
-import java.nio.ByteBuffer;
 import java.util.List;
 
-public class ShortTypeConverter extends AbstractTypeConverter<Short> {
+public class ShortTypeConverter extends TypeConverterBase<Short> {
 
 	public static final ShortTypeConverter INSTANCE = new ShortTypeConverter();
 

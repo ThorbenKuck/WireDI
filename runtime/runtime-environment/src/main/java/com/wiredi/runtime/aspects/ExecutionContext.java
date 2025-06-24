@@ -1,6 +1,6 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.properties.ThreadLocalTypedProperties;
 import com.wiredi.runtime.properties.TypedProperties;
 import org.jetbrains.annotations.NotNull;
@@ -88,15 +88,15 @@ public class ExecutionContext {
         return rootMethod;
     }
 
-    public Optional<AnnotationMetaData> findAnnotation(Predicate<AnnotationMetaData> predicate) {
+    public Optional<AnnotationMetadata> findAnnotation(Predicate<AnnotationMetadata> predicate) {
         return rootMethod.findAnnotation(predicate);
     }
 
-    public Optional<AnnotationMetaData> findAnnotation(Class<? extends Annotation> annotation) {
+    public Optional<AnnotationMetadata> findAnnotation(Class<? extends Annotation> annotation) {
         return rootMethod.findAnnotation(annotation);
     }
 
-    public AnnotationMetaData getAnnotation(Class<? extends Annotation> annotation) {
+    public AnnotationMetadata getAnnotation(Class<? extends Annotation> annotation) {
         return rootMethod.getAnnotation(annotation);
     }
 

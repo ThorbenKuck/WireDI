@@ -2,6 +2,7 @@ package com.wiredi.runtime.domain.provider;
 
 import com.google.common.primitives.Primitives;
 import com.wiredi.runtime.beans.Bean;
+import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.ParameterizedType;
@@ -145,6 +146,11 @@ public class TypeIdentifier<T> {
         throw new IllegalArgumentException("Unsupported type to construct a TypeIdentifier: " + type);
     }
 
+    @SuppressWarnings("unchecked")
+    public <S> TypeIdentifier<S> cast() {
+        return (TypeIdentifier<S>) this;
+    }
+
     @NotNull
     public TypeIdentifier<T> erasure() {
         if (genericTypes.isEmpty()) {
@@ -259,6 +265,10 @@ public class TypeIdentifier<T> {
     @NotNull
     public List<TypeIdentifier<?>> getGenericTypes() {
         return genericTypes;
+    }
+
+    public QualifiedTypeIdentifier<T> qualify(QualifierType qualifierType) {
+        return new QualifiedTypeIdentifier<>(this, qualifierType);
     }
 
     @Override

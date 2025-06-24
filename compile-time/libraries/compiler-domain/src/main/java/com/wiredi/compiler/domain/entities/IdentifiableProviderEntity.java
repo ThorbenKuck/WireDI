@@ -2,6 +2,7 @@ package com.wiredi.compiler.domain.entities;
 
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.AbstractClassEntity;
+import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,12 +16,12 @@ public class IdentifiableProviderEntity extends AbstractClassEntity<Identifiable
 
 	private final List<IdentifiableProviderEntity> children = new ArrayList<>();
 
-	public IdentifiableProviderEntity(TypeElement typeElement) {
-		this(typeElement, typeElement.asType(), typeElement.getSimpleName().toString() + "IdentifiableProvider");
+	public IdentifiableProviderEntity(TypeElement typeElement, Annotations annotations) {
+		this(typeElement, typeElement.asType(), typeElement.getSimpleName().toString() + "IdentifiableProvider", annotations);
 	}
 
-	public IdentifiableProviderEntity(Element source, TypeMirror element, String name) {
-		super(source, element, name);
+	public IdentifiableProviderEntity(Element source, TypeMirror element, String name, Annotations annotations) {
+		super(source, element, name, annotations);
 	}
 
 	public void addChild(IdentifiableProviderEntity provider) {

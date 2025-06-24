@@ -7,7 +7,7 @@ import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.compiler.domain.values.AspectHandlerMethod;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -15,7 +15,7 @@ import javax.lang.model.type.TypeMirror;
 
 public class AppliesToMethod implements StandaloneMethodFactory {
 
-    private static final String ANNOTATION_PARAMETER_NAME = "annotation";
+    private static final String ANNOTATION_PARAMETER_NAME = "instance";
     private static final String ROOT_METHOD_PARAMETER_NAME = "rootMethod";
     private final AspectHandlerMethod factoryMethod;
 
@@ -31,7 +31,7 @@ public class AppliesToMethod implements StandaloneMethodFactory {
                 .build();
 
         builder.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
-                .addParameter(ParameterSpec.builder(ClassName.get(AnnotationMetaData.class), ANNOTATION_PARAMETER_NAME)
+                .addParameter(ParameterSpec.builder(ClassName.get(AnnotationMetadata.class), ANNOTATION_PARAMETER_NAME)
                         .addModifiers(Modifier.FINAL)
                         .addAnnotation(NotNull.class)
                         .build())

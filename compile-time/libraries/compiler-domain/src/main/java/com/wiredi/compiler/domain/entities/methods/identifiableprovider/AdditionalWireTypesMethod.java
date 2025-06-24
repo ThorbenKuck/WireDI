@@ -59,7 +59,7 @@ public class AdditionalWireTypesMethod implements StandaloneMethodFactory {
         return typeElements.stream()
                 .filter(Objects::nonNull)
                 .filter(it -> it.getKind() != TypeKind.NONE)
-                .filter(it -> !it.equals(typeIdentifiers.objectType()))
+//                .filter(it -> !it.equals(typeIdentifiers.objectType()))
                 .map(typeIdentifiers::newTypeIdentifier)
                 .toList();
     }

@@ -12,11 +12,11 @@ import com.wiredi.compiler.domain.injection.FieldInjectionPoint;
 import com.wiredi.compiler.domain.injection.MethodInjectionPoint;
 import com.wiredi.compiler.domain.injection.PostConstructInjectionPoint;
 import com.wiredi.compiler.domain.injection.VariableContext;
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.MessagerContext;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.async.AsyncLoader;
 import com.wiredi.runtime.lang.ReflectionsHelper;
-import com.wiredi.runtime.values.FutureValue;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
@@ -28,7 +28,7 @@ import java.util.List;
 
 public abstract class CreateInstanceMethodFactory implements StandaloneMethodFactory {
 
-	private final Logger logger = Logger.get(getClass());
+	private final CompileTimeLogger logger = CompileTimeLogger.getLogger(getClass());
 	private static final CodeBlock EMPTY = CodeBlock.builder().build();
 
 	private final CompilerRepository compilerRepository;
@@ -60,7 +60,10 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 				String getValue = variableContext.instantiateVariableIfRequired(injectionPoint.field(), wireRepositories, codeBlockBuilder);
 
 				if (injectionPoint.requiresReflection() || entity.requiresReflectionFor(injectionPoint.field())) {
-					logger.reflectionWarning(injectionPoint.field());
+					MessagerContext.runNested(it -> {
+						it.setElement(injectionPoint.field());
+						logger.warn("This method requires the use of reflection, which is highly discouraged. Consider making it protected, package private or even public to reduce runtime reflection overhead.");
+					});
 //					codeBlockBuilder.add("// This Field requires reflections. If you are reading this think about make this field package private or protected instead\n");
 					codeBlockBuilder.add("$T.setField(", ReflectionsHelper.class)
 							.add("$S, ", injectionPoint.name())
@@ -116,7 +119,10 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 			String fetchVariables = getVariablesFromWireRepository(codeBlockBuilder, injectionPoint.parameters(), variableContext);
 
 			if (injectionPoint.requiresReflection() || entity.requiresReflectionFor(injectionPoint.method())) {
-				logger.reflectionWarning(injectionPoint.method());
+				MessagerContext.runNested(it -> {
+					it.setElement(injectionPoint.method());
+					logger.warn("This method requires the use of reflection, which is highly discouraged. Consider making it protected, package private or even public to reduce runtime reflection overhead.");
+				});
 //				codeBlockBuilder.add("// This function requires reflections. If you are reading this think about make this function package private or protected instead\n");
 				codeBlockBuilder.add("$T.invokeMethod(", ReflectionsHelper.class)
 						.add("$L, ", "instance")

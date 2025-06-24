@@ -1,7 +1,7 @@
 package com.wiredi.runtime.domain.provider.condition;
 
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.domain.conditional.ConditionEvaluation;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.domain.conditional.Conditional;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public interface LoadCondition {
     @NotNull
     static LoadCondition just(
             @NotNull Class<? extends ConditionEvaluator> evaluatorType,
-            @NotNull AnnotationMetaData annotationMetaData
+            @NotNull AnnotationMetadata annotationMetaData
     ) {
         return new SingleLoadCondition(evaluatorType, annotationMetaData);
     }
@@ -45,7 +45,7 @@ public interface LoadCondition {
     @NotNull
     static LoadCondition of(
             @NotNull Class<? extends ConditionEvaluator> evaluatorClass,
-            @NotNull AnnotationMetaData annotationMetaData
+            @NotNull AnnotationMetadata annotationMetaData
     ) {
         return builder(evaluatorClass).withAnnotation(annotationMetaData).build();
     }
@@ -59,16 +59,16 @@ public interface LoadCondition {
     @NotNull
     static LoadCondition of(
             @NotNull Class<? extends ConditionEvaluator> evaluatorClass,
-            @NotNull AnnotationMetaData.Builder annotationMetaDataBuilder
+            @NotNull AnnotationMetadata.Builder annotationMetaDataBuilder
     ) {
         return builder(evaluatorClass).withAnnotation(annotationMetaDataBuilder.build()).build();
     }
 
-    boolean matches(@NotNull WireRepository wireRepository);
+    void test(ConditionEvaluation.Context context);
 
     @NotNull
     default LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType) {
-        return add(evaluatorType, AnnotationMetaData.builder(Conditional.class.getSimpleName())
+        return add(evaluatorType, AnnotationMetadata.builder(Conditional.class.getSimpleName())
                 .withField("value", evaluatorType)
                 .build());
     }
@@ -84,13 +84,13 @@ public interface LoadCondition {
     }
 
     @NotNull
-    LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetaData annotationMetaData);
+    LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetadata annotationMetaData);
 
     /**
      * A builder for creating {@link LoadCondition} instances.
      * <p>
      * This builder provides a fluent API for creating conditions based on {@link ConditionEvaluator}s
-     * with appropriate annotation metadata. It can be used to programmatically create conditions
+     * with appropriate instance metadata. It can be used to programmatically create conditions
      * that would normally be created through annotations.
      * <p>
      * Example usage:
@@ -116,30 +116,30 @@ public interface LoadCondition {
         @NotNull
         private final Class<? extends ConditionEvaluator> evaluatorClass;
         @Nullable
-        private AnnotationMetaData annotation;
+        private AnnotationMetadata annotation;
 
         private Builder(@NotNull Class<? extends ConditionEvaluator> evaluatorClass) {
             this.evaluatorClass = evaluatorClass;
         }
 
         /**
-         * Adds a field to the annotation metadata.
+         * Adds a field to the instance metadata.
          *
          * @return this builder
          */
         @NotNull
-        public Builder withAnnotation(@NotNull AnnotationMetaData annotation) {
+        public Builder withAnnotation(@NotNull AnnotationMetadata annotation) {
             this.annotation = annotation;
             return this;
         }
 
         /**
-         * Adds a field to the annotation metadata.
+         * Adds a field to the instance metadata.
          *
          * @return this builder
          */
         @NotNull
-        public Builder withAnnotation(@NotNull AnnotationMetaData.Builder annotationBuilder) {
+        public Builder withAnnotation(@NotNull AnnotationMetadata.Builder annotationBuilder) {
             this.annotation = annotationBuilder.build();
             return this;
         }

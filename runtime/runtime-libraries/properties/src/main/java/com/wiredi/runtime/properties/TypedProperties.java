@@ -17,7 +17,7 @@ import java.util.function.Supplier;
  * First this class checks if the environment contains the property. If not, the System properties are checked.
  * If neither the environment, nor the System contain the property, it will be taken from the local cache.
  */
-public final class TypedProperties implements AutoCloseable {
+public final class TypedProperties implements AutoCloseable, Iterable<Map.Entry<Key, String>> {
 
     private static final String LIST_ENTRY_SEPARATOR = ",";
 
@@ -372,6 +372,26 @@ public final class TypedProperties implements AutoCloseable {
         return getAll(key, value -> typeMapper.convert(value, type));
     }
 
+    public Map<String, String> subsetOf(String prefix) {
+        Map<String, String> result = new HashMap<>();
+        properties.forEach((key, value) -> {
+            if (key.value().startsWith(prefix)) {
+                result.put(key.value().replaceFirst(prefix, "").replaceFirst(".", ""), value);
+            }
+        });
+        return result;
+    }
+
+    public <T> Map<String, T> subsetOf(String prefix, Class<T> type) {
+        Map<String, T> result = new HashMap<>();
+        properties.forEach((key, value) -> {
+            if (key.value().startsWith(prefix)) {
+                result.put(key.value().replaceFirst(prefix, ""), typeMapper.convert(value, type));
+            }
+        });
+        return result;
+    }
+
     @NotNull
     public List<Boolean> getAllAsBoolean(@NotNull final Key key) {
         return getAll(key, boolean.class);
@@ -409,5 +429,15 @@ public final class TypedProperties implements AutoCloseable {
 
     public List<String> splitKey(String key) {
         return Arrays.asList(key.split(LIST_ENTRY_SEPARATOR));
+    }
+
+    @Override
+    public String toString() {
+        return this.properties.toString();
+    }
+
+    @Override
+    public @NotNull Iterator<Map.Entry<Key, String>> iterator() {
+        return this.properties.entrySet().iterator();
     }
 }

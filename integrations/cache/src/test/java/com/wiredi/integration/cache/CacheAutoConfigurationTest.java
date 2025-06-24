@@ -11,7 +11,7 @@ import java.util.List;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-@ActiveProfiles({"test", "example"})
+@ActiveProfiles({"test"})
 class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerIsWired() {
@@ -20,7 +20,7 @@ class CacheAutoConfigurationTest {
 
         // Act
         // Assert
-        assertThat(wireRepository.environment().activeProfiles()).isEqualTo(List.of("test", "example"));
+        assertThat(wireRepository.environment().activeProfiles()).isEqualTo(List.of("test"));
         assertThat(wireRepository.contains(CacheManager.class)).isTrue();
     }
 

@@ -16,9 +16,6 @@ class ExecutionChainRegistryTest {
     @Test
     public void addingHandlerUpdatesRelevantChains() {
         // Arrange
-        final ExecutionChainRegistry registry = new ExecutionChainRegistry();
-        ExecutionChain firstChain = registry.getExecutionChain(FIRST_METHOD);
-        ExecutionChain secondChain = registry.getExecutionChain(SECOND_METHOD);
         AspectHandler firstHandler = new AspectHandler() {
             @Override
             public @Nullable Object process(@NotNull ExecutionContext context) {
@@ -41,10 +38,11 @@ class ExecutionChainRegistryTest {
                 return rootMethod.equals(SECOND_METHOD);
             }
         };
+        final ExecutionChainRegistry registry = new ExecutionChainRegistry(List.of(firstHandler, secondHandler));
+        ExecutionChain firstChain = registry.getExecutionChain(FIRST_METHOD);
+        ExecutionChain secondChain = registry.getExecutionChain(SECOND_METHOD);
 
         // Act
-        registry.setAspectHandlers(List.of(firstHandler, secondHandler));
-
         // Assert
         assertThat(firstChain.head()).isSameAs(firstChain.tail()).isSameAs(firstHandler);
         assertThat(secondChain.head()).isSameAs(secondChain.tail()).isSameAs(secondHandler);

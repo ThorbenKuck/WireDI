@@ -1,6 +1,7 @@
 package com.wiredi.annotations;
 
 import com.wiredi.annotations.aspects.Pure;
+import com.wiredi.annotations.stereotypes.AliasFor;
 
 import java.lang.annotation.*;
 

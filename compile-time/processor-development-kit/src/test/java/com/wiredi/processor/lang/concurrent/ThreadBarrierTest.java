@@ -1,6 +1,7 @@
 package com.wiredi.processor.lang.concurrent;
 
 import com.wiredi.compiler.processor.lang.concurrent.ContextRunnable;
+import com.wiredi.compiler.processor.lang.concurrent.ExecutorServiceThreadBarrier;
 import com.wiredi.compiler.processor.lang.concurrent.ThreadBarrier;
 import org.junit.jupiter.api.Test;
 
@@ -14,7 +15,7 @@ class ThreadBarrierTest {
 	public void test() {
 		ExecutorService executorService = Executors.newFixedThreadPool(10);
 		Result result = new Result();
-		ThreadBarrier barrier = ThreadBarrier.builder()
+		ThreadBarrier barrier = ExecutorServiceThreadBarrier.builder()
 				.withExecutorService(executorService)
 				.withRunnables(new TestRunnable(result))
 				.withRunnables(new TestRunnable(result))

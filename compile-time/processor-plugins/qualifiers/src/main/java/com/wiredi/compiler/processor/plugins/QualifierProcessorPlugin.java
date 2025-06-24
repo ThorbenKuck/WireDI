@@ -3,7 +3,8 @@ package com.wiredi.compiler.processor.plugins;
 import com.google.auto.service.AutoService;
 import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 
@@ -12,7 +13,7 @@ import java.util.List;
 @AutoService(CompilerEntityPlugin.class)
 public class QualifierProcessorPlugin implements CompilerEntityPlugin {
 
-    private static final Logger logger = Logger.get(QualifierProcessorPlugin.class);
+    private static final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(QualifierProcessorPlugin.class);
 
     @Override
     public void handle(@NotNull IdentifiableProviderEntity entity) {

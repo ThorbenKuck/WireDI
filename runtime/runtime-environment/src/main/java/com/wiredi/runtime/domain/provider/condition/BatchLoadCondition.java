@@ -1,15 +1,14 @@
 package com.wiredi.runtime.domain.provider.condition;
 
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.domain.conditional.ConditionEvaluation;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.conditional.context.ConditionContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class BatchLoadCondition extends AbstractLoadCondition {
+public class BatchLoadCondition implements LoadCondition {
 
     private final List<LoadConditionEvaluationStage> evaluators;
 
@@ -22,26 +21,26 @@ public class BatchLoadCondition extends AbstractLoadCondition {
     }
 
     @Override
-    public boolean matches(@NotNull WireRepository wireRepository) {
+    public void test(ConditionEvaluation.Context context) {
         if (evaluators.isEmpty()) {
-            return true;
+            return;
         }
+
         for (LoadConditionEvaluationStage loadConditionEvaluationStage : evaluators) {
-            ConditionContext.Runtime context = new ConditionContext.Runtime(wireRepository.environment(), wireRepository.beanContainer(), loadConditionEvaluationStage.annotationMetaData());
-            evaluate(wireRepository, context, loadConditionEvaluationStage.type());
-
-            if (!context.isMatched()) {
-                return false;
-            }
+            ConditionEvaluator evaluator = context.get(loadConditionEvaluationStage.type());
+            context.withAnnotationMetadata(loadConditionEvaluationStage.annotationMetaData(), evaluator::test);
         }
-
-        return true;
     }
 
     @Override
-    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetaData annotationMetaData) {
+    public @NotNull LoadCondition add(@NotNull Class<? extends ConditionEvaluator> evaluatorType, @NotNull AnnotationMetadata annotationMetaData) {
         evaluators.add(new LoadConditionEvaluationStage(evaluatorType, annotationMetaData));
         return this;
+    }
+
+    @Override
+    public String toString() {
+        return "All(" + evaluators + ')';
     }
 
     public static class Builder {
@@ -72,14 +71,9 @@ public class BatchLoadCondition extends AbstractLoadCondition {
                 this.type = type;
             }
 
-            public Builder forAnnotation(AnnotationMetaData annotationMetaData) {
+            public Builder forAnnotation(AnnotationMetadata annotationMetaData) {
                 return builder.withEvaluationStage(new LoadConditionEvaluationStage(type, annotationMetaData));
             }
         }
-    }
-
-    @Override
-    public String toString() {
-        return "All(" + evaluators + ')';
     }
 }

@@ -21,7 +21,6 @@
         <module>logging</module>
         <module>lang</module>
         <module>messaging</module>
-        <module>metrics</module>
         <module>properties</module>
         <module>resources</module>
         <module>retry</module>

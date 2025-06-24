@@ -1,6 +1,7 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.domain.ScopeProvider;
 import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.WireConflictResolver;
@@ -120,6 +121,7 @@ public interface IdentifiableProvider<T> extends Ordered {
     @Nullable
     T get(@NotNull final WireRepository wireRepository, @NotNull final TypeIdentifier<T> concreteType);
 
+    @Nullable
     default T get(@NotNull final WireRepository wireRepository) {
         return get(wireRepository, (TypeIdentifier<T>) type());
     }
@@ -136,12 +138,20 @@ public interface IdentifiableProvider<T> extends Ordered {
     }
 
     @NotNull
-    default List<QualifierType> qualifiers() {
+    default List<@NotNull QualifierType> qualifiers() {
         return Collections.emptyList();
     }
 
     @Nullable
     default LoadCondition condition() {
         return null;
+    }
+
+    default @Nullable ScopeProvider scope() {
+        return null;
+    }
+
+    default void tearDown(@NotNull T t) {
+        // Default, do nothing.
     }
 }

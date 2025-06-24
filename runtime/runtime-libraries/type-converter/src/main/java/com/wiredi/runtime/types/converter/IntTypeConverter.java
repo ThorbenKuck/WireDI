@@ -1,11 +1,11 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.util.List;
 
-public class IntTypeConverter extends AbstractTypeConverter<Integer> {
+public class IntTypeConverter extends TypeConverterBase<Integer> {
 
 	public static final IntTypeConverter INSTANCE = new IntTypeConverter();
 

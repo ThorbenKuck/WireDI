@@ -1,25 +1,25 @@
 package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 
 import javax.lang.model.element.AnnotationMirror;
 
 public class AnnotationMetaDataSpec {
 
     public static CodeBlock initializer(AnnotationMirror mirror) {
-        return initializer(AnnotationMetaData.of(mirror));
+        return initializer(AnnotationMetadata.of(mirror));
     }
 
-    public static CodeBlock initializer(AnnotationMetaData metaData) {
+    public static CodeBlock initializer(AnnotationMetadata metaData) {
         if (metaData.isEmpty()) {
             return CodeBlock.builder()
-                    .add("$T.empty($S)", AnnotationMetaData.class, metaData.className())
+                    .add("$T.empty($S)", AnnotationMetadata.class, metaData.className())
                     .build();
         }
 
         CodeBlock.Builder metaDataInitializer = CodeBlock.builder()
-                .add("$T.builder($S)", AnnotationMetaData.class, metaData.className())
+                .add("$T.builder($S)", AnnotationMetadata.class, metaData.className())
                 .indent();
         metaData.forEach((field, value) -> appendField(metaDataInitializer, field, value));
         metaDataInitializer.add("\n.build()").unindent();

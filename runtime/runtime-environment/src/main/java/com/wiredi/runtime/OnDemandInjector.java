@@ -44,6 +44,10 @@ public class OnDemandInjector {
     }
 
     public <T> T get(Class<T> type) {
+        if (wireRepository.contains(type)) {
+            return wireRepository.get(type);
+        }
+
         if (cache.containsKey(type)) {
             return (T) cache.get(type);
         }

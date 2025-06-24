@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 /**
  * Any instance of this interface, are treated as a handler for a specific
- * {@link com.wiredi.annotations.aspects.AspectTarget aspectTarget} annotation.
+ * {@link com.wiredi.annotations.aspects.AspectTarget aspectTarget} instance.
  * <p>
  * You can provide a handler for aspect enabled annotations, by adding it to the wire repository,
  * which means you can write a class like this:

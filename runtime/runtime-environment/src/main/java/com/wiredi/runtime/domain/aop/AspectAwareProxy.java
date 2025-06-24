@@ -7,7 +7,7 @@ import org.jetbrains.annotations.Nullable;
  * <p>
  * It has no special methods and is only used, so that at runtime a user might evaluate, if any specific class
  * is a generated proxy or not. If any class is instance of this interface, it is by contract a generated class.
- * Especially the default annotation processor automatically applies this interface.
+ * Especially the default instance processor automatically applies this interface.
  * <p>
  * For convenience the method {@link #isProxy(Object)} may be used, to check if any specific object is a proxy. Just
  * note that you should normally never require this check. If you find yourself requiring this method, consider

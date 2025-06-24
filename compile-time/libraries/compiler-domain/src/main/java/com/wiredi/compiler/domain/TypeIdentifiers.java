@@ -1,8 +1,7 @@
 package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import org.slf4j.Logger;import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
 import jakarta.inject.Inject;
 
@@ -15,7 +14,7 @@ import javax.lang.model.util.Types;
 
 public class TypeIdentifiers {
 
-	private static Logger logger = Logger.get(TypeIdentifier.class);
+	private static Logger logger = org.slf4j.LoggerFactory.getLogger(TypeIdentifier.class);
 
 	@Inject
 	private Types types;

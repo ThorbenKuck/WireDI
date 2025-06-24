@@ -1,6 +1,6 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 class ExecutionChainTest {
 
-	private final AnnotationMetaData annotationMetaData = AnnotationMetaData.empty(ExampleAnnotation.class.getName());
+	private final AnnotationMetadata annotationMetaData = AnnotationMetadata.empty(ExampleAnnotation.class.getName());
 	private final RootMethod rootMethod = RootMethod.builder("test")
 			.withAnnotation(annotationMetaData)
 			.build(context -> context.requireParameter("param"));

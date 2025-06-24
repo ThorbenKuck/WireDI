@@ -1,5 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
+import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.domain.provider.sources.FixedIdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource;
 
@@ -23,7 +24,7 @@ import java.util.ServiceLoader;
  */
 public interface IdentifiableProviderSource {
 
-    static IdentifiableProviderSource serviceLoader(ServiceLoader<IdentifiableProvider> serviceLoader) {
+    static IdentifiableProviderSource serviceLoader(ServiceFiles<IdentifiableProvider> serviceLoader) {
         return new ServiceLoaderIdentifiableProviderSource(serviceLoader);
     }
 
@@ -44,5 +45,5 @@ public interface IdentifiableProviderSource {
      *
      * @return all identifiable providers this source can identify
      */
-    List<IdentifiableProvider<?>> load();
+    Collection<IdentifiableProvider<?>> load();
 }

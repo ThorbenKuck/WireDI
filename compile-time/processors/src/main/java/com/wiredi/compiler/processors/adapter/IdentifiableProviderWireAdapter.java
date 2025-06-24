@@ -3,8 +3,9 @@ package com.wiredi.compiler.processors.adapter;
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.entities.AspectAwareProxyEntity;
 import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.processor.factories.AspectAwareProxyFactory;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
+import org.slf4j.Logger;import com.wiredi.compiler.processor.factories.AspectAwareProxyFactory;
 import com.wiredi.compiler.processor.factories.IdentifiableProviderFactory;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +15,7 @@ import java.util.Optional;
 
 public class IdentifiableProviderWireAdapter {
 
-	private static final Logger logger = Logger.get(IdentifiableProviderWireAdapter.class);
+	private static final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(IdentifiableProviderWireAdapter.class);
 
 	@Inject
 	private AspectAwareProxyFactory aspectAwareProxyFactory;

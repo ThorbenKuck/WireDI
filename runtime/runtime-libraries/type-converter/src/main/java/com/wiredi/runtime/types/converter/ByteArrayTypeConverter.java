@@ -1,13 +1,12 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
-import java.util.function.Function;
 
-public class ByteArrayTypeConverter extends AbstractTypeConverter<byte[]> {
+public class ByteArrayTypeConverter extends TypeConverterBase<byte[]> {
 
     public static final ByteArrayTypeConverter INSTANCE = new ByteArrayTypeConverter();
 

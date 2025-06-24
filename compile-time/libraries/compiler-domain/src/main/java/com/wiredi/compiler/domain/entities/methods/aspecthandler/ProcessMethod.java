@@ -6,8 +6,7 @@ import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionContext;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
-import com.wiredi.compiler.logger.Logger;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.ExecutableElement;
@@ -22,7 +21,7 @@ import java.util.List;
 
 public class ProcessMethod implements StandaloneMethodFactory {
 
-    private static final Logger logger = Logger.get(ProcessMethod.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(ProcessMethod.class);
     private final ExecutableElement methodDelegate;
     private final TypeElement handlerType;
     private final Aspect aspectAnnotation;

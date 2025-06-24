@@ -4,8 +4,7 @@ import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.entities.AspectAwareProxyEntity;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.values.ProxyMethod;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.repository.CompilerRepository;
+import org.slf4j.Logger;import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.compiler.processor.TypeExtractor;
 import com.wiredi.compiler.processor.business.AspectAwareProxyService;
 
@@ -20,7 +19,7 @@ public class AspectAwareProxyFactory implements Factory<AspectAwareProxyEntity> 
 	private final TypeExtractor typeExtractor;
 	private final AspectAwareProxyService proxyService;
 	private final Types types;
-	private static final Logger logger = Logger.get(AspectAwareProxyFactory.class);
+	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(AspectAwareProxyFactory.class);
 
 	public AspectAwareProxyFactory(
             CompilerRepository compilerRepository,

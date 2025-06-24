@@ -3,11 +3,13 @@ package com.wiredi.compiler.processor.plugins;
 import com.wiredi.compiler.Injector;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.*;
-import com.wiredi.compiler.logger.Logger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.compiler.repository.CompilerRepositoryCallback;
 import com.wiredi.runtime.collections.TypeMap;
+import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.lang.OrderedComparator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -15,18 +17,22 @@ import java.util.stream.Collectors;
 
 public class ProcessorPluginContext implements CompilerRepositoryCallback {
 
-    private static final Logger logger = Logger.get(ProcessorPluginContext.class);
-    private static final TypeMap<List<? extends Plugin>> cache = new TypeMap<>();
-    public final List<CompilerEntityPlugin> wireProcessorPlugins;
+    private static final Logger logger = LoggerFactory.getLogger(ProcessorPluginContext.class);
+    public final List<CompilerEntityPlugin> wireProcessorPlugins = new ArrayList<>();
     private final TypeMap<Consumer<ClassEntity<?>>> attachListeners = new TypeMap<>();
     private final Consumer<ClassEntity<?>> defaultFinalizeHandler;
 
     public ProcessorPluginContext(Injector injector, CompilerRepository compilerRepository) {
         compilerRepository.registerCallback(this);
 
-        wireProcessorPlugins = load(injector, CompilerEntityPlugin.class);
+        load(injector, CompilerEntityPluginFactory.class).stream()
+                .map(factory -> factory.create(injector))
+                .forEach(wireProcessorPlugins::add);
+        wireProcessorPlugins.addAll(load(injector, CompilerEntityPlugin.class));
+        OrderedComparator.sort(wireProcessorPlugins);
+
         defaultFinalizeHandler = (type) -> {
-            logger.debug(() -> "Unhandled type " + type);
+            logger.debug("Unhandled type {}", type);
             wireProcessorPlugins.forEach(it -> it.handleUnsupported(type));
         };
 
@@ -39,20 +45,25 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
 
     private static final Map<Class<?>, List<?>> LOADED_CLASSES = new HashMap<>();
 
-    public synchronized static <T extends Plugin> List<T> load(Injector injector, Class<T> type) {
+    public synchronized static <T extends Ordered> List<T> load(Injector injector, Class<T> type) {
         return (List<T>) LOADED_CLASSES.computeIfAbsent(type, t -> doLoad(injector, type));
     }
 
-    private static <T extends Plugin> List<T> doLoad(Injector injector, Class<T> type) {
+    private static <T extends Ordered> List<T> doLoad(Injector injector, Class<T> type) {
         List<T> result = ServiceLoader.load(type)
                 .stream()
-                .map(provider -> injector.get(provider.type()))
-                .sorted(OrderedComparator.INSTANCE)
-                .peek(it -> {
-                    it.initialize();
+                .map(provider -> {
+                    try {
+                        return injector.get(provider.type());
+                    } catch (Throwable throwable) {
+                        logger.warn("Failed to load {}: {}", type.getSimpleName(), throwable.getMessage());
+                        return null;
+                    }
                 })
+                .filter(Objects::nonNull)
+                .sorted(OrderedComparator.INSTANCE)
                 .collect(Collectors.toList());
-        logger.info(() -> "Loaded " + result.size() + " ProcessorPlugins: " + result.stream().map(it -> it.getClass().getSimpleName()).toList());
+        logger.info("Loaded {}({}): {}", type.getSimpleName(), result.size(), result.stream().map(it -> it.getClass().getSimpleName()).toList());
 
         return result;
 

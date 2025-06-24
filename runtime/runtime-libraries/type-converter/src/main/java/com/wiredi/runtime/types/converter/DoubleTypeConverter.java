@@ -1,12 +1,12 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.nio.ByteBuffer;
 import java.util.List;
 
-public class DoubleTypeConverter extends AbstractTypeConverter<Double> {
+public class DoubleTypeConverter extends TypeConverterBase<Double> {
 
     public static final DoubleTypeConverter INSTANCE = new DoubleTypeConverter();
 

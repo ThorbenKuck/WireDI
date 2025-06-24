@@ -1,5 +1,6 @@
 package com.wiredi.tests;
 
+import com.wiredi.annotations.Wire;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 import java.lang.annotation.*;
@@ -9,5 +10,6 @@ import java.lang.annotation.*;
 @Target(ElementType.TYPE)
 @Documented
 @Inherited
+@Wire
 public @interface WiredTest {
 }

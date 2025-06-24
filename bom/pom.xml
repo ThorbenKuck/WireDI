@@ -49,11 +49,6 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
-                <artifactId>metrics</artifactId>
-                <version>${revision}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.wiredi</groupId>
                 <artifactId>collections</artifactId>
                 <version>${revision}</version>
             </dependency>

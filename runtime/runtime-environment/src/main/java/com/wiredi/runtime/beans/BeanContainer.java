@@ -1,16 +1,17 @@
 package com.wiredi.runtime.beans;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.ServiceLoader;
+import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.async.DataAccess;
 import com.wiredi.runtime.beans.value.BeanValue;
+import com.wiredi.runtime.domain.conditional.ConditionEvaluation;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
-import com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource;
 import com.wiredi.runtime.lang.Counter;
+import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import static com.wiredi.runtime.lang.Preconditions.is;
  * The BeanContainer holds instances of {@link Bean} containers, which hold Component instances of same types.
  * <p>
  * A BeanContainer is empty by default, but by calling {@link #load(WireRepository)} it is filled with
- * {@link IdentifiableProvider} instances that can be loaded using the {@link ServiceLoader}.
+ * {@link IdentifiableProvider} instances that can be loaded using the {@link ServiceFiles}.
  * It requires a {@link WireRepository} to correctly resolve conditions.
  * <p>
  * All methods of a BeanContainer are supposed to never return null.
@@ -48,7 +49,7 @@ public class BeanContainer {
     public BeanContainer(
             @NotNull BeanContainerProperties properties
     ) {
-        this(properties, List.of(new ServiceLoaderIdentifiableProviderSource()));
+        this(properties, List.of(IdentifiableProviderSource.serviceLoader()));
     }
 
     public BeanContainer(
@@ -99,7 +100,7 @@ public class BeanContainer {
     /**
      * Loads all available {@link IdentifiableProvider}.
      * <p>
-     * This method uses the {@link ServiceLoader} to load providers.
+     * This method uses the {@link ServiceFiles} to load providers.
      *
      * @param wireRepository the repository maintaining this BeanContainer.
      *                       It is required to resolve conditions
@@ -154,23 +155,56 @@ public class BeanContainer {
         if (conditionalProviders.isEmpty()) {
             return 0;
         }
+        ConditionEvaluation conditionEvaluation = new ConditionEvaluation(wireRepository);
 
         logger.debug(() -> "Detected " + conditionalProviders.size() + " conditional providers.");
         Counter additionalRounds = new Counter();
-        int result = applyConditionals(conditionalProviders, wireRepository, additionalRounds);
+        int result = applyConditionals(conditionalProviders, wireRepository, additionalRounds, conditionEvaluation);
         int warnThreshHold = properties.conditionalRoundThreshold();
         if (additionalRounds.get() > warnThreshHold) {
             logger.warn(() -> ROUND_LOGGING_PREFIX.formatted(result, additionalRounds.get()) + ROUND_WARNING_SUFFIX);
         } else {
             logger.debug(() -> ROUND_LOGGING_PREFIX.formatted(result, additionalRounds.get()));
         }
+
+        if (wireRepository.environment().getProperty(Key.just("debug"), false)) {
+            System.out.println();
+            System.out.println("Condition Evaluation:");
+            System.out.println("=====================");
+            System.out.println("Total: " + conditionalProviders.size());
+            System.out.println("Applied: " + result);
+            System.out.println("Additional Rounds: " + additionalRounds.get());
+            System.out.println("Round Threshold: " + warnThreshHold);
+            System.out.println();
+            conditionEvaluation.forEach(context -> {
+                System.out.println("# " + context.provider());
+                if (!context.positiveMatches().isEmpty()) {
+                    System.out.println(" ## Positive Matches ##");
+                    context.positiveMatches().forEach(match -> {
+                        System.out.println(" - " + match);
+                    });
+                }
+
+                if (!context.negativeMatches().isEmpty()) {
+                    System.out.println(" ## Negative Matches ##");
+                    context.negativeMatches().forEach(match -> {
+                        System.out.println(" - " + match);
+                    });
+                }
+
+                System.out.println();
+            });
+            System.out.println("=====================");
+        }
+
         return result;
     }
 
     private int applyConditionals(
             @NotNull List<IdentifiableProvider> identifiableProviders,
             @NotNull WireRepository wireRepository,
-            @NotNull Counter round
+            @NotNull Counter round,
+            @NotNull ConditionEvaluation conditionEvaluation
     ) {
         int applied = 0;
         round.increment();
@@ -178,8 +212,12 @@ public class BeanContainer {
         logger.debug(() -> "Applying conditional providers; Round " + round.get());
 
         for (IdentifiableProvider provider : ordered(identifiableProviders)) {
-            LoadCondition condition = provider.condition();
-            if (condition != null && condition.matches(wireRepository)) {
+            LoadCondition condition = Objects.requireNonNull(provider.condition());
+            ConditionEvaluation.Context context = conditionEvaluation.access(provider);
+            context.reset();
+            condition.test(context);
+
+            if (context.isMatched()) {
                 applied += 1;
                 unsafeRegister(provider);
             } else {
@@ -190,7 +228,7 @@ public class BeanContainer {
         if (applied > 0 && !notMatched.isEmpty()) {
             int finalApplied = applied;
             logger.debug(() -> "Applied " + finalApplied + " conditions in round " + round.get() + ". Attempting another round for the conditionals on " + notMatched.size() + " left over conditionals.");
-            applied += applyConditionals(notMatched, wireRepository, round);
+            applied += applyConditionals(notMatched, wireRepository, round, conditionEvaluation);
         }
 
         return applied;

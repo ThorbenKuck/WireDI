@@ -28,9 +28,8 @@ public class BatchConditionMethodFactory implements StandaloneMethodFactory {
                 .add("$T.async(() -> $T.builder()", Value.class, BatchLoadCondition.class)
                 .indent();
 
-        conditionEntries.forEach(entry -> initializer.add("\n.withEvaluationStage($T.class)", entry.annotationType())
-                .add(".forAnnotation($L)", AnnotationMetaDataSpec.initializer(entry.annotationMetaData()))
-        );
+        conditionEntries.forEach(entry -> initializer.add("\n.withEvaluationStage($T.class)", entry.evaluatorType())
+                    .add(".forAnnotation($L)", AnnotationMetaDataSpec.initializer(entry.annotationMetaData())));
         initializer.add("\n.build()").unindent().add("\n)");
 
         entity.addField(

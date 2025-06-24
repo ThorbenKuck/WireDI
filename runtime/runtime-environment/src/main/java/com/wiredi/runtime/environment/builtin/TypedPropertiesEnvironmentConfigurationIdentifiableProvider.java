@@ -3,7 +3,7 @@ package com.wiredi.runtime.environment.builtin;
 import com.google.auto.service.AutoService;
 import com.wiredi.annotations.Order;
 import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnPropertyEvaluator;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -24,7 +24,7 @@ public class TypedPropertiesEnvironmentConfigurationIdentifiableProvider impleme
 
     private static final Value<LoadCondition> LOAD_CONDITION_VALUE = Value.async(() -> new EagerLoadCondition(
             new ConditionalOnPropertyEvaluator(),
-            AnnotationMetaData.builder(APPLY_TYPE_CONVERTERS_VALUE)
+            AnnotationMetadata.builder(APPLY_TYPE_CONVERTERS_VALUE)
                     .withField("key", APPLY_TYPE_CONVERTERS_VALUE)
                     .withField("havingValue", "true")
                     .withField("matchIfMissing", "true")

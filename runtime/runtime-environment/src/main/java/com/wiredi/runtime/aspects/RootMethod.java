@@ -1,6 +1,6 @@
 package com.wiredi.runtime.aspects;
 
-import com.wiredi.runtime.domain.AnnotationMetaData;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,13 +18,13 @@ public class RootMethod implements AspectHandler {
     @NotNull
     private final Map<@NotNull String, @NotNull TypeIdentifier<?>> parameterTypes;
     @NotNull
-    private final List<@NotNull AnnotationMetaData> annotations;
+    private final List<@NotNull AnnotationMetadata> annotations;
 
     public RootMethod(
             @NotNull AspectHandler rootMethodAspectHandler,
             @NotNull String methodName,
             @NotNull Map<String, TypeIdentifier<?>> parameterTypes,
-            @NotNull List<@NotNull AnnotationMetaData> annotations
+            @NotNull List<@NotNull AnnotationMetadata> annotations
     ) {
         this.rootMethodAspectHandler = rootMethodAspectHandler;
         this.methodName = methodName;
@@ -49,7 +49,7 @@ public class RootMethod implements AspectHandler {
     }
 
     @NotNull
-    public List<AnnotationMetaData> getAnnotations() {
+    public List<AnnotationMetadata> getAnnotations() {
         return annotations;
     }
 
@@ -58,8 +58,8 @@ public class RootMethod implements AspectHandler {
         return parameterTypes;
     }
 
-    public Optional<AnnotationMetaData> findAnnotation(Predicate<AnnotationMetaData> predicate) {
-        for (AnnotationMetaData annotationMetaData : annotations) {
+    public Optional<AnnotationMetadata> findAnnotation(Predicate<AnnotationMetadata> predicate) {
+        for (AnnotationMetadata annotationMetaData : annotations) {
             if (predicate.test(annotationMetaData)) {
                 return Optional.of(annotationMetaData);
             }
@@ -68,8 +68,8 @@ public class RootMethod implements AspectHandler {
         return Optional.empty();
     }
 
-    public Optional<AnnotationMetaData> findAnnotation(Class<? extends Annotation> annotation) {
-        for (AnnotationMetaData annotationMetaData : annotations) {
+    public Optional<AnnotationMetadata> findAnnotation(Class<? extends Annotation> annotation) {
+        for (AnnotationMetadata annotationMetaData : annotations) {
             if (Objects.equals(annotationMetaData.className(), annotation.getName())) {
                 return Optional.of(annotationMetaData);
             }
@@ -78,8 +78,8 @@ public class RootMethod implements AspectHandler {
         return Optional.empty();
     }
 
-    public AnnotationMetaData getAnnotation(Class<? extends Annotation> annotation) {
-        for (AnnotationMetaData annotationMetaData : annotations) {
+    public AnnotationMetadata getAnnotation(Class<? extends Annotation> annotation) {
+        for (AnnotationMetadata annotationMetaData : annotations) {
             if (Objects.equals(annotationMetaData.className(), annotation.getName())) {
                 return annotationMetaData;
             }
@@ -125,7 +125,7 @@ public class RootMethod implements AspectHandler {
         @NotNull
         private final Map<@NotNull String, @NotNull TypeIdentifier<?>> parameters = new HashMap<>();
         @NotNull
-        private final List<@NotNull AnnotationMetaData> annotations = new ArrayList<>();
+        private final List<@NotNull AnnotationMetadata> annotations = new ArrayList<>();
 
         public Builder(@NotNull String methodName) {
             this.methodName = methodName;
@@ -139,7 +139,7 @@ public class RootMethod implements AspectHandler {
             return this;
         }
 
-        public Builder withAnnotation(@NotNull AnnotationMetaData annotation) {
+        public Builder withAnnotation(@NotNull AnnotationMetadata annotation) {
             this.annotations.add(annotation);
             return this;
         }

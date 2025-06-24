@@ -9,7 +9,7 @@ public class OverwritingTestClass extends OverwrittenTestClass {
 
 	@Override
 	public void injectInOverwrittenOnly() {
-		overwritingMethodPreventsInjection.failure("The overwriting function was invoked, even though it shadows the @Inject annotation");
+		overwritingMethodPreventsInjection.failure("The overwriting function was invoked, even though it shadows the @Inject instance");
 	}
 
 	@Override

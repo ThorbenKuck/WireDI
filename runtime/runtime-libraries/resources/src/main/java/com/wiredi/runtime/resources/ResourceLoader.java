@@ -6,6 +6,8 @@ import com.wiredi.runtime.resources.builtin.FileSystemResourceProtocolResolver;
 import com.wiredi.runtime.resources.exceptions.UnsupportedResourceProtocolException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -50,6 +52,7 @@ import java.util.*;
  */
 public class ResourceLoader {
 
+    private static final Logger logger = LoggerFactory.getLogger(ResourceLoader.class);
     private static final char PROTOCOL_DELIMITER = ':';
     @NotNull
     private final Map<@NotNull String, @NotNull ResourceProtocolResolver> protocolResolvers;
@@ -80,6 +83,10 @@ public class ResourceLoader {
         this.defaultResolver = defaultResolver;
     }
 
+    public Set<String> supportedProtocols() {
+        return protocolResolvers.keySet();
+    }
+
     /**
      * Constructs a new ResourceLoader with the provided {@link ResourceProtocolResolver}.
      *
@@ -89,6 +96,24 @@ public class ResourceLoader {
     @NotNull
     public static ResourceLoader open(final ResourceProtocolResolver... resolvers) {
         return new ResourceLoader(Arrays.asList(resolvers));
+    }
+
+    @Nullable
+    public ResourceProtocolResolver getResolver(@NotNull final String protocol) {
+        return protocolResolvers.get(protocol);
+    }
+
+    @Nullable
+    public Resource firstHitInAllResolvers(String path) {
+        for (Map.Entry<String, ResourceProtocolResolver> entry : protocolResolvers.entrySet()) {
+            Resource resolve = entry.getValue().resolve(new ResolverContext(entry.getKey(), path));
+
+            if (resolve.exists()) {
+                return resolve;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -136,11 +161,12 @@ public class ResourceLoader {
     public ResourceLoader addProtocolResolver(@NotNull final ResourceProtocolResolver resourceProtocolResolver) {
         Objects.requireNonNull(resourceProtocolResolver);
         resourceProtocolResolver.supportedProtocols().forEach(type -> {
-            if (protocolResolvers.containsKey(type)) {
-                throw new IllegalArgumentException("The ProtocolResolver " + resourceProtocolResolver + " tried to register the type " + type + " but there already is a ProtocolResolver registered for it");
+            if (protocolResolvers.containsKey(type) && !protocolResolvers.get(type).equals(resourceProtocolResolver)) {
+                throw new IllegalArgumentException("The ProtocolResolver " + resourceProtocolResolver + " tried to register the type " + type + " but there already is a ProtocolResolver registered for it: " + protocolResolvers.get(type));
             }
         });
         resourceProtocolResolver.supportedProtocols().forEach(type -> protocolResolvers.put(type, resourceProtocolResolver));
+        logger.debug("Registered ProtocolResolver " + resourceProtocolResolver + " for protocols " + resourceProtocolResolver.supportedProtocols());
 
         return this;
     }

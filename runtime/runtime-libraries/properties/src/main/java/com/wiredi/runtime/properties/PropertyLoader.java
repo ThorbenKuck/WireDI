@@ -64,7 +64,7 @@ public final class PropertyLoader {
      * @param loader the loader to register.
      * @throws IllegalStateException if any file type already has a {@link PropertyFileTypeLoader}
      */
-    public void addPropertyFileLoader(@NotNull final PropertyFileTypeLoader loader) {
+    public PropertyLoader addPropertyFileLoader(@NotNull final PropertyFileTypeLoader loader) {
         loader.supportedFileTypes().forEach(supportedFileType -> {
             final PropertyFileTypeLoader existingPropertyLoader = propertyFileLoaders.get(supportedFileType);
             if (existingPropertyLoader != null) {
@@ -72,6 +72,8 @@ public final class PropertyLoader {
             }
             propertyFileLoaders.put(supportedFileType, loader);
         });
+
+        return this;
     }
 
     /**

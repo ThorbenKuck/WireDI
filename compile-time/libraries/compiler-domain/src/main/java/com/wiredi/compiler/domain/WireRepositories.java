@@ -3,8 +3,7 @@ package com.wiredi.compiler.domain;
 import com.google.common.base.Strings;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.runtime.properties.Key;
+import org.slf4j.Logger;import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.properties.exceptions.PropertyNotFoundException;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +23,7 @@ public class WireRepositories {
 	private final TypeChecker typeChecker;
 	private final TypeIdentifiers typeIdentifiers;
 	private final Types types;
-	private final Logger logger = Logger.get(WireRepositories.class);
+	private final Logger logger = org.slf4j.LoggerFactory.getLogger(WireRepositories.class);
 
 	public WireRepositories(TypeChecker typeChecker, TypeIdentifiers typeIdentifiers, Types types) {
 		this.typeChecker = typeChecker;

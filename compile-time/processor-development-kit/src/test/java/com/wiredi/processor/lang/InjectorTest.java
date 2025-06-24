@@ -19,19 +19,6 @@ class InjectorTest {
         assertNotNull(testClass.getLeaf2(), "Direct dependency is not null");
         assertNotNull(testClass.getLeaf(), "Parent dependency is not null");
     }
-
-    @Test
-    @Disabled // TODO: Find out why this faily
-    public void testThatAnExampleProcessorCanBeWired() {
-        ExampleProcessor wireDiBaseProcessor = new ExampleProcessor();
-        wireDiBaseProcessor.init(new ProcessingEnvironmentMock());
-
-        assertThat(wireDiBaseProcessor.logger).isNotNull();
-        assertThat(wireDiBaseProcessor.compilerRepository).isNotNull();
-        assertThat(wireDiBaseProcessor.types).isNotNull();
-        assertThat(wireDiBaseProcessor.injectionPointService).isNotNull();
-        assertThat(wireDiBaseProcessor.proxyService).isNotNull();
-    }
 }
 
 class Leaf {}

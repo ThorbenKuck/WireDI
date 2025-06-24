@@ -1,10 +1,8 @@
 package com.wiredi.runtime.types.converter;
 
-import com.wiredi.runtime.types.AbstractTypeConverter;
-import com.wiredi.runtime.types.TypeConverter;
-import org.jetbrains.annotations.NotNull;
+import com.wiredi.runtime.types.TypeConverterBase;
 
-public class CharSequenceTypeConverter extends AbstractTypeConverter<CharSequence> {
+public class CharSequenceTypeConverter extends TypeConverterBase<CharSequence> {
 
     public static final CharSequenceTypeConverter INSTANCE = new CharSequenceTypeConverter();
 

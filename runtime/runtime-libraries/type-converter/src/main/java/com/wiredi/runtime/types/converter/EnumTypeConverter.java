@@ -1,12 +1,12 @@
 package com.wiredi.runtime.types.converter;
 
 import com.wiredi.runtime.collections.EnumSet;
-import com.wiredi.runtime.types.AbstractTypeConverter;
+import com.wiredi.runtime.types.TypeConverterBase;
 import com.wiredi.runtime.types.Bytes;
 
 import java.nio.ByteBuffer;
 
-public class EnumTypeConverter<T extends Enum<T>> extends AbstractTypeConverter<T> {
+public class EnumTypeConverter<T extends Enum<T>> extends TypeConverterBase<T> {
 
     private final EnumSet<T> values;
 

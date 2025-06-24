@@ -7,7 +7,7 @@ import java.util.List;
 
 public enum CompilerPropertyKeys {
     DEBUG_ENABLED("flags.debug-enabled", false),
-    AOP_REQUIRES_ASPECT_TARGET_ANNOTATION("flags.aop-requires-annotation-target", true),
+    AOP_REQUIRES_ASPECT_TARGET_ANNOTATION("flags.aop-requires-instance-target", true),
     AOP_STRICT_ANNOTATION_TARGET("flags.strict-aop-annotation-target", true),
     AOP_ASPECT_TARGETS("aspects.target-annotations", ""),
     WARN_REFLECTION_USAGE("flags.reflection-warnings-enabled", true),
@@ -26,14 +26,13 @@ public enum CompilerPropertyKeys {
      * <p>
      * If false, only directly declared supertypes will be returned as additional wire types.
      */
-    ADDITIONAL_WIRE_TYPES_SUPPORT_INHERITANCE("processor.additional-wire-types.support-inheritance", false),
+    ADDITIONAL_WIRE_TYPES_SUPPORT_INHERITANCE("processor.additional-wire-types.support-inheritance", true),
 
     /**
      * A list of fully qualified class names, that should not be added to the additional wire types.
      */
     ADDITIONAL_WIRE_TYPES_IGNORE("processor.additional-wire-types.ignore", List.of(
-            Object.class.getName(),
-            Record.class.getName(),
+            "java.lang",
             Serializable.class.getName()
     ));
 

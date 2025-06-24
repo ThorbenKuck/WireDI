@@ -2,8 +2,7 @@ package com.wiredi.compiler.processor.lang.utils;
 
 import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.compiler.errors.ProcessingException;
-import com.wiredi.compiler.logger.Logger;
-import org.jetbrains.annotations.NotNull;
+import org.slf4j.Logger;import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.*;
 import javax.lang.model.type.TypeKind;
@@ -18,7 +17,7 @@ public class TypeElements {
     private static final Map<TypeElement, List<? extends VariableElement>> FIELD_CACHE = new HashMap<>();
     private static final Map<TypeElement, List<ExecutableElement>> METHOD_CACHE = new HashMap<>();
     private static final Map<ExecutableElement, List<VariableElement>> PARAMETER_CACHE = new HashMap<>();
-    private static final Logger logger = Logger.get(TypeElements.class);
+    private static final Logger logger = org.slf4j.LoggerFactory.getLogger(TypeElements.class);
     private static final TypeMap<TypeMirror> TYPE_CACHE = new TypeMap<>();
     private final Elements elements;
     private final Types types;

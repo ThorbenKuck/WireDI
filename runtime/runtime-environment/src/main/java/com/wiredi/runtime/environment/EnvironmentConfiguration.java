@@ -1,6 +1,7 @@
 package com.wiredi.runtime.environment;
 
 import com.wiredi.runtime.Environment;
+import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.NotNull;
  *     <li><b>ServiceLocation:</b> Add the fully qualified class name to the <code>META-INF/services/com.wiredi.runtime.environment.EnvironmentConfiguration</code> file. You can do so by manually adding this, or by using something like googles AUtoService.</li>
  *     <li><b>Wiring:</b> Provide it as a bean by annotating it with <code>@com.wiredi.annotations.Wire</code>.</li>
  * </ol>
- * The Environment itself will use the {@link com.wiredi.runtime.ServiceLoader} to load {@code META-INF/services} files
+ * The Environment itself will use the {@link ServiceFiles} to load {@code META-INF/services} files
  * when utilizing {@link Environment#autoconfigure}, whilst the {@link com.wiredi.runtime.WireRepository} will invoke
  * all instances when it is loaded.
  * <p>

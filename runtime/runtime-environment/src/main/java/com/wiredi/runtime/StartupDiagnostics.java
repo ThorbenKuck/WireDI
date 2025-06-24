@@ -1,7 +1,9 @@
 package com.wiredi.runtime;
 
 import com.wiredi.runtime.lang.ThrowingRunnable;
+import com.wiredi.runtime.lang.ThrowingSupplier;
 import com.wiredi.runtime.time.Timed;
+import com.wiredi.runtime.time.TimedValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +30,18 @@ public class StartupDiagnostics {
             duration = stop();
         }
         return duration;
+    }
+
+    public <T extends Throwable, S> TimedValue<S> measure(String name, ThrowingSupplier<S, T> runnable) throws T {
+        Timed duration;
+        S result;
+        try {
+            start(name);
+            result = runnable.get();
+        } finally {
+            duration = stop();
+        }
+        return new TimedValue<>(result, duration);
     }
 
     private void start(String name) {

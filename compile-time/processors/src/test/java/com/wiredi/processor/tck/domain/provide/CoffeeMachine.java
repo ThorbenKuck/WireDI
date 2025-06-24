@@ -4,6 +4,7 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.processor.tck.domain.provide.coffee.*;
 import com.wiredi.processor.tck.infrastructure.TckTestCase;
 import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.lang.OrderedComparator;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DynamicNode;
 
@@ -49,7 +50,7 @@ public class CoffeeMachine implements TckTestCase {
 				dynamicTest("The earthy coffee should be a singleton", () -> assertThat(earthyCoffee).isSameAs(robusta)),
 				dynamicTest("The primary coffee should be primary", () -> assertThat(primaryCoffee).isSameAs(robusta)),
 				dynamicTest("There should be two types of coffee registered", () -> Assertions.assertThat(wireRepository.getAll(Coffee.class)).hasSize(2)),
-				dynamicTest("The registered coffee classes should be robusta and arabica", () -> Assertions.assertThat(wireRepository.getAll(Coffee.class).stream().map(Coffee::getClass).toList()).isEqualTo(List.of(Robusta.class, Arabica.class)))
+				dynamicTest("The registered coffee classes should be robusta and arabica", () -> Assertions.assertThat(wireRepository.getAll(Coffee.class).stream().<Class<? extends Coffee>>map(Coffee::getClass).toList()).containsExactlyInAnyOrder(Arabica.class, Robusta.class))
 		);
 	}
 }

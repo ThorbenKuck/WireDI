@@ -5,6 +5,7 @@ import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
 import java.util.List;
 
 public enum StandardWireConflictResolver implements WireConflictResolver {
@@ -12,7 +13,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
         @Override
         @NotNull
         public <T> IdentifiableProvider<T> find(
-                @NotNull final List<IdentifiableProvider<T>> identifiableProviders,
+                @NotNull final Collection<IdentifiableProvider<T>> identifiableProviders,
                 @NotNull final TypeIdentifier<T> expectedType
         ) {
             final List<IdentifiableProvider<T>> bestMatches = identifiableProviders.stream()
@@ -40,7 +41,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
         @Override
         @NotNull
         public <T> IdentifiableProvider<T> find(
-                @NotNull final List<IdentifiableProvider<T>> identifiableProviders,
+                @NotNull final Collection<IdentifiableProvider<T>> identifiableProviders,
                 @NotNull final TypeIdentifier<T> expectedType
         ) {
             return identifiableProviders.stream()
@@ -54,7 +55,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
         @Override
         @NotNull
         public <T> IdentifiableProvider<T> find(
-                @NotNull final List<IdentifiableProvider<T>> identifiableProviders,
+                @NotNull final Collection<IdentifiableProvider<T>> identifiableProviders,
                 @NotNull final TypeIdentifier<T> expectedType
         ) {
             final List<IdentifiableProvider<T>> directMatches = identifiableProviders.stream()
@@ -72,7 +73,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
         @Override
         @NotNull
         public <T> IdentifiableProvider<T> find(
-                @NotNull final List<IdentifiableProvider<T>> identifiableProviders,
+                @NotNull final Collection<IdentifiableProvider<T>> identifiableProviders,
                 @NotNull final TypeIdentifier<T> expectedType
         ) {
             return error(identifiableProviders, identifiableProviders.size(), expectedType);
@@ -82,7 +83,7 @@ public enum StandardWireConflictResolver implements WireConflictResolver {
         @Override
         @NotNull
         public <T> IdentifiableProvider<T> find(
-                @NotNull final List<IdentifiableProvider<T>> identifiableProviders,
+                @NotNull final Collection<IdentifiableProvider<T>> identifiableProviders,
                 @NotNull final TypeIdentifier<T> expectedType
         ) {
             return identifiableProviders.stream()

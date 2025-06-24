@@ -1,6 +1,7 @@
 package com.wiredi.compiler.processor.lang;
 
-import com.wiredi.compiler.logger.Logger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
+import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
 import com.wiredi.runtime.resources.ResolverContext;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.resources.ResourceProtocolResolver;
@@ -11,7 +12,7 @@ import java.util.Set;
 
 public class AnnotationProcessorResourceResolver implements ResourceProtocolResolver {
 
-    private static final Logger logger = Logger.get(AnnotationProcessorResourceResolver.class);
+    private static final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(AnnotationProcessorResourceResolver.class);
     private final Filer filer;
 
     public AnnotationProcessorResourceResolver(Filer filer) {

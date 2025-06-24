@@ -6,8 +6,7 @@ import com.wiredi.compiler.domain.entities.EnvironmentConfigurationEntity;
 import com.wiredi.compiler.domain.entities.environment.AddPropertyEnvironmentModification;
 import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
 import com.wiredi.compiler.errors.ProcessingException;
-import com.wiredi.compiler.logger.Logger;
-import com.wiredi.compiler.repository.CompilerRepository;
+import org.slf4j.Logger;import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.properties.Key;
 import jakarta.inject.Inject;
 
@@ -20,13 +19,13 @@ public class EnvironmentConfigurationFactory implements Factory<EnvironmentConfi
 	@Inject
 	private CompilerRepository compilerRepository;
 
-	private static final Logger logger = Logger.get(EnvironmentConfigurationFactory.class);
+	private static final Logger logger = org.slf4j.LoggerFactory.getLogger(EnvironmentConfigurationFactory.class);
 
 	@Override
 	public EnvironmentConfigurationEntity create(TypeElement typeElement) {
 		Optional<PropertySource> annotation = Annotations.getAnnotation(typeElement, PropertySource.class);
 		if (annotation.isEmpty()) {
-			throw new ProcessingException(typeElement, "Missing @PropertySource annotation.");
+			throw new ProcessingException(typeElement, "Missing @PropertySource instance.");
 		}
 		PropertySource propertySource = annotation.get();
 		return compilerRepository.newEnvironmentConfiguration(typeElement)
