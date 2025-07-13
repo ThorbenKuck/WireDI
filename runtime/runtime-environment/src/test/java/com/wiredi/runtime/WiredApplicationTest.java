@@ -21,8 +21,8 @@ class WiredApplicationTest {
         void startupAndShutdown() {
             // Arrange
             Case testCase = new Case();
-            WiredApplicationInstance application = WiredApplication.start(repository -> {
-                repository.announce(
+            WiredApplicationInstance application = WiredApplication.start(container -> {
+                container.announce(
                         IdentifiableProvider.singleton(testCase)
                                 .withAdditionalTypeIdentifier(TypeIdentifier.just(Eager.class))
                                 .withAdditionalTypeIdentifier(TypeIdentifier.just(Disposable.class))

@@ -83,7 +83,7 @@ public class WiredApplicationInstance {
      * This constructor is typically called by the {@link WiredApplication} class
      * and should not be called directly.
      *
-     * @param wireContainer the wire repository to use for this application instance
+     * @param wireContainer the wire container to use for this application instance
      * @param barrier the barrier to use for managing the application's completion state
      */
     public WiredApplicationInstance(

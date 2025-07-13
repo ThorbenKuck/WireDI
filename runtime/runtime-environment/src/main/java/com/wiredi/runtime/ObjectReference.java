@@ -66,7 +66,7 @@ public class ObjectReference<T> {
     }
 
     /**
-     * Returns the wire repository associated with this reference.
+     * Returns the wire container associated with this reference.
      * <p>
      * The wire repository is used for resolving bean instances.
      *

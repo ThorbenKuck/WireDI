@@ -126,7 +126,7 @@ public interface WireContainerCallback extends Ordered {
     }
 
     /**
-     * This method is only called once, when a wire repository is constructed.
+     * This method is only called once, when a wire container is constructed.
      * <p>
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
      *
