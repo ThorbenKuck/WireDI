@@ -14,7 +14,7 @@ import com.wiredi.compiler.errors.ProcessingException;
 import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.lang.DynamicBuilder;
 import com.wiredi.runtime.properties.Key;
@@ -94,8 +94,8 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
 
     @Override
     public void append(
-            MethodSpec.Builder builder,
-            ClassEntity<?> entity
+            MethodSpec.@NotNull Builder builder,
+            @NotNull ClassEntity<?> entity
     ) {
         CodeBlock instantiation;
         if (annotation.lifecycle() == PropertyBinding.Lifecycle.RUNTIME) {
@@ -108,7 +108,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
 
         builder.returns(TypeName.get(entity.rootType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireRepository.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(instantiation)
                 .build();

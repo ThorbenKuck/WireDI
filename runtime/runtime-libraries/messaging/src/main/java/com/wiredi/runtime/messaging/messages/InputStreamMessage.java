@@ -13,7 +13,7 @@ import java.io.*;
  * This is an implementation of the {@link Message} which takes the body from an input stream.
  * <p>
  * The underlying {@link InputStream} will not be buffered.
- * Repeated calls to {@link #body()} or repeated reads from the {@link #inputStream()} will likely result in an
+ * Repeated calls to {@link #body()} or repeated reads from the {@link #inputStream()} will likely appliedConditionalProviders in an
  * Exceptions to be raised.
  * <p>
  * The method {@link #buffer()} can be used to construct a new {@link Message} that contains the contents from the

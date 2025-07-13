@@ -12,12 +12,6 @@ public record FactoryMethod(TypeElement enclosingType, ExecutableElement method)
 		return method.getReturnType();
 	}
 
-	public boolean isSingleton() {
-		return Optional.ofNullable(method.getAnnotation(Provider.class))
-				.map(Provider::singleton)
-				.orElse(true);
-	}
-
 	public Provider.SuperTypes superTypes() {
 		return Optional.ofNullable(method.getAnnotation(Provider.class))
 				.map(Provider::respect)

@@ -12,15 +12,15 @@ import java.util.ServiceLoader;
 /**
  * This interface abstracts how {@link IdentifiableProvider} instances are loaded.
  * <p>
- * The goal is to abstract how and from where the providers are loaded that are used by the {@link com.wiredi.runtime.beans.BeanContainer}
+ * The goal is to abstract how and from where the providers are loaded that are used by the {@link com.wiredi.runtime.WireContainerInitializer}
  * to construct beans.
  * Each different implementation can be understood as a strategy on how to load providers.
  * <p>
  * The most important source is the {@link com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource},
  * which uses the {@link java.util.ServiceLoader} to load all IdentifiableProviders and bypass reflections as much as possible.
  *
- * @see com.wiredi.runtime.beans.BeanContainer
  * @see IdentifiableProvider
+ * @see com.wiredi.runtime.WireContainerInitializer
  */
 public interface IdentifiableProviderSource {
 

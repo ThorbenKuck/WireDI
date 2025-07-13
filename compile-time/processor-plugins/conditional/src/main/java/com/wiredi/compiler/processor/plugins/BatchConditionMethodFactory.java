@@ -9,6 +9,7 @@ import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.runtime.domain.provider.condition.BatchLoadCondition;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.values.Value;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import java.util.List;
@@ -23,7 +24,7 @@ public class BatchConditionMethodFactory implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         CodeBlock.Builder initializer = CodeBlock.builder()
                 .add("$T.async(() -> $T.builder()", Value.class, BatchLoadCondition.class)
                 .indent();
@@ -47,7 +48,7 @@ public class BatchConditionMethodFactory implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "condition";
     }
 }

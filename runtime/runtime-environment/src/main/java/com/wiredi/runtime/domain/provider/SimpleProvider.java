@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.conditional.ConditionEvaluator;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
@@ -53,7 +53,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
     private final TypeIdentifier<T> type;
     private final List<TypeIdentifier<?>> additionalTypes;
     private final List<QualifierType> qualifiers;
-    private final ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, ?> instanceSupplier;
+    private final ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, ?> instanceSupplier;
     private final LoadCondition condition;
     private final int order;
     private final boolean singleton;
@@ -145,7 +145,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
     }
 
     @Override
-    public @Nullable T get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> concreteType) {
+    public @Nullable T get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> concreteType) {
         try {
             return instanceSupplier.apply(wireRepository, concreteType);
         } catch (Throwable e) {
@@ -163,9 +163,9 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
 
         <E extends Throwable> Builder<T> withInstance(ThrowingSupplier<T, E> instanceSupplier);
 
-        <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireRepository, T, E> instanceFunction);
+        <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireContainer, T, E> instanceFunction);
 
-        <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> instanceFunction);
+        <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, E> instanceFunction);
 
         Buildable<T> withAdditionalType(TypeIdentifier<?> additionalType);
 
@@ -198,17 +198,17 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         Buildable<T> withCondition(Class<? extends ConditionEvaluator> conditionType, Consumer<LoadCondition.Builder> builderConsumer);
     }
 
-    private class CachingFunction<E extends Throwable> implements ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> {
+    private class CachingFunction<E extends Throwable> implements ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, E> {
 
-        private final ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> delegate;
+        private final ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, E> delegate;
         private T instance;
 
-        private CachingFunction(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> delegate) {
+        private CachingFunction(ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, E> delegate) {
             this.delegate = delegate;
         }
 
         @Override
-        public T apply(WireRepository wireRepository, TypeIdentifier<T> s) throws E {
+        public T apply(WireContainer wireRepository, TypeIdentifier<T> s) throws E {
             if (instance == null) {
                 instance = delegate.apply(wireRepository, s);
             }
@@ -225,7 +225,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         private final TypeIdentifier<T> type;
         private final Set<TypeIdentifier<?>> additionalTypes = new HashSet<>();
         private final Set<QualifierType> qualifiers = new HashSet<>();
-        private ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, ?> instanceFunction;
+        private ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, ?> instanceFunction;
         private LoadCondition condition = null;
         private int order = Ordered.DEFAULT;
         private Boolean singleton = null;
@@ -262,7 +262,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          * @return this builder
          */
         @Override
-        public <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireRepository, T, E> instanceFunction) {
+        public <E extends Throwable> Builder<T> withInstance(ThrowingFunction<WireContainer, T, E> instanceFunction) {
             if (this.instanceFunction != null) {
                 throw new IllegalStateException("Instance supplier already set");
             }
@@ -282,7 +282,7 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
          * @return this builder
          */
         @Override
-        public <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireRepository, TypeIdentifier<T>, T, E> instanceFunction) {
+        public <E extends Throwable> Builder<T> withInstance(ThrowingBiFunction<WireContainer, TypeIdentifier<T>, T, E> instanceFunction) {
             if (this.instanceFunction != null) {
                 throw new IllegalStateException("Instance supplier already set");
             }

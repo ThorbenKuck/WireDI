@@ -7,8 +7,9 @@ import com.wiredi.compiler.domain.injection.InjectionPoints;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.domain.values.FactoryMethod;
 import com.wiredi.compiler.repository.CompilerRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.WireRepository;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ public class CreateInstanceForFactoryMethod extends CreateInstanceMethodFactory 
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
 
         final VariableContext variableContext = new VariableContext();
         final CodeBlock.Builder methodBody = CodeBlock.builder()
@@ -59,7 +60,7 @@ public class CreateInstanceForFactoryMethod extends CreateInstanceMethodFactory 
 
         builder.returns(TypeName.get(factoryMethod.returnType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireRepository.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(methodBody.build())
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))

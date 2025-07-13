@@ -1,10 +1,13 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.beans.Bean;
+import com.wiredi.runtime.domain.factories.MissingBeanException;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.exceptions.BeanNotFoundException;
+import com.wiredi.runtime.exceptions.DiInstantiationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -32,7 +35,7 @@ import java.util.function.Supplier;
  *          // Get the instance
  *          MyDependency dependency = reference.getInstance();
  *          // Get all available instance
- *          List&#60;MyDependency&#62; allInstances = reference.getAll();
+ *          Collection&#60;MyDependency&#62; allInstances = reference.getAll();
  *     }
  * }
  * </code></pre>
@@ -54,14 +57,12 @@ import java.util.function.Supplier;
  */
 public class ObjectReference<T> {
 
-    private final Bean<T> bean;
-    private final WireRepository wireRepository;
+    private final WireContainer wireRepository;
     private final TypeIdentifier<T> type;
 
-    public ObjectReference(WireRepository wireRepository, TypeIdentifier<T> type) {
+    public ObjectReference(WireContainer wireRepository, TypeIdentifier<T> type) {
         this.wireRepository = wireRepository;
         this.type = type;
-        this.bean = wireRepository.getBean(type);
     }
 
     /**
@@ -71,20 +72,10 @@ public class ObjectReference<T> {
      *
      * @return the wire repository instance used by this reference
      */
-    public WireRepository wireRepository() {
+    public WireContainer wireRepository() {
         return wireRepository;
     }
 
-    /**
-     * Returns the bean definition associated with this reference.
-     * <p>
-     * The bean contains metadata about how to create and manage instances.
-     *
-     * @return the bean definition for the referenced type
-     */
-    public Bean<T> bean() {
-        return bean;
-    }
 
     /**
      * Returns all available instances of the referenced type.
@@ -93,7 +84,7 @@ public class ObjectReference<T> {
      *
      * @return a list containing all available instances of the referenced type
      */
-    public List<T> getAll() {
+    public Collection<T> getAll() {
         return wireRepository.getAll(type);
     }
 
@@ -111,23 +102,11 @@ public class ObjectReference<T> {
      */
     @Nullable
     public T getInstance() {
-        if (bean.isEmpty()) {
+        try {
+            return wireRepository.get(type);
+        } catch (DiInstantiationException | BeanNotFoundException | MissingBeanException e) {
             return null;
         }
-        List<T> allInstances = wireRepository.getAll(type);
-        if (allInstances.isEmpty()) {
-            return null;
-        }
-
-        if (allInstances.size() == 1) {
-            return allInstances.getFirst();
-        }
-
-        if (bean.getAllUnqualified().size() == 1) {
-            return bean.getAllUnqualified().getFirst().get(wireRepository, type);
-        }
-
-        return null;
     }
 
     /**
@@ -136,7 +115,7 @@ public class ObjectReference<T> {
      * If no instance is available through the wire repository.
      *
      * @param defaultValue supplier to provide a default value if no instance is available
-     * @return the instance from the repository if available, otherwise the result of the defaultValue supplier
+     * @return the instance from the repository if available, otherwise the appliedConditionalProviders of the defaultValue supplier
      * @throws NullPointerException if both the instance and the supplied default value are null
      */
     @NotNull

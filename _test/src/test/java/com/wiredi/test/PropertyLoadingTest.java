@@ -1,6 +1,6 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.test.properties.ExampleProperties;
 import com.wiredi.test.properties.SeparateProperties;
 import org.junit.jupiter.api.Test;
@@ -12,7 +12,7 @@ public class PropertyLoadingTest extends AbstractIntegrationTest {
     @Test
     public void testThatSeparatePropertiesAreLoadedCorrectly()  {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
 
         // Act
         SeparateProperties separateProperties = wireRepository.get(SeparateProperties.class);
@@ -25,7 +25,7 @@ public class PropertyLoadingTest extends AbstractIntegrationTest {
     @Test
     public void testThatExamplePropertiesAreLoadedCorrectly()  {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
 
         // Act
         ExampleProperties separateProperties = wireRepository.get(ExampleProperties.class);

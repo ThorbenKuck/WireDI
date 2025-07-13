@@ -1,19 +1,18 @@
 package com.wiredi.examples;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.junit.jupiter.api.Assertions.*;
 
 class BaseTest {
 
     @Test
     public void orderingWorks() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
 
         // Act
         List<Base> bases = wireRepository.getAll(Base.class);

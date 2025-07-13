@@ -130,11 +130,11 @@ public abstract class AsyncResult<T> {
         if (checkPermits) {
             int permits = barrier.availablePermits();
             if (permits < 1) {
-                throw new AssertionFailedError("Async result was not invoked " + expectedInvocations + " times");
+                throw new AssertionFailedError("Async appliedConditionalProviders was not invoked " + expectedInvocations + " times");
             }
 
             if (permits > 1) {
-                throw new AssertionFailedError("Async result was invoked " + (permits - 1) + " too many times");
+                throw new AssertionFailedError("Async appliedConditionalProviders was invoked " + (permits - 1) + " too many times");
             }
         }
     }

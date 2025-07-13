@@ -9,7 +9,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * An interface on the result of processing {@link Message}.
+ * An interface on the appliedConditionalProviders of processing {@link Message}.
  * <p>
  * Implementations may decide on how (and if) errors are rethrown.
  * Developers can decide to use the default implementations ({@link Success}, {@link Failed} or {@link SkipMessage}) to

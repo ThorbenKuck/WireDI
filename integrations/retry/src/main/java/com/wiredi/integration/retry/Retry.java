@@ -17,7 +17,7 @@ public @interface Retry {
      * The max amount that the execution can be retried.
      * <p>
      * This results in the max amount of times the code is executed to be max retries + 1;
-     * A value of less than 1 will result in an indefinite retry.
+     * A value of less than 1 will appliedConditionalProviders in an indefinite retry.
      *
      * @return the max amount that the execution can be retried.
      */

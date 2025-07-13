@@ -21,6 +21,7 @@ import java.lang.annotation.Inherited;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public class Annotations {
 
@@ -153,11 +154,10 @@ public class Annotations {
                 .stream().anyMatch(it -> hasByNameInherited(it.getAnnotationType().asElement(), name));
     }
 
-    public static List<? extends AnnotationMirror> findAll(Element element, Predicate<AnnotationMirror> include) {
+    public static Stream<? extends AnnotationMirror> findAll(Element element, Predicate<AnnotationMirror> include) {
         return element.getAnnotationMirrors()
                 .stream()
-                .filter(include)
-                .toList();
+                .filter(include);
     }
 
     public static boolean isMetaAnnotatedWith(Element element, Class<? extends Annotation> annotation) {
@@ -297,6 +297,11 @@ public class Annotations {
             }
         }
         return Optional.empty();
+    }
+
+    public AnnotationMirror getAnnotationMirror(AnnotationMirror annotationMirror, Class<? extends Annotation> annotation) {
+        return findAnnotationMirror(annotationMirror.getAnnotationType().asElement(), annotation)
+                .orElseThrow(() -> new IllegalArgumentException("Could not find the instance " + annotation + " on " + annotationMirror));
     }
 
     public AnnotationMirror getAnnotationMirror(Element element, Class<? extends Annotation> annotation) {

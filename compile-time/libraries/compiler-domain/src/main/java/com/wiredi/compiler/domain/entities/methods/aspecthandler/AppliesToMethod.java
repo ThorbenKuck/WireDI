@@ -24,7 +24,7 @@ public class AppliesToMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         TypeMirror aspectHandler = Annotations.extractType(factoryMethod.annotation(), Aspect::around);
         CodeBlock methodBody = CodeBlock.builder()
                 .add("return $L.className().equals($S)", ANNOTATION_PARAMETER_NAME, aspectHandler.toString())
@@ -44,7 +44,7 @@ public class AppliesToMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "appliesTo";
     }
 }

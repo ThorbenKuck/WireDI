@@ -11,7 +11,7 @@ import java.util.function.Consumer;
  * The main entry point for WireDI applications.
  * <p>
  * This class provides static methods for starting and running a wired application,
- * abstracting away the complexity of setting up and configuring a {@link WireRepository}.
+ * abstracting away the complexity of setting up and configuring a {@link WireContainer}.
  * <p>
  * There are two main ways to use this class:
  * <ul>
@@ -39,13 +39,13 @@ import java.util.function.Consumer;
  * });
  * }</pre>
  *
- * @see WireRepository
+ * @see WireContainer
  * @see WiredApplicationInstance
  * @see Environment
  */
 public class WiredApplication {
     @NotNull
-    private static final Consumer<WireRepository> NO_OP_CONFIGURATION = r -> {
+    private static final Consumer<WireContainer> NO_OP_CONFIGURATION = r -> {
     };
     private static final Logging logger = Logging.getInstance(WiredApplication.class);
 
@@ -75,9 +75,9 @@ public class WiredApplication {
      * This method creates a new {@link WiredApplicationInstance}, applies the specified configuration,
      * and then calls {@link WiredApplicationInstance#awaitCompletion()} to block until the application completes.
      *
-     * @param configuration a consumer that configures the {@link WireRepository}
+     * @param configuration a consumer that configures the {@link WireContainer}
      */
-    public static void run(@NotNull Consumer<WireRepository> configuration) {
+    public static void run(@NotNull Consumer<WireContainer> configuration) {
         WiredApplicationInstance barrier = start(configuration);
         barrier.awaitCompletion();
     }
@@ -98,25 +98,25 @@ public class WiredApplication {
      * <p>
      * This is a convenience method for {@link #start(Environment, Consumer)} that creates a default environment.
      *
-     * @param configuration a consumer that configures the {@link WireRepository}
+     * @param configuration a consumer that configures the {@link WireContainer}
      * @return the created {@link WiredApplicationInstance}
      */
-    public static WiredApplicationInstance start(@NotNull Consumer<WireRepository> configuration) {
+    public static WiredApplicationInstance start(@NotNull Consumer<WireContainer> configuration) {
         return start(Environment.build(), configuration);
     }
 
     /**
      * Starts a WireDI application with the specified environment and configuration and returns the application instance.
      * <p>
-     * This method creates a new {@link WireRepository} with the specified environment, applies the specified configuration,
+     * This method creates a new {@link WireContainer} with the specified environment, applies the specified configuration,
      * and then creates and returns a new {@link WiredApplicationInstance}.
      *
      * @param environment   the environment to use for the application
-     * @param configuration a consumer that configures the {@link WireRepository}
+     * @param configuration a consumer that configures the {@link WireContainer}
      * @return the created {@link WiredApplicationInstance}
      */
-    public static WiredApplicationInstance start(Environment environment, @NotNull Consumer<WireRepository> configuration) {
-        WireRepository wireRepository = WireRepository.create(environment);
+    public static WiredApplicationInstance start(Environment environment, @NotNull Consumer<WireContainer> configuration) {
+        WireContainer wireRepository = WireContainer.create(environment);
         MutableBarrier barrier = Barrier.create();
 
         configuration.accept(wireRepository);

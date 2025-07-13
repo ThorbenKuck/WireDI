@@ -1,7 +1,7 @@
 package com.wiredi.aop;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -28,7 +28,7 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
     private final Value<TransactionalHandler$handle$AspectHandler> instance = Value.empty();
 
     private TransactionalHandler$handle$AspectHandler createInstance(
-            final WireRepository wireRepository,
+            final WireContainer wireRepository,
             final TypeIdentifier<TransactionalHandler$handle$AspectHandler> concreteType) {
         // We will start by Fetching all 1 constructor parameters
         TransactionalHandler variable = wireRepository.get(TypeIdentifier.of(TransactionalHandler.class));
@@ -44,7 +44,7 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
 
     @Override
     public final synchronized TransactionalHandler$handle$AspectHandler get(
-            @NotNull final WireRepository wireRepository,
+            @NotNull final WireContainer wireRepository,
             @NotNull final TypeIdentifier<TransactionalHandler$handle$AspectHandler> concreteType) {
         return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
     }

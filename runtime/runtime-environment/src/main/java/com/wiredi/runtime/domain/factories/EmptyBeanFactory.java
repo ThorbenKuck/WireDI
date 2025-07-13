@@ -1,8 +1,9 @@
 package com.wiredi.runtime.domain.factories;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.BeanFactory;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
@@ -27,37 +28,32 @@ public record EmptyBeanFactory<T>(
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireRepository wireRepository) {
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository) {
         return Collections.emptyList();
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type) {
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type) {
         return Collections.emptyList();
     }
 
     @Override
-    public @Nullable Bean<T> get(@NotNull WireRepository wireRepository) {
+    public @Nullable Bean<T> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type) {
         return null;
     }
 
     @Override
-    public @Nullable Bean<T> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type) {
-        return null;
-    }
-
-    @Override
-    public @Nullable Bean<T> get(@NotNull WireRepository wireRepository, @NotNull QualifierType qualifier) {
-        return null;
-    }
-
-    @Override
-    public @Nullable Bean<T> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type, @NotNull QualifierType qualifierType) {
+    public @Nullable Bean<T> get(@NotNull WireContainer wireRepository, @NotNull QualifiedTypeIdentifier<T> type) {
         return null;
     }
 
     @Override
     public void register(@NotNull IdentifiableProvider<T> identifiableProvider) {
         throw new UnsupportedOperationException("Empty bean factory does not support registration");
+    }
+
+    @Override
+    public @Nullable IdentifiableProvider<T> resolveProvider(@Nullable QualifierType qualifier) {
+        return null;
     }
 }

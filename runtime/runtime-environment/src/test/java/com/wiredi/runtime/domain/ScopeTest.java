@@ -17,11 +17,12 @@ public class ScopeTest {
         // Arrange
         Scope scope = Scope.singleton();
         scope.link(Mockito.mock());
+        scope.start();
 
         // Act
-        assertThrows(MissingBeanException.class, () -> scope.get(QualifiedTypeIdentifier.unqualified(A.class)));
+        assertThrows(MissingBeanException.class, () -> scope.get(TypeIdentifier.just(A.class)));
         scope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
-        A shouldBeNonNull = assertDoesNotThrow(() -> scope.get(QualifiedTypeIdentifier.unqualified(A.class)));
+        A shouldBeNonNull = assertDoesNotThrow(() -> scope.get(TypeIdentifier.just(A.class)));
 
         // Assert
         assertThat(shouldBeNonNull).isNotNull();
@@ -33,11 +34,12 @@ public class ScopeTest {
         Scope scope = Scope.singleton();
         scope.link(Mockito.mock());
         scope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
+        scope.start();
 
         // Act
-        A a1 = scope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        A a2 = scope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        assertThrows(MissingBeanException.class, () -> scope.get(QualifiedTypeIdentifier.unqualified(B.class)));
+        A a1 = scope.get(TypeIdentifier.just(A.class));
+        A a2 = scope.get(TypeIdentifier.just(A.class));
+        assertThrows(MissingBeanException.class, () -> scope.get(TypeIdentifier.just(B.class)));
 
         // Assert
         assertSame(a1, a2);
@@ -49,11 +51,12 @@ public class ScopeTest {
         Scope scope = Scope.prototype();
         scope.link(Mockito.mock());
         scope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
+        scope.start();
 
         // Act
-        A a1 = scope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        A a2 = scope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        assertThrows(MissingBeanException.class, () -> scope.get(QualifiedTypeIdentifier.unqualified(B.class)));
+        A a1 = scope.get(TypeIdentifier.just(A.class));
+        A a2 = scope.get(TypeIdentifier.just(A.class));
+        assertThrows(MissingBeanException.class, () -> scope.get(TypeIdentifier.just(B.class)));
 
         // Assert
         assertNotSame(a1, a2);
@@ -63,17 +66,18 @@ public class ScopeTest {
     public void testThatCompositeScopeWorks() {
         // Arrange
         Scope singletonScope = Scope.singleton();
-        Scope rootScope = Scope.prototype();
-        Scope compositeScope = Scope.composite(singletonScope, rootScope);
+        Scope prototypeScope = Scope.prototype();
+        Scope compositeScope = Scope.composite(singletonScope, prototypeScope);
         compositeScope.link(Mockito.mock());
-        rootScope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
+        prototypeScope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
         singletonScope.register(SimpleProvider.builder(TypeIdentifier.just(B.class)).withInstance(() -> new B(new A())).build());
+        compositeScope.start();
 
         // Act
-        A a1 = compositeScope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        A a2 = compositeScope.get(QualifiedTypeIdentifier.unqualified(A.class));
-        B b1 = compositeScope.get(QualifiedTypeIdentifier.unqualified(B.class));
-        B b2 = compositeScope.get(QualifiedTypeIdentifier.unqualified(B.class));
+        A a1 = compositeScope.get(TypeIdentifier.just(A.class));
+        A a2 = compositeScope.get(TypeIdentifier.just(A.class));
+        B b1 = compositeScope.get(TypeIdentifier.just(B.class));
+        B b2 = compositeScope.get(TypeIdentifier.just(B.class));
 
         // Assert
         assertNotSame(a1, a2);

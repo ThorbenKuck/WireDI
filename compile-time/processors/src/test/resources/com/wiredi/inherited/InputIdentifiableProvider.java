@@ -1,7 +1,7 @@
 package com.wiredi.inherited;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
@@ -19,7 +19,7 @@ public final class InputIdentifiableProvider implements IdentifiableProvider<Inp
 
     private final Value<Input> instance = Value.empty();
 
-    private Input createInstance(final WireRepository wireRepository,
+    private Input createInstance(final WireContainer wireRepository,
                                  final TypeIdentifier<Input> concreteType) {
         Input instance = new Input();
         return instance;
@@ -31,7 +31,7 @@ public final class InputIdentifiableProvider implements IdentifiableProvider<Inp
     }
 
     @Override
-    public final synchronized Input get(@NotNull final WireRepository wireRepository,
+    public final synchronized Input get(@NotNull final WireContainer wireRepository,
                                         @NotNull final TypeIdentifier<Input> concreteType) {
         return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
     }

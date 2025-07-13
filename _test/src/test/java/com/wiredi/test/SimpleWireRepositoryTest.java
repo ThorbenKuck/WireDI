@@ -1,6 +1,6 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -13,7 +13,7 @@ public class SimpleWireRepositoryTest extends AbstractIntegrationTest {
     @Test
     public void testWireRepositoryCreation() {
         // Arrange & Act
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
 
         // Assert
         assertThat(wireRepository).isNotNull();
@@ -23,7 +23,7 @@ public class SimpleWireRepositoryTest extends AbstractIntegrationTest {
     @Test
     public void testGetExistingBean() {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
 
         // Act
         CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);

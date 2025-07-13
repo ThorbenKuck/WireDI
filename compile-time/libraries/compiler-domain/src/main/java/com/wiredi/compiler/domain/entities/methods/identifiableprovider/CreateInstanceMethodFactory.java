@@ -17,6 +17,7 @@ import com.wiredi.compiler.logger.slf4j.MessagerContext;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.async.AsyncLoader;
 import com.wiredi.runtime.lang.ReflectionsHelper;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.VariableElement;
@@ -168,7 +169,7 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 	}
 
 	@Override
-	public String methodName() {
+	public @NotNull String methodName() {
 		return "createInstance";
 	}
 }

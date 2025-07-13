@@ -3,6 +3,7 @@ package com.wiredi.runtime;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.domain.errors.results.ExceptionHandlingResult;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.infrastructure.GenericBase;
 import com.wiredi.runtime.lang.Counter;
@@ -50,8 +51,9 @@ public class WireRepositoryTest {
         @MethodSource("argumentsList")
         public void test(Class<Object> type, IdentifiableProvider<?> provider, boolean find) {
             // Arrange
-            WireRepository wireRepository = WireRepository.create();
-            wireRepository.announce(provider);
+            WireContainer wireRepository = WireContainer.create();
+            wireRepository.initializer().setSources(IdentifiableProviderSource.just(provider));
+            wireRepository.load();
 
             // Act
             Optional<Object> result = wireRepository.tryGet(type);
@@ -67,16 +69,19 @@ public class WireRepositoryTest {
     @Nested
     class MultiGenericTestClasses {
 
-        private WireRepository repository;
+        private WireContainer repository;
 
 
         @BeforeEach
         void setup() {
-            repository = WireRepository.create();
-            repository.announce(new MultiGenericClass<>(new ImplementationA(), new ImplementationB()).getProvider());
-            repository.announce(new MultiGenericClass<>(new ImplementationAA(), new ImplementationB()).getProvider());
-            repository.announce(new MultiGenericClass<>(new ImplementationA(), new ImplementationBB()).getProvider());
-            repository.announce(new MultiGenericClass<>(new ImplementationAA(), new ImplementationBB()).getProvider());
+            repository = WireContainer.create();
+            repository.initializer().setSources(List.of(IdentifiableProviderSource.just(
+                    new MultiGenericClass<>(new ImplementationA(), new ImplementationB()).getProvider(),
+                    new MultiGenericClass<>(new ImplementationAA(), new ImplementationB()).getProvider(),
+                    new MultiGenericClass<>(new ImplementationA(), new ImplementationBB()).getProvider(),
+                    new MultiGenericClass<>(new ImplementationAA(), new ImplementationBB()).getProvider()
+            )));
+            repository.load();
         }
 
         @Test
@@ -263,7 +268,7 @@ public class WireRepositoryTest {
                     }
 
                     @Override
-                    public @Nullable MultiGenericClass<T, S> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<MultiGenericClass<T, S>> concreteType) {
+                    public @Nullable MultiGenericClass<T, S> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<MultiGenericClass<T, S>> concreteType) {
                         return it;
                     }
                 };
@@ -274,22 +279,27 @@ public class WireRepositoryTest {
     @Nested
     class SingleGenericTestClasses {
 
-        private WireRepository repository;
+        private WireContainer repository;
 
         @BeforeEach
         void setup() {
-            repository = WireRepository.create();
-            repository.announce(GenericBase.provider("Test1"));
-            repository.announce(GenericBase.provider("Test2"));
-            repository.announce(GenericBase.provider(1));
-            repository.announce(GenericBase.provider(2));
-            repository.announce(GenericBase.provider(true));
-            repository.announce(GenericBase.provider(false));
+            repository = WireContainer.create();
+            repository.initializer().setSources(List.of(
+                    IdentifiableProviderSource.just(
+                            GenericBase.provider("Test1"),
+                            GenericBase.provider("Test2"),
+                            GenericBase.provider(1),
+                            GenericBase.provider(2),
+                            GenericBase.provider(true),
+                            GenericBase.provider(false)
+                    )
+            ));
+            repository.load();
         }
 
         @Test
         void searchingWithoutAGeneric() {
-            List<GenericBase> all = repository.getAll(TypeIdentifier.of(GenericBase.class));
+            Collection<GenericBase> all = repository.getAll(TypeIdentifier.of(GenericBase.class));
             assertThat(all).containsExactlyInAnyOrder(
                     GenericBase.of("Test1"),
                     GenericBase.of("Test2"),
@@ -302,7 +312,7 @@ public class WireRepositoryTest {
 
         @Test
         void searchingWithAParentClassGeneric() {
-            List<GenericBase<Object>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(Object.class));
+            Collection<GenericBase<Object>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(Object.class));
             assertThat(all).containsExactlyInAnyOrder(
                     GenericBase.of("Test1"),
                     GenericBase.of("Test2"),
@@ -315,7 +325,7 @@ public class WireRepositoryTest {
 
         @Test
         void searchingForTheStringGeneric() {
-            List<GenericBase<String>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(String.class));
+            Collection<GenericBase<String>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(String.class));
             assertThat(all).containsExactlyInAnyOrder(
                     GenericBase.of("Test1"),
                     GenericBase.of("Test2")
@@ -324,7 +334,7 @@ public class WireRepositoryTest {
 
         @Test
         void searchingForTheIntGeneric() {
-            List<GenericBase<Integer>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(int.class));
+            Collection<GenericBase<Integer>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(int.class));
             assertThat(all).containsExactlyInAnyOrder(
                     GenericBase.of(1),
                     GenericBase.of(2)
@@ -333,7 +343,7 @@ public class WireRepositoryTest {
 
         @Test
         void searchingForTheBooleanGeneric() {
-            List<GenericBase<Boolean>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(boolean.class));
+            Collection<GenericBase<Boolean>> all = repository.getAll(TypeIdentifier.of(GenericBase.class).withGeneric(boolean.class));
             assertThat(all).containsExactlyInAnyOrder(
                     GenericBase.of(true),
                     GenericBase.of(false)
@@ -356,7 +366,7 @@ public class WireRepositoryTest {
         @Test
         public void handlingASpecificExceptionIsPossible() {
             // Arrange
-            WireRepository wireRepository = WireRepository.create();
+            WireContainer wireRepository = WireContainer.create();
             wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
             wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
             wireRepository.load();
@@ -377,7 +387,7 @@ public class WireRepositoryTest {
         @Test
         public void handlingASpecificSecondExceptionIsPossible() {
             // Arrange
-            WireRepository wireRepository = WireRepository.create();
+            WireContainer wireRepository = WireContainer.create();
             wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
             wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
             wireRepository.load();

@@ -9,10 +9,6 @@ public interface AnnotationProcessorSubroutine {
 
     List<Class<? extends Annotation>> targetAnnotations();
 
-    static AnnotationProcessorSubroutine provider() {
-        throw new UnsupportedOperationException("This processor is not a provider");
-    }
-
     /**
      * This method can be overwritten, to be informed once the processor is initialized
      */

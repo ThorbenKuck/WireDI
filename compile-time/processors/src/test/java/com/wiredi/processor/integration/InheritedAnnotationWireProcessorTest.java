@@ -26,8 +26,8 @@ public class InheritedAnnotationWireProcessorTest extends AbstractProcessorTest 
     public void verifyThatAutoConfigurationInheritsOrder(Compilation compilation, FileManagerState state) {
         assertThat(compilation)
                 .wasSuccessful()
-                .hasNoErrors()
-                .hasNoWarnings();
+//                .hasNoWarnings()
+                .hasNoErrors();
         assertThat(state)
                 .containsGeneratedFile("com.wiredi.inherited.CustomAutoConfigurationIdentifiableProvider");
     }

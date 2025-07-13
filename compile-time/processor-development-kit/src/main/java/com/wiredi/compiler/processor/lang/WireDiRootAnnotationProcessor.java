@@ -90,7 +90,7 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
             slf4jHijacker.initialize(environment, processingEnv.getMessager());
 
             counter.reset();
-            logger.info("Hijacked SLF4J with messager: {}", processingEnv.getMessager());
+            logger.debug("Hijacked SLF4J with messager: {}", processingEnv.getMessager());
 
             injector.bind(Environment.class).toInstance(environment);
             injector.bind(ProcessingEnvironment.class).toValue(processingEnv);

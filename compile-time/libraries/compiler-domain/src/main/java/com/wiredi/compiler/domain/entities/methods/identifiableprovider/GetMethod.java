@@ -3,9 +3,8 @@ package com.wiredi.compiler.domain.entities.methods.identifiableprovider;
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -15,37 +14,24 @@ import java.util.List;
 
 public class GetMethod implements StandaloneMethodFactory {
 
-    private final boolean singleton;
     private final TypeMirror returnType;
 
-    public GetMethod(boolean singleton, TypeMirror returnType) {
-        this.singleton = singleton;
+    public GetMethod(TypeMirror returnType) {
         this.returnType = returnType;
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         List<Modifier> getMethodModifier = new ArrayList<>(List.of(Modifier.PUBLIC, Modifier.FINAL));
 
         CodeBlock.Builder getCodeBlock = CodeBlock.builder();
-        if (singleton) {
-            getCodeBlock.addStatement("return instance.getOrSet(() -> createInstance(wireRepository, concreteType))");
-
-            entity.addField(ParameterizedTypeName.get(ClassName.get(Value.class), TypeName.get(entity.rootType())), "instance", (field) ->
-                    field.addModifiers(Modifier.PRIVATE, Modifier.FINAL)
-                            .initializer("$T.empty()", Value.class)
-                            .build()
-            );
-            getMethodModifier.add(Modifier.SYNCHRONIZED);
-        } else {
-            getCodeBlock.addStatement("return createInstance(wireRepository, concreteType)");
-        }
+        getCodeBlock.addStatement("return createInstance(wireRepository, concreteType)");
 
 
         builder.addModifiers(getMethodModifier)
                 .addAnnotation(Override.class)
                 .addParameter(
-                        ParameterSpec.builder(WireRepository.class, "wireRepository", Modifier.FINAL)
+                        ParameterSpec.builder(WireContainer.class, "wireRepository", Modifier.FINAL)
                                 .addAnnotation(NotNull.class)
                                 .build()
                 )
@@ -60,7 +46,7 @@ public class GetMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "get";
     }
 }

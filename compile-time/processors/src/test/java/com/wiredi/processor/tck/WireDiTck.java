@@ -9,12 +9,11 @@ import com.wiredi.processor.tck.domain.ordered.CommandBasedStringBuilder;
 import com.wiredi.processor.tck.domain.override.OverwritingTestClass;
 import com.wiredi.processor.tck.domain.override.OverwrittenTestClass;
 import com.wiredi.processor.tck.domain.provide.CoffeeMachine;
+import com.wiredi.processor.tck.domain.scopes.Scopes;
 import com.wiredi.processor.tck.domain.transactional.TransactionalTestController;
 import com.wiredi.processor.tck.infrastructure.TckTestCase;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.beans.BeanContainerProperties;
-import com.wiredi.runtime.domain.StandardWireConflictResolver;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.time.TimedValue;
@@ -23,7 +22,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestFactory;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -37,29 +35,40 @@ public class WireDiTck {
     public void test() {
         // Arrange
         Environment environment = Environment.build();
-        WireRepository wireRepository = WireRepository.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
+//        WireContainer wireRepository = WireContainer.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
+        WireContainer wireRepository = WireContainer.open(environment);
 
         // Act
         Car car = wireRepository.get(Car.class);
 
         // Assert
         if (!(car.getEngine() instanceof V1Engine)) {
-            fail("Engine is not V6Engine, but " + car.getEngine().getClass().getSimpleName());
+            fail("Engine is not V1Engine, but " + car.getEngine().getClass().getSimpleName());
         }
     }
 
     @Test
     public void testLoadTimeOfObjects() {
-        WireRepository wireRepository = WireRepository.create();
-        TimedValue<List<TckTestCase>> timedValue = Timed.of(() -> wireRepository.getAll(TypeIdentifier.of(TckTestCase.class)));
+        WireContainer wireRepository = WireContainer.create();
+        TimedValue<Collection<TckTestCase>> timedValue = Timed.of(() -> wireRepository.getAll(TypeIdentifier.of(TckTestCase.class)));
 
         System.out.println(timedValue.time());
         assertThat(timedValue.time().get(TimeUnit.MILLISECONDS)).isLessThan(100);
     }
 
     @TestFactory
+    public Collection<DynamicNode> verifyScopesWork() {
+        WireContainer wireRepository = WireContainer.open();
+        assertThat(wireRepository.tryGet(Scopes.class))
+                .withFailMessage("The Qualifications was not wired correctly")
+                .isPresent();
+
+        return wireRepository.get(Scopes.class).dynamicTests();
+    }
+
+    @TestFactory
     public Collection<DynamicNode> verifyThatTheAspectProxiesWork() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(TransactionalTestController.class))
                 .withFailMessage("The TransactionalTestController was not wired correctly")
                 .isPresent();
@@ -69,7 +78,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> verifyThatOrderingWorksCorrectly() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(CommandBasedStringBuilder.class))
                 .withFailMessage("The CommandBasedStringBuilder was not wired correctly")
                 .isPresent();
@@ -79,7 +88,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> verifyThatProducersWithQualifiersWork() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(CoffeeMachine.class))
                 .withFailMessage("The Coffee Machine was not wired correctly")
                 .isPresent();
@@ -89,7 +98,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> verifyThatSimpleInjectionWorks() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(InjectionTest.class))
                 .withFailMessage("The InjectionTest was not wired correctly")
                 .isPresent();
@@ -99,7 +108,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> verifyThatConditionEvaluationWorks() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(ConditionTestCase.class))
                 .withFailMessage("The InjectionTest was not wired correctly")
                 .isPresent();
@@ -109,7 +118,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> overwritingBehaviourTest() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(OverwrittenTestClass.class))
                 .withFailMessage("The OverwrittenTestClass was not wired correctly")
                 .isPresent();
@@ -119,7 +128,7 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> genericBehaviourTest() {
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
         assertThat(wireRepository.tryGet(GenericTestCase.class))
                 .withFailMessage("The OverwrittenTestClass was not wired correctly")
                 .isPresent();
@@ -131,8 +140,8 @@ public class WireDiTck {
     public Collection<? extends DynamicNode> repeatingDynamicTestCases() {
         return IntStream.range(0, 20)
                 .mapToObj(round -> {
-                    WireRepository wireRepository = WireRepository.open();
-                    List<TckTestCase> tckTestCases = wireRepository.getAllUnordered(TypeIdentifier.of(TckTestCase.class));
+                    WireContainer wireRepository = WireContainer.open();
+                    Collection<TckTestCase> tckTestCases = wireRepository.getAll(TypeIdentifier.of(TckTestCase.class));
 
                     return dynamicContainer("Repetition-" + round, () -> tckTestCases.stream()
                             .map(testCase -> dynamicContainer(testCase.getClass().getSimpleName(), () -> testCase.dynamicTests().iterator()))

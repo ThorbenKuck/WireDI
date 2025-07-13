@@ -29,6 +29,7 @@ public enum PropertyKeys {
      */
     AWAIT_STATES_TIMEOUT("wiredi.startup.await-states-timeout", null),
     PRINT_DIAGNOSTICS("wiredi.startup.print-diagnostics", false),
+    DEBUG("debug", false),
     ;
 
     private final Key rawKey;

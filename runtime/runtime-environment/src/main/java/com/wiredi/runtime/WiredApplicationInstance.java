@@ -7,7 +7,7 @@ import com.wiredi.runtime.async.barriers.Barrier;
 import com.wiredi.runtime.async.barriers.MutableBarrier;
 import com.wiredi.runtime.banner.Banner;
 import com.wiredi.runtime.domain.Disposable;
-import com.wiredi.runtime.domain.WireRepositoryContextCallback;
+import com.wiredi.runtime.domain.WireContainerCallback;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
@@ -20,6 +20,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
@@ -32,7 +33,7 @@ import static com.wiredi.runtime.lang.Preconditions.isNot;
  * <p>
  * This class is responsible for managing the lifecycle of a WireDI application, including:
  * <ul>
- *   <li>Starting up the application and loading the {@link WireRepository}</li>
+ *   <li>Starting up the application and loading the {@link WireContainer}</li>
  *   <li>Synchronizing {@link StateFull} instances during startup</li>
  *   <li>Managing the application's completion state through a {@link Barrier}</li>
  *   <li>Shutting down the application and cleaning up resources</li>
@@ -59,21 +60,21 @@ import static com.wiredi.runtime.lang.Preconditions.isNot;
  * }</pre>
  * 
  * @see WiredApplication
- * @see WireRepository
+ * @see WireContainer
  * @see Barrier
  */
 public class WiredApplicationInstance {
 
     private static final Logging logger = Logging.getInstance(WiredApplicationInstance.class);
     @NotNull
-    private final WireRepository wireRepository;
+    private final WireContainer wireContainer;
     @NotNull
     private final Environment environment;
     @NotNull
     private final Barrier barrier;
     @NotNull
     private final Banner banner;
-    private final List<WireRepositoryContextCallback> contextCallbacks;
+    private final List<WireContainerCallback> contextCallbacks;
     private boolean isRunning = false;
 
     /**
@@ -82,19 +83,19 @@ public class WiredApplicationInstance {
      * This constructor is typically called by the {@link WiredApplication} class
      * and should not be called directly.
      *
-     * @param wireRepository the wire repository to use for this application instance
+     * @param wireContainer the wire repository to use for this application instance
      * @param barrier the barrier to use for managing the application's completion state
      */
     public WiredApplicationInstance(
-            @NotNull WireRepository wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull Barrier barrier
     ) {
-        this.wireRepository = wireRepository;
-        this.environment = wireRepository.environment();
+        this.wireContainer = wireContainer;
+        this.environment = wireContainer.environment();
         this.barrier = barrier;
-        this.banner = new Banner(wireRepository.environment());
-        contextCallbacks = ServiceFiles.getInstance(WireRepositoryContextCallback.class)
-                .initialize(wireRepository.onDemandInjector())
+        this.banner = new Banner(wireContainer.environment());
+        contextCallbacks = ServiceFiles.getInstance(WireContainerCallback.class)
+                .tryInitialize(wireContainer.onDemandInjector())
                 .instances();
     }
 
@@ -118,8 +119,8 @@ public class WiredApplicationInstance {
     @NotNull Timed start() {
         isNot(isRunning, () -> "The WiredApplication is already started");
         return Timed.of(() -> {
-                    contextCallbacks.addAll(wireRepository.getAll(WireRepositoryContextCallback.class));
-                    contextCallbacks.forEach(it -> it.loadingStarted(wireRepository));
+                    contextCallbacks.addAll(wireContainer.getAll(WireContainerCallback.class));
+                    contextCallbacks.forEach(it -> it.loadingStarted(wireContainer));
 
                     Timed.of(() -> {
                         logger.debug(() -> "Loading Environment");
@@ -128,38 +129,38 @@ public class WiredApplicationInstance {
                         environment.printProfiles();
                     }).then(timed -> contextCallbacks.forEach(it -> it.loadedEnvironment(timed, environment)));
 
-                    if (wireRepository.isNotLoaded()) {
+                    if (wireContainer.isNotLoaded()) {
                         logger.trace(() -> "Registering all known static types");
-                        wireRepository.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
-                        logger.debug(() -> "Loading WireRepository");
+                        wireContainer.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
+                        logger.debug(() -> "Loading WireContainer");
 
-                        wireRepository.load(repository -> {
+                        wireContainer.load(repository -> {
                             logger.debug(() -> "Configuring Environment with Bean instances");
-                            environment.addExpressionResolvers(wireRepository.getAll(EnvironmentExpressionResolver.class));
-                            environment.resourceLoader().addProtocolResolvers(wireRepository.getAll(ResourceProtocolResolver.class));
-                            environment.propertyLoader().addPropertyFileLoaders(wireRepository.getAll(PropertyFileTypeLoader.class));
-                            wireRepository.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
+                            environment.addExpressionResolvers(wireContainer.getAll(EnvironmentExpressionResolver.class));
+                            environment.resourceLoader().addProtocolResolvers(wireContainer.getAll(ResourceProtocolResolver.class));
+                            environment.propertyLoader().addPropertyFileLoaders(wireContainer.getAll(PropertyFileTypeLoader.class));
+                            wireContainer.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
 
-                            return new WireRepository.LoadConfig(
+                            return new WireContainer.LoadConfig(
                                     environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true),
                                     environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true),
                                     environment.getProperty(PropertyKeys.AWAIT_STATES_TIMEOUT.getKey(), Duration.class)
                                     .orElse(null)
                             );
-                        }).then(time -> logger.info("WireRepository loaded in " + time));
+                        }).then(time -> logger.info("WireContainer loaded in " + time));
                     }
 
                     Runtime.getRuntime().addShutdownHook(shutdownHook);
                     isRunning = true;
                 })
-                .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireRepository)))
+                .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireContainer)))
                 .then(this::printDiagnostics);
     }
 
     private void printDiagnostics() {
-        logger.debug(() -> "Printing WireRepository Diagnostics");
+        logger.debug(() -> "Printing WireContainer Diagnostics");
         if (environment.getProperty(PRINT_DIAGNOSTICS.getKey(), false)) {
-            StartupDiagnostics startupDiagnostics = wireRepository.startupDiagnostics();
+            StartupDiagnostics startupDiagnostics = wireContainer.startupDiagnostics();
             StartupDiagnostics.TimingState state = startupDiagnostics.state();
 
             if (!state.isEmpty()) {
@@ -186,7 +187,7 @@ public class WiredApplicationInstance {
      * This method performs the following tasks:
      * <ul>
      *   <li>Calls {@link StateFull#dismantleState()} on all {@link StateFull} instances</li>
-     *   <li>Calls {@link Disposable#tearDown(WireRepository)} on all {@link Disposable} instances</li>
+     *   <li>Calls {@link Disposable#tearDown(WireContainer)} on all {@link Disposable} instances</li>
      *   <li>Clears the environment</li>
      *   <li>Notifies all context callbacks that the application is being destroyed</li>
      *   <li>Clears the wire repository</li>
@@ -200,18 +201,18 @@ public class WiredApplicationInstance {
     public Timed shutdown() {
         is(isRunning, () -> "The WiredApplication is not started");
         return Timed.of(() -> {
-                    List<WireRepositoryContextCallback> contextCallbacks = wireRepository.getAll(WireRepositoryContextCallback.class);
-                    logger.debug(() -> "Destroying all Beans of the WireRepository");
-                    wireRepository.getAll(TypeIdentifier.just(StateFull.class))
+                    Collection<WireContainerCallback> contextCallbacks = wireContainer.getAll(WireContainerCallback.class);
+                    logger.debug(() -> "Destroying all Beans of the WireContainer");
+                    wireContainer.getAll(TypeIdentifier.just(StateFull.class))
                             .parallelStream()
                             .forEach(StateFull::dismantleState);
-                    wireRepository.getAll(TypeIdentifier.just(Disposable.class))
+                    wireContainer.getAll(TypeIdentifier.just(Disposable.class))
                             .parallelStream()
-                            .forEach(bean -> bean.tearDown(wireRepository));
+                            .forEach(bean -> bean.tearDown(wireContainer));
                     environment.clear();
-                    new ArrayList<>(contextCallbacks).forEach(callback -> callback.destroyed(wireRepository));
-                    wireRepository.getAll(ShutdownListener.class).forEach(it -> it.tearDown(wireRepository));
-                    wireRepository.clear();
+                    new ArrayList<>(contextCallbacks).forEach(callback -> callback.destroyed(wireContainer));
+                    wireContainer.getAll(ShutdownListener.class).forEach(it -> it.tearDown(wireContainer));
+                    wireContainer.clear();
                     if (Thread.currentThread() != shutdownHook) {
                         Runtime.getRuntime().removeShutdownHook(this.shutdownHook);
                     }
@@ -219,7 +220,7 @@ public class WiredApplicationInstance {
                     // We have just cleared a lot of collections, so the gc can pick up a lot of things.
                     Runtime.getRuntime().gc();
                 })
-                .then(timed -> logger.info(() -> "WireRepository destroyed in " + timed))
+                .then(timed -> logger.info(() -> "WireContainer shutdown in " + timed))
                 .then(() -> isRunning = false);
     }
 
@@ -285,8 +286,8 @@ public class WiredApplicationInstance {
      *
      * @return the wire repository
      */
-    public WireRepository wireRepository() {
-        return wireRepository;
+    public WireContainer wireRepository() {
+        return wireContainer;
     }
 
     /**
@@ -307,7 +308,7 @@ public class WiredApplicationInstance {
         return environment;
     }
 
-    public List<WireRepositoryContextCallback> getContextCallbacks() {
+    public List<WireContainerCallback> getContextCallbacks() {
         return contextCallbacks;
     }
 
@@ -332,7 +333,7 @@ public class WiredApplicationInstance {
         }
 
         @Override
-        public @Nullable ShutdownListener get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<ShutdownListener> concreteType) {
+        public @Nullable ShutdownListener get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<ShutdownListener> concreteType) {
             return instance;
         }
 
@@ -364,7 +365,7 @@ public class WiredApplicationInstance {
         }
 
         @Override
-        public void tearDown(WireRepository origin) {
+        public void tearDown(WireContainer origin) {
             if (barrier.isClosed()) {
                 logger.info(() -> "Application shutdown detected");
                 barrier.open();
@@ -392,7 +393,7 @@ public class WiredApplicationInstance {
 
     private final ShutdownHook shutdownHook = new ShutdownHook(() -> {
         if (isRunning) {
-            logger.info(() -> "Detected JVM shutdown. Instructing the WireRepository to shutdown.");
+            logger.info(() -> "Detected JVM shutdown. Instructing the WireContainer to shutdown.");
             shutdown();
         }
     });

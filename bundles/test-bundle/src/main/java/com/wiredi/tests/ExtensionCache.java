@@ -3,7 +3,7 @@ package com.wiredi.tests;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WiredApplication;
 import com.wiredi.runtime.WiredApplicationInstance;
-import com.wiredi.runtime.domain.WireRepositoryContextCallback;
+import com.wiredi.runtime.domain.WireContainerCallback;
 import com.wiredi.runtime.domain.provider.SimpleProvider;
 import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.properties.Key;
@@ -32,7 +32,7 @@ public class ExtensionCache {
         return WiredApplication.start(wireRepository -> {
             wireRepository.announce(
                     SimpleProvider.builder(new ApplicationIdentifierWireRepositoryContextCallbacks(identifier))
-                            .withAdditionalType(WireRepositoryContextCallback.class)
+                            .withAdditionalType(WireContainerCallback.class)
                             .withOrder(Ordered.LAST - 10)
                             .withSingleton(true)
             );
@@ -52,7 +52,7 @@ public class ExtensionCache {
 
     private record ApplicationIdentifierWireRepositoryContextCallbacks(
             ApplicationIdentifier identifier
-    ) implements WireRepositoryContextCallback {
+    ) implements WireContainerCallback {
 
         @Override
         public void loadedEnvironment(@NotNull Timed timed, @NotNull Environment environment) {

@@ -6,6 +6,7 @@ import com.wiredi.compiler.domain.AbstractClassEntity;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.MethodFactory;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
 
@@ -18,7 +19,7 @@ public class PrimaryMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         builder.returns(ClassName.BOOLEAN)
                 .addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .addStatement("return true")
@@ -26,12 +27,12 @@ public class PrimaryMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "primary";
     }
 
     @Override
-    public boolean applies(ClassEntity<?> entity) {
+    public boolean applies(@NotNull ClassEntity<?> entity) {
         return isPrimary;
     }
 }

@@ -16,7 +16,6 @@ import java.util.ServiceLoader;
  * <p>
  * This source is loading providers from service files.
  *
- * @see com.wiredi.runtime.beans.BeanContainer
  * @see IdentifiableProviderSource
  * @see IdentifiableProvider
  * @see ServiceLoader

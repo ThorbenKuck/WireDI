@@ -89,7 +89,7 @@ public class RequestContext {
     }
 
     /**
-     * Executes the {@code throwingSupplier} in the context of the Message and returns its result.
+     * Executes the {@code throwingSupplier} in the context of the Message and returns its appliedConditionalProviders.
      * <p>
      * This method:
      * <ul>

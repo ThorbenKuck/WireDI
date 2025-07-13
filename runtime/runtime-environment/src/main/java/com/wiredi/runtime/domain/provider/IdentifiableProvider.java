@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.ScopeProvider;
 import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
@@ -41,11 +41,11 @@ public interface IdentifiableProvider<T> extends Ordered {
         return wrap((r) -> supplier.get(), type, wireTypes);
     }
 
-    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireRepository, T> function, TypeIdentifier<T> type) {
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireContainer, T> function, TypeIdentifier<T> type) {
         return wrap(function, type, List.of(type));
     }
 
-    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireRepository, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+    static <T> MultiTonGenericIdentifiableProvider<T> wrap(Function<WireContainer, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
         return new MultiTonGenericIdentifiableProvider<>(function, wireTypes, type);
     }
 
@@ -57,11 +57,11 @@ public interface IdentifiableProvider<T> extends Ordered {
         return wrapSingleton((r) -> supplier.get(), type, wireTypes);
     }
 
-    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, TypeIdentifier<T> type) {
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireContainer, T> function, TypeIdentifier<T> type) {
         return wrapSingleton(function, type, List.of(type));
     }
 
-    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireRepository, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
+    static <T> LazySingletonIdentifiableProvider<T> wrapSingleton(Function<WireContainer, T> function, TypeIdentifier<T> type, List<TypeIdentifier<?>> wireTypes) {
         return new LazySingletonIdentifiableProvider<>(function, wireTypes, type);
     }
 
@@ -72,7 +72,7 @@ public interface IdentifiableProvider<T> extends Ordered {
     /**
      * Defines the type, this IdentifiableProvider will produce.
      * <p>
-     * This type returned right here must be assignable from the type the {@link #get(WireRepository) get method}
+     * This type returned right here must be assignable from the type the {@link #get(WireContainer) get method}
      * returns.
      *
      * @return the type this IdentifiableProvider produces
@@ -88,7 +88,7 @@ public interface IdentifiableProvider<T> extends Ordered {
     /**
      * Returns, whether the type produced by this IdentifiableProvider is singleton or produced on request.
      *
-     * @return true, if the same instance is returned with ever call of the {@link #get(WireRepository) get method}
+     * @return true, if the same instance is returned with ever call of the {@link #get(WireContainer) get method}
      */
     default boolean isSingleton() {
         return true;
@@ -99,7 +99,7 @@ public interface IdentifiableProvider<T> extends Ordered {
      * <p>
      * If true, it will override other existing providers when injection qualifiers are resolved.
      *
-     * @return true, if {@link #get(WireRepository)} should return the primary instance for the {@link #type()} and {@link #additionalWireTypes()}.
+     * @return true, if {@link #get(WireContainer)} should return the primary instance for the {@link #type()} and {@link #additionalWireTypes()}.
      */
     default boolean primary() {
         return false;
@@ -114,15 +114,15 @@ public interface IdentifiableProvider<T> extends Ordered {
      * To resolve dependencies, the WireRepository instance this IdentifiableProvider is created through is passed
      * into this method.
      *
-     * @param wireRepository the {@link WireRepository wireRepository} instance this Provider is created through
+     * @param wireRepository the {@link WireContainer wireRepository} instance this Provider is created through
      * @param concreteType the type that was requested
      * @return the instance, which might be null
      */
     @Nullable
-    T get(@NotNull final WireRepository wireRepository, @NotNull final TypeIdentifier<T> concreteType);
+    T get(@NotNull final WireContainer wireRepository, @NotNull final TypeIdentifier<T> concreteType);
 
     @Nullable
-    default T get(@NotNull final WireRepository wireRepository) {
+    default T get(@NotNull final WireContainer wireRepository) {
         return get(wireRepository, (TypeIdentifier<T>) type());
     }
 
@@ -147,7 +147,8 @@ public interface IdentifiableProvider<T> extends Ordered {
         return null;
     }
 
-    default @Nullable ScopeProvider scope() {
+    @Nullable
+    default ScopeProvider scope() {
         return null;
     }
 

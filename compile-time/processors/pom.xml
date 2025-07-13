@@ -48,6 +48,10 @@
             <groupId>com.wiredi</groupId>
             <artifactId>processor-plugin-qualifiers</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>processor-plugin-scopes</artifactId>
+        </dependency>
 
         <!-- Tests -->
         <dependency>

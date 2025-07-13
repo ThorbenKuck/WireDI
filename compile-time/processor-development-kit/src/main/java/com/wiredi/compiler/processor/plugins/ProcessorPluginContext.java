@@ -41,6 +41,7 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
         registerAttachListener(AspectHandlerEntity.class, entity -> wireProcessorPlugins.forEach(it -> it.handle(entity)));
         registerAttachListener(EnvironmentConfigurationEntity.class, entity -> wireProcessorPlugins.forEach(it -> it.handle(entity)));
         registerAttachListener(WireBridgeEntity.class, entity -> wireProcessorPlugins.forEach(it -> it.handle(entity)));
+        wireProcessorPlugins.forEach(it -> it.initialize(injector));
     }
 
     private static final Map<Class<?>, List<?>> LOADED_CLASSES = new HashMap<>();

@@ -1,6 +1,6 @@
 package com.wiredi.integration.cache;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.security.SecurityContext;
 import org.junit.jupiter.api.Test;
 
@@ -10,7 +10,7 @@ class SecurityContextAutoConfigurationTest {
     @Test
     public void testThatTheSecurityContextIsWired() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
 
         // Act
         // Assert
@@ -20,7 +20,7 @@ class SecurityContextAutoConfigurationTest {
     @Test
     public void testThatTheSecurityContextCanBeWiredInADependency() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
 
         // Act
         // Assert

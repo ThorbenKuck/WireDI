@@ -65,23 +65,20 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
 
     @Override
     public IdentifiableProviderEntity create(TypeElement typeElement) {
-
         return create(typeElement, Annotations.getAnnotation(typeElement, Wire.class).orElseThrow());
     }
 
     public IdentifiableProviderEntity create(TypeElement typeElement, PropertyBinding propertyBinding) {
         return createIdentifiableProvider(typeElement)
                 .addMethod(new PrimaryMethod(false))
-                .addMethod(new SingletonMethod(true))
-                .addMethod(new GetMethod(true, typeElement.asType()))
+                .addMethod(new GetMethod(typeElement.asType()))
                 .addMethod(new CreateInstanceForPropertyBindingMethod(propertyBinding, typeElement, wireRepositories, compilerRepository, environment, propertyContext));
     }
 
     public IdentifiableProviderEntity create(TypeElement typeElement, @Nullable Wire annotation) {
         IdentifiableProviderEntity identifiableProviderEntity = createIdentifiableProvider(typeElement)
                 .addMethod(new PrimaryMethod(Optional.ofNullable(annotation).map(Wire::primary).orElse(false) || Annotations.isAnnotatedWith(typeElement, Primary.class)))
-                .addMethod(new SingletonMethod(Optional.ofNullable(annotation).map(Wire::singleton).orElse(true)))
-                .addMethod(new GetMethod(Optional.ofNullable(annotation).map(Wire::singleton).orElse(true), typeElement.asType()))
+                .addMethod(new GetMethod(typeElement.asType()))
                 .addMethod(new CreateInstanceForWireMethod(injectionPointService.injectionPoints(typeElement), wireRepositories, compilerRepository));
 
         identifiableProviderService.findAllFactoryMethodsIn(typeElement)
@@ -103,8 +100,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
         IdentifiableProviderEntity entity = compilerRepository.newIdentifiableProvider(factoryMethod.method(), providerClassName(factoryMethod), factoryMethod.returnType())
                 .addMethod(new TypeMethod(typeIdentifiers, factoryMethod.returnType()))
                 .addMethod(new PrimaryMethod(Annotations.isAnnotatedWith(factoryMethod.method(), Primary.class)))
-                .addMethod(new SingletonMethod(factoryMethod.isSingleton()))
-                .addMethod(new GetMethod(factoryMethod.isSingleton(), factoryMethod.returnType()))
+                .addMethod(new GetMethod(factoryMethod.returnType()))
                 .addMethod(new CreateInstanceForFactoryMethod(factoryMethod, compilerRepository, wireRepositories, injectionPointService.injectionPoints(returnType)));
 
         if(factoryMethod.superTypes() == Provider.SuperTypes.ALL) {

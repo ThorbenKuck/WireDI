@@ -1,7 +1,7 @@
 package com.wiredi.runtime.converter;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.types.TypeConverter;
@@ -31,7 +31,7 @@ public class InstantTypeConverterProvider implements IdentifiableProvider<Instan
 
     @Override
     public @Nullable InstantTypeConverter get(
-            @NotNull WireRepository wireRepository,
+            @NotNull WireContainer wireRepository,
             @NotNull TypeIdentifier<InstantTypeConverter> concreteType
     ) {
         return value.getOrSet(() -> new InstantTypeConverter());

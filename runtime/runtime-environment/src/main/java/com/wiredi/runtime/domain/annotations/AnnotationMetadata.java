@@ -314,6 +314,25 @@ public class AnnotationMetadata {
         return this.<T>getClass(field).orElse(alternative);
     }
 
+    public Optional<String> getTypeName(String field) {
+        Object value = fields.get(field);
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        return switch (value) {
+            case Class<?> c -> Optional.of(c.getName());
+            case TypeMirror tm -> Optional.of(tm.toString());
+            case Element e -> Optional.of(e.toString());
+            case String s -> Optional.of(s);
+            default -> Optional.empty();
+        };
+    }
+
+    public String getTypeName(String field, String alternative) {
+        return getTypeName(field).orElse(alternative);
+    }
+
     public <T extends Enum<T>> Optional<T> getEnum(String field, Class<T> enumType) {
         Object value = fields.get(field);
         if (value == null) {

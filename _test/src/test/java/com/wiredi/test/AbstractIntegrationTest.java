@@ -1,11 +1,11 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 
 public abstract class AbstractIntegrationTest {
 
-    public WireRepository loadWireRepository() {
-        WireRepository wireRepository = WireRepository.create();
+    public WireContainer loadWireRepository() {
+        WireContainer wireRepository = WireContainer.create();
         wireRepository.load();
         return wireRepository;
     }

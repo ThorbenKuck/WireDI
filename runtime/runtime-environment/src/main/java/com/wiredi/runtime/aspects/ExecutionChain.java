@@ -169,7 +169,7 @@ public class ExecutionChain {
         }
 
         @NotNull
-        public Builder withProcessors(@NotNull List<AspectHandler> handlers) {
+        public Builder withProcessors(@NotNull Collection<AspectHandler> handlers) {
             for (AspectHandler handler : handlers) {
                 if (handler.appliesTo(rootMethod)) {
                     this.handlers.add(handler);

@@ -1,8 +1,8 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.collections.TypeMap;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.lang.ReflectionsHelper;
 import com.wiredi.runtime.lang.SingletonSupplier;
 import jakarta.annotation.PostConstruct;
@@ -17,19 +17,19 @@ import java.util.function.Supplier;
 
 public class OnDemandInjector {
 
-    private static final Map<WireRepository, OnDemandInjector> INSTANCES = new HashMap<>();
-    private final WireRepository wireRepository;
+    private static final Map<WireContainer, OnDemandInjector> INSTANCES = new HashMap<>();
+    private final WireContainer wireRepository;
     private final TypeMap<Object> cache = new TypeMap<>();
     private final TypeMap<Class<?>> typeTranslations = new TypeMap<>();
     private final TypeMap<Supplier<?>> constructors = new TypeMap<>();
 
-    OnDemandInjector(WireRepository wireRepository) {
+    OnDemandInjector(WireContainer wireRepository) {
         this.wireRepository = wireRepository;
         bind(OnDemandInjector.class).toValue(this);
-        bind(WireRepository.class).toValue(wireRepository);
+        bind(WireContainer.class).toValue(wireRepository);
     }
 
-    public static OnDemandInjector of(WireRepository wireRepository) {
+    public static OnDemandInjector of(WireContainer wireRepository) {
         return INSTANCES.computeIfAbsent(wireRepository, OnDemandInjector::new);
     }
 
@@ -65,7 +65,7 @@ public class OnDemandInjector {
 
     private <T> T createNewInstance(Class<T> type) {
         if (IdentifiableProvider.class.equals(type)) {
-            return (T) wireRepository.getNativeProvider(type);
+            return (T) wireRepository.getNativeProvider(TypeIdentifier.just(type));
         }
         return (T) findTargetConstructor(type)
                 .map(this::invokeConstructor)
@@ -158,11 +158,7 @@ public class OnDemandInjector {
         if (type instanceof ParameterizedType parameterizedType) {
             if (parameterizedType.getRawType().equals(IdentifiableProvider.class)) {
                 Class<?> genericType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-                return (T) wireRepository.getNativeProvider(genericType);
-            }
-            if (parameterizedType.getRawType().equals(Bean.class)) {
-                Class<?> genericType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-                return (T) wireRepository.getBean(genericType);
+                return (T) wireRepository.getNativeProvider(TypeIdentifier.just(genericType));
             }
 
             Class<T> genericType = (Class<T>) type;

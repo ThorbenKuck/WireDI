@@ -1,13 +1,14 @@
 package com.wiredi.runtime.domain.conditional;
 
+import com.wiredi.runtime.WireContainer;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * A ConditionEvaluator is used to determine if certain conditions have been achieved.
  * <p>
  * The primary use case is to determine if an {@link com.wiredi.runtime.domain.provider.IdentifiableProvider}
- * should be loaded into the {@link com.wiredi.runtime.beans.BeanContainer} of a
- * {@link com.wiredi.runtime.WireRepository} or if it should be ignored.
+ * should be loaded into the {@link com.wiredi.runtime.WireContainerInitializer} of a
+ * {@link WireContainer} or if it should be ignored.
  * <p>
  * ConditionEvaluators are part of the first level api.
  * It is mainly exposed in the {@link Conditional} instance.

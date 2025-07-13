@@ -1,7 +1,7 @@
 package com.wiredi.inherited;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
@@ -19,7 +19,7 @@ public final class CustomAutoConfigurationIdentifiableProvider implements Identi
 
     private final Value<CustomAutoConfiguration> instance = Value.empty();
 
-    private CustomAutoConfiguration createInstance(final WireRepository wireRepository,
+    private CustomAutoConfiguration createInstance(final WireContainer wireRepository,
                                                    final TypeIdentifier<CustomAutoConfiguration> concreteType) {
         CustomAutoConfiguration instance = new CustomAutoConfiguration();
         return instance;
@@ -32,7 +32,7 @@ public final class CustomAutoConfigurationIdentifiableProvider implements Identi
 
     @Override
     public final synchronized CustomAutoConfiguration get(
-            @NotNull final WireRepository wireRepository,
+            @NotNull final WireContainer wireRepository,
             @NotNull final TypeIdentifier<CustomAutoConfiguration> concreteType) {
         return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
     }

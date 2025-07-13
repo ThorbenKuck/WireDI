@@ -1,12 +1,8 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiableProvider<T> {
 
@@ -39,7 +35,7 @@ public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiab
     @Override
     @NotNull
     public T get(
-            @NotNull final WireRepository wireRepository,
+            @NotNull final WireContainer wireRepository,
             @NotNull final TypeIdentifier<T> concreteType
     ) {
         return instance;

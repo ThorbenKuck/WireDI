@@ -1,8 +1,7 @@
 package com.wiredi.runtime.domain.conditional;
 
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.beans.BeanContainer;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import org.jetbrains.annotations.NotNull;
@@ -14,9 +13,9 @@ import java.util.stream.Stream;
 public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context> {
 
     private final Map<IdentifiableProvider<?>, Context> evaluations = new HashMap<>();
-    private final WireRepository wireRepository;
+    private final WireContainer wireRepository;
 
-    public ConditionEvaluation(WireRepository wireRepository) {
+    public ConditionEvaluation(WireContainer wireRepository) {
         this.wireRepository = wireRepository;
     }
 
@@ -47,7 +46,7 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
 
     public static class Context {
 
-        private final WireRepository wireRepository;
+        private final WireContainer wireRepository;
         private final IdentifiableProvider<?> provider;
         private AnnotationMetadata annotationMetadata;
         private final Set<String> dependencies = new HashSet<>();
@@ -55,7 +54,7 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
         private final Set<String> negativeMatches = new HashSet<>();
 
         public Context(
-                WireRepository wireRepository,
+                WireContainer wireRepository,
                 IdentifiableProvider<?> provider
         ) {
             this.wireRepository = wireRepository;
@@ -85,7 +84,7 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
             return wireRepository.environment();
         }
 
-        public WireRepository wireRepository() {
+        public WireContainer wireRepository() {
             return wireRepository;
         }
 

@@ -1,6 +1,6 @@
 package com.wiredi.metrics;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.Test;
@@ -13,7 +13,7 @@ class MicrometerAutoConfigurationTest {
     @Test
     void shouldCreateDefaultMeterRegistry() {
         // Arrange
-        WireRepository repository = WireRepository.open();
+        WireContainer repository = WireContainer.open();
 
         // Act
         MeterRegistry meterRegistry = repository.get(MeterRegistry.class);
@@ -26,7 +26,7 @@ class MicrometerAutoConfigurationTest {
     @Test
     void shouldCreateMetricCollector() {
         // Arrange
-        WireRepository repository = WireRepository.open();
+        WireContainer repository = WireContainer.open();
 
         // Act
         MeterRegistry metricCollector = repository.get(MeterRegistry.class);

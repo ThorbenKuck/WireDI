@@ -2,13 +2,13 @@ package com.wiredi.runtime;
 
 import com.wiredi.runtime.domain.Eager;
 
-import java.util.List;
+import java.util.Collection;
 
 /**
  * This interface abstracts strategies on how {@link Eager} instances are loaded.
  * <p>
  * Custom implementations can be provided to override the strategy on how eager classes are initialized.
- * The {@link WireRepository} tries to fetch a single instance from the BeanContainer.
+ * The {@link WireContainer} tries to fetch a single instance from the BeanContainer.
  * If it finds a single instance, it's used.
  */
 public interface EagerInitializer {
@@ -16,17 +16,17 @@ public interface EagerInitializer {
     /**
      * Initialize all eager instances.
      * <p>
-     * It's expected that all {@link Eager#setup(WireRepository)} methods are called.
+     * It's expected that all {@link Eager#setup(WireContainer)} methods are called.
      *
      * @param eagerInstances the {@link Eager} instances to setup
      * @param wireRepository the repository which asks for initialization
      */
-    void initialize(WireRepository wireRepository, List<Eager> eagerInstances);
+    void initialize(WireContainer wireRepository, Collection<Eager> eagerInstances);
 
     class ParallelStream implements EagerInitializer {
 
         @Override
-        public void initialize(WireRepository wireRepository, List<Eager> eagerInstances) {
+        public void initialize(WireContainer wireRepository, Collection<Eager> eagerInstances) {
             eagerInstances.parallelStream().forEach(it -> it.setup(wireRepository));
         }
     }

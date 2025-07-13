@@ -14,26 +14,36 @@ import java.util.*;
  * Whenever an exception arises, this class can be consulted to determine an instance of the {@link ExceptionHandler}
  * to handle the exception.
  * <p>
- * The ExceptionHandler is connected to the {@link WireRepository},
- * where it can be accessed by {@link WireRepository#exceptionHandler()}.
+ * The ExceptionHandler is connected to the {@link WireContainer},
+ * where it can be accessed by {@link WireContainer#exceptionHandler()}.
  * You can provide {@link ExceptionHandler} instances either manually by calling
- * {@link WireRepository#exceptionHandler()},
+ * {@link WireContainer#exceptionHandler()},
  * followed by {@link ExceptionHandlerContext#register(Class, ExceptionHandler)},
  * or implicitly by declaring an {@link ExceptionHandler}
  * exposed as a bean by annotating it with {@link com.wiredi.annotations.Wire}.
  * <p>
  * To reduce computational complexity, the ExceptionHandler caches found instances of the {@link ExceptionHandler}.
  *
- * @see WireRepository
+ * @see WireContainer
  * @see ExceptionHandler
  */
 public class ExceptionHandlerContext {
 
     private static final Logging logger = Logging.getInstance(ExceptionHandlerContext.class);
-    private final WireRepository wireRepository;
-    private final Map<Class<? extends Throwable>, List<ExceptionHandler<? extends Throwable>>> cache = new HashMap<>();
+    private WireContainer wireRepository;
+    private final Map<Class<? extends Throwable>, Collection<ExceptionHandler<? extends Throwable>>> cache = new HashMap<>();
 
-    public ExceptionHandlerContext(WireRepository wireRepository) {
+    public ExceptionHandlerContext(WireContainer wireRepository) {
+        this.wireRepository = wireRepository;
+    }
+
+    /**
+     * Sets the WireContext for this ExceptionHandlerContext.
+     * This method is used to resolve circular dependencies during initialization.
+     *
+     * @param wireRepository the WireContext to set
+     */
+    public void setWireContext(WireContainer wireRepository) {
         this.wireRepository = wireRepository;
     }
 
@@ -51,7 +61,12 @@ public class ExceptionHandlerContext {
     @SuppressWarnings({"unchecked", "rawtypes"}) // We ignore generics right here
     public void handle(@NotNull final Throwable throwable) throws Throwable {
         logger.debug(() -> "Handling Exception " + throwable);
-        Collection<ExceptionHandler<? extends Throwable>> errorHandlers = getHandler(throwable);
+        Collection<ExceptionHandler<? extends Throwable>> errorHandlers;
+        try {
+            errorHandlers = getHandler(throwable);
+        } catch (Throwable t) {
+            errorHandlers = Collections.emptyList();
+        }
         if (errorHandlers.isEmpty()) {
             logger.debug(() -> "No error handler found for " + throwable + ". Rethrowing exception.");
             throw throwable;
@@ -78,7 +93,7 @@ public class ExceptionHandlerContext {
      * @return This instance for fluent api access
      */
     public <T extends Throwable> ExceptionHandlerContext register(Class<T> errorType, ExceptionHandler<T> handler) {
-        List<ExceptionHandler<? extends Throwable>> errorHandlers = cache.computeIfAbsent(errorType, k -> new ArrayList<>());
+        Collection<ExceptionHandler<? extends Throwable>> errorHandlers = cache.computeIfAbsent(errorType, k -> new ArrayList<>());
         errorHandlers.add(handler);
         return this;
     }

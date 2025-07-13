@@ -1,10 +1,8 @@
 package com.wiredi.runtime.infrastructure;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.AbstractIdentifiableProvider;
-import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.values.LazyValue;
 import com.wiredi.runtime.values.Value;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +24,7 @@ public class GenericBaseIdentifiableProvider<T> extends AbstractIdentifiableProv
     }
 
     @Override
-    public @Nullable GenericBase<T> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<GenericBase<T>> concreteType) {
+    public @Nullable GenericBase<T> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<GenericBase<T>> concreteType) {
         return base.get();
     }
 

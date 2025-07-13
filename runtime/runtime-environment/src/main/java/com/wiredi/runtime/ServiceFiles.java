@@ -4,12 +4,14 @@ import com.wiredi.logging.Logging;
 import com.wiredi.runtime.values.Value;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 public class ServiceFiles<T> {
 
-    private final Logging logger = Logging.getInstance(ServiceFiles.class);
-
+    private static final Map<Class<?>, ServiceFiles<?>> instances = new ConcurrentHashMap<>();
     private static ProviderFactory PROVIDER_FACTORY = new ServiceLoaderProviderFactory();
+    private final Logging logger = Logging.getInstance(ServiceFiles.class);
     private final Class<T> type;
     private final Value<Collection<ServiceLoader.Provider<T>>> providers;
     private final List<Class<? extends T>> serviceTypes;
@@ -17,30 +19,26 @@ public class ServiceFiles<T> {
     private boolean initialized = false;
     private boolean ignoreClassNotFound = false;
 
-    public static void setProviderFactory(ProviderFactory factory) {
-        PROVIDER_FACTORY = factory;
-    }
-
-    public interface ProviderFactory {
-        <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type);
-    }
-
-    public static class ServiceLoaderProviderFactory implements ProviderFactory {
-
-        @Override
-        public <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type) {
-            return ServiceLoader.load(type, Thread.currentThread().getContextClassLoader()).stream().toList();
-        }
-    }
-
     public ServiceFiles(Class<T> type) {
         this.type = type;
         this.providers = Value.async(() -> PROVIDER_FACTORY.getProviders(type));
         this.serviceTypes = new ArrayList<>();
     }
 
+    public static void setProviderFactory(ProviderFactory factory) {
+        PROVIDER_FACTORY = factory;
+    }
+
     public static <T> ServiceFiles<T> getInstance(Class<T> clazz) {
-        return new ServiceFiles<>(clazz);
+        return (ServiceFiles<T>) instances.computeIfAbsent(clazz, ServiceFiles::new);
+    }
+
+    public static <T> ServiceFiles<T> getInstance(Class<T> clazz, Consumer<ServiceFiles<T>> initializer) {
+        return (ServiceFiles<T>) instances.computeIfAbsent(clazz, t -> {
+            ServiceFiles<T> serviceFiles = new ServiceFiles<>(clazz);
+            initializer.accept(serviceFiles);
+            return serviceFiles;
+        });
     }
 
     public List<Class<? extends T>> serviceTypes() {
@@ -57,6 +55,14 @@ public class ServiceFiles<T> {
         }
 
         return services;
+    }
+
+    public ServiceFiles<T> tryInitialize(OnDemandInjector onDemandInjector) {
+        if (!initialized) {
+            this.initialize(onDemandInjector);
+        }
+
+        return this;
     }
 
     public ServiceFiles<T> initialize(OnDemandInjector onDemandInjector) {
@@ -129,5 +135,17 @@ public class ServiceFiles<T> {
     public ServiceFiles<T> ignoreClassNotFound(boolean ignore) {
         this.ignoreClassNotFound = ignore;
         return this;
+    }
+
+    public interface ProviderFactory {
+        <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type);
+    }
+
+    public static class ServiceLoaderProviderFactory implements ProviderFactory {
+
+        @Override
+        public <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type) {
+            return ServiceLoader.load(type, Thread.currentThread().getContextClassLoader()).stream().toList();
+        }
     }
 }

@@ -7,6 +7,7 @@ import com.wiredi.annotations.Order;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.type.TypeMirror;
@@ -30,7 +31,7 @@ public class OrderMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         builder.addModifiers(Modifier.PUBLIC, Modifier.FINAL)
                 .returns(TypeName.INT)
                 .addAnnotation(Override.class)
@@ -70,7 +71,7 @@ public class OrderMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "getOrder";
     }
 

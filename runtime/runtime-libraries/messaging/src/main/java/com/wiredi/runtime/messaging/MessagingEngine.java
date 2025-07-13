@@ -50,7 +50,7 @@ public interface MessagingEngine {
      * When processing the message within the {@code handler}, the message provided to the Function should be used,
      * as {@link RequestAware} instances may alter the message.
      * <p>
-     * The returned result is describing what happened during processing.
+     * The returned appliedConditionalProviders is describing what happened during processing.
      * Underlying implementations should use the {@link RequestContext} to process the message.
      *
      * @param message the received {@link Message} that should be processed

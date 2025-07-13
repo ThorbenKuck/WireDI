@@ -2,7 +2,7 @@ package com.wiredi.aop;
 
 import com.wiredi.annotations.PrimaryWireType;
 import com.wiredi.annotations.Wire;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
 import com.wiredi.runtime.aspects.ExecutionChainRegistry;
@@ -25,12 +25,12 @@ import java.lang.Override;
         proxy = false
 )
 final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectAwareProxy {
-    private final WireRepository wireRepository;
+    private final WireContainer wireRepository;
 
     private final Value<ExecutionChain> executionChain;
 
     ProxyTarget$$AspectAwareProxy(final ExecutionChainRegistry executionChainRegistry,
-                          final WireRepository wireRepository) {
+                          final WireContainer wireRepository) {
         this.wireRepository = wireRepository;
         this.executionChain = Value.async(() ->
                 executionChainRegistry.getExecutionChain(

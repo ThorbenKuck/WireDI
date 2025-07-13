@@ -1,15 +1,12 @@
 package com.wiredi.integration.cache;
 
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.WiredApplication;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.security.SecurityContext;
 import com.wiredi.runtime.security.crypto.Algorithms;
 import com.wiredi.runtime.security.crypto.BCryptAlgorithm;
 import com.wiredi.runtime.security.crypto.CryptographicAlgorithm;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -20,7 +17,7 @@ class AlgorithmsAutoConfigurationTest {
     @Test
     public void testThatAlgorithmsIsWired() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
 
         // Act
         // Assert
@@ -31,7 +28,7 @@ class AlgorithmsAutoConfigurationTest {
     @Test
     public void ifAnAlgorithmBeanIsPresentItIsUsedAsSystemAlgorithm() {
         // Arrange
-        WireRepository wireRepository = WireRepository.create();
+        WireContainer wireRepository = WireContainer.create();
         wireRepository.announce(new IdentifiableProvider<BCryptAlgorithm>() {
             @Override
             public @NotNull List<TypeIdentifier<?>> additionalWireTypes() {
@@ -44,7 +41,7 @@ class AlgorithmsAutoConfigurationTest {
             }
 
             @Override
-            public BCryptAlgorithm get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<BCryptAlgorithm> concreteType) {
+            public BCryptAlgorithm get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<BCryptAlgorithm> concreteType) {
                 return new BCryptAlgorithm();
             }
         });
@@ -59,7 +56,7 @@ class AlgorithmsAutoConfigurationTest {
     @Test
     public void testThatAlgorithmsCanBeWiredInADependency() {
         // Arrange
-        WireRepository wireRepository = WireRepository.open();
+        WireContainer wireRepository = WireContainer.open();
 
         // Act
         // Assert

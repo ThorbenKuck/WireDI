@@ -1,7 +1,7 @@
 package com.wiredi.runtime.aspects;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
@@ -19,7 +19,7 @@ public class ExecutionChainRegistryProvider implements IdentifiableProvider<Exec
     }
 
     @Override
-    public @Nullable ExecutionChainRegistry get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<ExecutionChainRegistry> concreteType) {
+    public @Nullable ExecutionChainRegistry get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<ExecutionChainRegistry> concreteType) {
         return instance.getOrSet(() -> new ExecutionChainRegistry(wireRepository.getAll(AspectHandler.class)));
     }
 }

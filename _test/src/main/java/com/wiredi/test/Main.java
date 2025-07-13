@@ -1,19 +1,17 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.test.commands.Command;
 import com.wiredi.test.commands.CommandNote;
 import com.wiredi.test.inner.SuperDi;
-import com.wiredi.test.properties.ExampleProperties;
 import com.wiredi.test.properties.NestedProperties;
-import com.wiredi.test.properties.SeparateProperties;
 
 import java.util.List;
 
 public class Main {
 
 	public static void main(String[] args) {
-		WireRepository wireRepository = WireRepository.open();
+		WireContainer wireRepository = WireContainer.open();
 		wireRepository.announce(new Dependency());
 
 		wireRepository.get(MetaAnnotationTest.class);

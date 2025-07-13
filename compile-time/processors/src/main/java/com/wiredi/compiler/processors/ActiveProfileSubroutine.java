@@ -39,10 +39,6 @@ public class ActiveProfileSubroutine implements AnnotationProcessorSubroutine {
     @Inject
     private Types types;
 
-    public static ActiveProfileSubroutine provider() {
-        throw new UnsupportedOperationException("This processor is not a provider");
-    }
-
     @Override
     public List<Class<? extends Annotation>> targetAnnotations() {
         return List.of(ActiveProfiles.class);

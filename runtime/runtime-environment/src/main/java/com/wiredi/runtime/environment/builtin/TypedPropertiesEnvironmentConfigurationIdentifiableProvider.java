@@ -2,7 +2,7 @@ package com.wiredi.runtime.environment.builtin;
 
 import com.google.auto.service.AutoService;
 import com.wiredi.annotations.Order;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnPropertyEvaluator;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
@@ -56,7 +56,7 @@ public class TypedPropertiesEnvironmentConfigurationIdentifiableProvider impleme
 
     @Override
     public @Nullable TypedPropertiesEnvironmentConfiguration get(
-            @NotNull WireRepository wireRepository,
+            @NotNull WireContainer wireRepository,
             @NotNull TypeIdentifier<TypedPropertiesEnvironmentConfiguration> concreteType
     ) {
         return this.instance.getOrSet(() -> new TypedPropertiesEnvironmentConfiguration(

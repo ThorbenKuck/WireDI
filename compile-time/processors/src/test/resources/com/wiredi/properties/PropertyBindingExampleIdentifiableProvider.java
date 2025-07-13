@@ -1,12 +1,12 @@
 package com.wiredi.properties;
 
 import com.google.auto.service.AutoService;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.lang.DynamicBuilder;
 import com.wiredi.runtime.properties.TypedProperties;
 import com.wiredi.runtime.properties.Key;
-import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
 import java.lang.Override;
@@ -22,7 +22,7 @@ public final class PropertyBindingExampleIdentifiableProvider implements Identif
 
     private final Value<PropertyBindingExample> instance = Value.empty();
 
-    private PropertyBindingExample createInstance(final WireRepository wireRepository) {
+    private PropertyBindingExample createInstance(final WireContainer wireRepository) {
         TypedProperties properties = wireRepository.environment().properties();
         return DynamicBuilder.of(
                     new PropertyBindingExample(
@@ -41,7 +41,7 @@ public final class PropertyBindingExampleIdentifiableProvider implements Identif
 
     @Override
     public final synchronized PropertyBindingExample get(
-            @NotNull final WireRepository wireRepository) {
+            @NotNull final WireContainer wireRepository) {
         return instance.getOrSet(() -> createInstance(wireRepository));
     }
 

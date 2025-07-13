@@ -1,10 +1,11 @@
 package com.wiredi.runtime.domain;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.factories.Bean;
 import com.wiredi.runtime.domain.factories.EmptyBeanFactory;
 import com.wiredi.runtime.domain.factories.SimpleBeanFactory;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
+import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
@@ -29,26 +30,24 @@ public interface BeanFactory<T> {
     @NotNull TypeIdentifier<T> rootType();
 
     @NotNull
-    default Collection<Bean<T>> getAll(@NotNull WireRepository wireRepository) {
+    default Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository) {
         return getAll(wireRepository, rootType());
     }
 
-    @NotNull Collection<Bean<T>> getAll(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type);
+    @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type);
 
-    @Nullable
-    default Bean<T> get(@NotNull WireRepository wireRepository) {
-        return get(wireRepository, rootType());
-    }
+    @Nullable Bean<T> get(
+            @NotNull WireContainer wireRepository,
+            @NotNull TypeIdentifier<T> type
+    );
 
-    @Nullable Bean<T> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type);
-
-    @Nullable
-    default Bean<T> get(@NotNull WireRepository wireRepository, @NotNull QualifierType qualifier) {
-        return get(wireRepository, rootType(), qualifier);
-    }
-
-    @Nullable Bean<T> get(@NotNull WireRepository wireRepository, @NotNull TypeIdentifier<T> type, @NotNull QualifierType qualifierType);
+    @Nullable Bean<T> get(
+            @NotNull WireContainer wireRepository,
+            @NotNull QualifiedTypeIdentifier<T> type
+    );
 
     void register(@NotNull IdentifiableProvider<T> identifiableProvider);
 
+    @Nullable
+    IdentifiableProvider<T> resolveProvider(@Nullable QualifierType qualifier);
 }

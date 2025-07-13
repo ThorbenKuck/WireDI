@@ -31,8 +31,6 @@ import java.lang.annotation.*;
 @Inherited
 public @interface Provider {
 
-    boolean singleton() default true;
-
     /**
      * Whether the provided class should be wired to all super types or not.
      * <p>

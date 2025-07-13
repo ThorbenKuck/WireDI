@@ -2,8 +2,8 @@ package com.wiredi.processor.tck.domain.properties;
 
 import com.wiredi.annotations.Wire;
 import com.wiredi.annotations.environment.Resolve;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.Eager;
-import com.wiredi.runtime.WireRepository;
 
 @Wire
 public class ProfileProperties implements Eager {
@@ -15,7 +15,7 @@ public class ProfileProperties implements Eager {
     }
 
     @Override
-    public void setup(WireRepository wireRepository) {
+    public void setup(WireContainer wireRepository) {
         System.out.println(property);
     }
 }

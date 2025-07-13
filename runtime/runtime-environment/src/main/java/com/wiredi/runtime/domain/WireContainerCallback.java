@@ -1,18 +1,18 @@
 package com.wiredi.runtime.domain;
 
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.beans.BeanContainer;
+import com.wiredi.runtime.WireContainer;
+import com.wiredi.runtime.WireContainerInitializer;
 import com.wiredi.runtime.domain.errors.ExceptionHandler;
 import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is used by the {@link WireRepository} to
+ * This class is used by the {@link WireContainer} to
  * inform about context actions.
  * <p>
- * Since this class is existing before the {@link BeanContainer}
+ * Since this class is existing before the {@link WireContainerInitializer}
  * and the {@link Environment} is loaded, it does <b>NOT</b>
  * support any form of injection. Neither  field nor constructor
  * injections. Any implementations  of this interface must be
@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * </p>
  * <h2>The lifecycle</h2>
  * <p>
- * The general load lifecycle of the {@link WireRepository} is as follows:
+ * The general load lifecycle of the {@link WireContainer} is as follows:
  * </p>
  * <p>
  * 1) Loading the {@link Environment}.
@@ -35,40 +35,40 @@ import org.jetbrains.annotations.NotNull;
  * of the {@link Environment}.
  * </p>
  * <p>
- * 2) Loading the {@link BeanContainer}.
+ * 2) Loading the {@link WireContainerInitializer}.
  * </p>
  * <p>
- * The {@link BeanContainer} will be loaded. During this step,
+ * The {@link WireContainerInitializer} will be loaded. During this step,
  * all identifiable provider will be loaded from the {@link java.util.ServiceLoader},
  * as in the general contract of this framework. Each callback can
- * choose to interact with the {@link BeanContainer} to append beans.
+ * choose to interact with the {@link WireContainerInitializer} to append beans.
  * </p>
  * <p>
  * 3) Instantiating Eager classes
  * </p>
  * <p>
  * All Bean instances of the {@link Eager} interface, which were
- * loaded inside of the {@link BeanContainer}. All BeanContainers
+ * loaded inside of the {@link WireContainerInitializer}. All BeanContainers
  * will be executed in parallel.
  * </p>
  * <p>
  * Any error raised by an instance of this interface will be handled by the
  * default error handling mechanism, using {@link ExceptionHandler}
- * instances, that can be found in the {@link BeanContainer}. If the
- * {@link BeanContainer} is not yet configured, the exception will
+ * instances, that can be found in the {@link WireContainerInitializer}. If the
+ * {@link WireContainerInitializer} is not yet configured, the exception will
  * simply be delegated.
  * <p>
  * Please note: This class should be stateless. It is loaded once globally and hence any state will stay for multiple
  * executions of different WireRepositories. If a state is required, it should be cleared with
- * {@link #loadingFinished(Timed, WireRepository)}
+ * {@link #loadingFinished(Timed, WireContainer)}
  *
  * @see LoggingWireRepositoryContextCallbacks
  * @see Environment
- * @see BeanContainer
+ * @see WireContainerInitializer
  * @see Eager
- * @see WireRepository
+ * @see WireContainer
  */
-public interface WireRepositoryContextCallback extends Ordered {
+public interface WireContainerCallback extends Ordered {
 
     /**
      * This method will be called after the banner has been printed,
@@ -82,13 +82,13 @@ public interface WireRepositoryContextCallback extends Ordered {
      *
      * @param wireRepository the WireRepository that is being loaded
      */
-    default void loadingStarted(@NotNull WireRepository wireRepository) {
+    default void loadingStarted(@NotNull WireContainer wireRepository) {
     }
 
     /**
      * This method will be called after the first phase of the load lifecycle
      * (loading the {@link Environment}) has successfully been concluded and
-     * before the second phase, loading the {@link BeanContainer} has been
+     * before the second phase, loading the {@link WireContainerInitializer} has been
      * started.
      * <p>
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
@@ -114,15 +114,15 @@ public interface WireRepositoryContextCallback extends Ordered {
     }
 
     /**
-     * This method will be called, after the loading lifecycle of the {@link WireRepository}
+     * This method will be called, after the loading lifecycle of the {@link WireContainer}
      * has successfully concluded.
      * <p>
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
      *
      * @param timed          the total time that loading the WireRepository took
-     * @param wireRepository the fully configured {@link WireRepository}
+     * @param wireRepository the fully configured {@link WireContainer}
      */
-    default void loadingFinished(@NotNull Timed timed, @NotNull WireRepository wireRepository) {
+    default void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireRepository) {
     }
 
     /**
@@ -132,6 +132,6 @@ public interface WireRepositoryContextCallback extends Ordered {
      *
      * @param wireRepository the WireRepository that is being destroyed
      */
-    default void destroyed(@NotNull WireRepository wireRepository) {
+    default void destroyed(@NotNull WireContainer wireRepository) {
     }
 }

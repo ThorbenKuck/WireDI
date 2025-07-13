@@ -2,6 +2,7 @@ package com.wiredi.compiler.processor.plugins;
 
 import com.squareup.javapoet.*;
 import com.wiredi.compiler.domain.ClassEntity;
+import com.wiredi.compiler.domain.Qualifiers;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
@@ -19,12 +20,12 @@ public class QualifiersMethod implements StandaloneMethodFactory {
 
 	@Override
 	public void append(
-			MethodSpec.Builder builder,
-			ClassEntity<?> entity
+			MethodSpec.@NotNull Builder builder,
+			@NotNull ClassEntity<?> entity
 	) {
 		final String fieldName = "QUALIFIER";
 		List<CodeBlock> values = qualifierTypes.stream()
-				.map(this::qualifierValueBuilder)
+				.map(Qualifiers::qualifierValueBuilder)
 				.toList();
 
 		entity.addField(ParameterizedTypeName.get(List.class, QualifierType.class), fieldName, field -> field.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
@@ -44,37 +45,13 @@ public class QualifiersMethod implements StandaloneMethodFactory {
 				.addStatement("return $L", fieldName);
 	}
 
-	private CodeBlock qualifierValueBuilder(QualifierType qualifier) {
-		if (qualifier.values().isEmpty()) {
-			return CodeBlock.builder().add("$T.just($S)", QualifierType.class, qualifier.name()).build();
-		} else {
-			CodeBlock.Builder builder = CodeBlock.builder()
-					.add("$T.builder($S)", QualifierType.class, qualifier.name())
-					.indent();
-			qualifier.forEach((key, value) -> {
-				builder.add("\n.add($S, ", key);
-				if (value instanceof String) {
-					builder.add("$S", value);
-				} else if (value instanceof Character) {
-					builder.add("'$L'", value);
-				} else if (value instanceof Class<?> c) {
-					builder.add("$S", c.getName());
-				} else {
-					builder.add("$L", value);
-				}
-				builder.add(")");
-			});
-			return builder.add("\n.build()").unindent().build();
-		}
-	}
-
 	@Override
-	public String methodName() {
+	public @NotNull String methodName() {
 		return "qualifiers";
 	}
 
 	@Override
-	public boolean applies(ClassEntity<?> entity) {
+	public boolean applies(@NotNull ClassEntity<?> entity) {
 		return !qualifierTypes.isEmpty();
 	}
 }

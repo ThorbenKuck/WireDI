@@ -5,7 +5,6 @@ import com.squareup.javapoet.TypeName;
 import com.wiredi.runtime.ObjectReference;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.collections.TypeMap;
-import com.wiredi.runtime.beans.Bean;
 import jakarta.inject.Provider;
 
 import javax.lang.model.element.Element;
@@ -22,7 +21,6 @@ public class TypeChecker {
 	private final TypeMirror nativeProviderTypeElement;
 	private final TypeMirror collectionTypeElement;
 	private final TypeMirror listTypeElement;
-	private final TypeMirror beanTypeElement;
 	private final Types types;
 	private final Elements elements;
 
@@ -31,7 +29,6 @@ public class TypeChecker {
 		this.nativeProviderTypeElement = elements.getTypeElement(IdentifiableProvider.class.getName()).asType();
 		this.collectionTypeElement = elements.getTypeElement(Collection.class.getName()).asType();
 		this.listTypeElement = elements.getTypeElement(List.class.getName()).asType();
-		this.beanTypeElement = elements.getTypeElement(Bean.class.getName()).asType();
 		this.types = types;
 		this.elements = elements;
 	}
@@ -80,10 +77,6 @@ public class TypeChecker {
 
 		public boolean isList() {
 			return isAssignable(List.class, typeMirror);
-		}
-
-		public boolean isBean() {
-			return isAssignable(Bean.class, typeMirror);
 		}
 
 		public boolean isObjectReference() {

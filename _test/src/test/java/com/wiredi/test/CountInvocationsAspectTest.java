@@ -1,6 +1,6 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.test.inner.SuperDi;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +11,7 @@ class CountInvocationsAspectTest extends AbstractIntegrationTest {
     @Test
     public void testThatSimpleInvocationsAreIntercepted() {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
         CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
         assertThat(aspect.invocations())
                 .withFailMessage("Precondition failed, CountInvocations was not zero")
@@ -27,7 +27,7 @@ class CountInvocationsAspectTest extends AbstractIntegrationTest {
     @Test
     public void testThatPrivateMethodInvocationsAreInterceptedTwice() {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireContainer wireRepository = loadWireRepository();
         CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
         assertThat(aspect.invocations())
                 .withFailMessage("Precondition failed, CountInvocations was not zero")

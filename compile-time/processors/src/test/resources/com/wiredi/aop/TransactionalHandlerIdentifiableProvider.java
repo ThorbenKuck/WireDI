@@ -1,7 +1,7 @@
 package com.wiredi.aop;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
@@ -19,14 +19,14 @@ public final class TransactionalHandlerIdentifiableProvider implements Identifia
 
     private final Value<TransactionalHandler> instance = Value.empty();
 
-    private TransactionalHandler createInstance(final WireRepository wireRepository,
+    private TransactionalHandler createInstance(final WireContainer wireRepository,
                                                 final TypeIdentifier<TransactionalHandler> concreteType) {
         TransactionalHandler instance = new TransactionalHandler();
         return instance;
     }
 
     @Override
-    public final synchronized TransactionalHandler get(@NotNull final WireRepository wireRepository,
+    public final synchronized TransactionalHandler get(@NotNull final WireContainer wireRepository,
                                                        @NotNull final TypeIdentifier<TransactionalHandler> concreteType) {
         return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
     }

@@ -1,9 +1,9 @@
 package com.wiredi.integration.cache;
 
 import com.wiredi.annotations.ActiveProfiles;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.WiredApplication;
 import com.wiredi.runtime.properties.Key;
-import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.cache.CacheManager;
 import org.junit.jupiter.api.Test;
 
@@ -16,7 +16,7 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerIsWired() {
         // Arrange
-        WireRepository wireRepository = WiredApplication.start().wireRepository();
+        WireContainer wireRepository = WiredApplication.start().wireRepository();
 
         // Act
         // Assert
@@ -27,7 +27,7 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerCanBeWiredInADependency() {
         // Arrange
-        WireRepository wireRepository = WiredApplication.start().wireRepository();
+        WireContainer wireRepository = WiredApplication.start().wireRepository();
 
         // Act
         // Assert
@@ -39,7 +39,7 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatACustomCacheManagerCanBeSupplied() {
         // Arrange
-        WireRepository wireRepository = WireRepository.create();
+        WireContainer wireRepository = WireContainer.create();
         wireRepository.environment().properties().set(Key.just("test"), "true");
         wireRepository.load();
 

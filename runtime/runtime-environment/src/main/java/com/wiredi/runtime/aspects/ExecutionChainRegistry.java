@@ -1,12 +1,9 @@
 package com.wiredi.runtime.aspects;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.async.DataAccess;
-import com.wiredi.runtime.domain.Eager;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,10 +20,10 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ExecutionChainRegistry {
 
     private static final Logging logger = Logging.getInstance(ExecutionChainRegistry.class);
-    private final List<AspectHandler> aspectHandlerList;
+    private final Collection<AspectHandler> aspectHandlerList;
     private final Map<RootMethod, ExecutionChain> executionChains = new ConcurrentHashMap<>();
 
-    public ExecutionChainRegistry(List<AspectHandler> aspectHandlerList) {
+    public ExecutionChainRegistry(Collection<AspectHandler> aspectHandlerList) {
         this.aspectHandlerList = new ArrayList<>(aspectHandlerList);
     }
 

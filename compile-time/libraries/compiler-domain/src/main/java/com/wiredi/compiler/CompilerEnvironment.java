@@ -16,8 +16,6 @@ public class CompilerEnvironment {
             environment.autoconfigure();
         }
 
-        environment.properties().forEach(entry -> System.out.println(entry.getKey() + " = " + entry.getValue()));
-
         return environment;
     }
 

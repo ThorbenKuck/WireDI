@@ -1,9 +1,9 @@
 package com.wiredi.runtime.domain.provider;
 
 import com.google.common.primitives.Primitives;
-import com.wiredi.runtime.beans.Bean;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -16,7 +16,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-import static com.wiredi.runtime.lang.Preconditions.is;
 import static com.wiredi.runtime.lang.Preconditions.isNotNull;
 
 /**
@@ -86,11 +85,15 @@ public class TypeIdentifier<T> {
     public static final TypeIdentifier<ZonedDateTime> ZONED_DATE_TIME = new TypeIdentifier<>(ZonedDateTime.class);
     public static final TypeIdentifier<OffsetDateTime> OFFSET_DATE_TIME = new TypeIdentifier<>(OffsetDateTime.class);
     public static final TypeIdentifier<ZoneOffset> ZONE_OFFSET = new TypeIdentifier<>(ZoneOffset.class);
+    public static final TypeIdentifier<Void> VOID = new TypeIdentifier<>(Void.class);
 
     @NotNull
     private final Class<T> rootType;
     @NotNull
     private final List<TypeIdentifier<?>> genericTypes = new ArrayList<>();
+
+    @Nullable
+    private TypeIdentifier<T> cachedErasure; // Cache the erasure result
 
     private TypeIdentifier(@NotNull Class<T> rootType) {
         this.rootType = rootType;
@@ -153,11 +156,14 @@ public class TypeIdentifier<T> {
 
     @NotNull
     public TypeIdentifier<T> erasure() {
-        if (genericTypes.isEmpty()) {
-            return this;
-        } else {
-            return TypeIdentifier.of(rootType);
+        if (cachedErasure == null) {
+            if (genericTypes.isEmpty()) {
+                cachedErasure = this;
+            } else {
+                cachedErasure = TypeIdentifier.of(rootType);
+            }
         }
+        return cachedErasure;
     }
 
     public boolean willErase() {
@@ -237,12 +243,8 @@ public class TypeIdentifier<T> {
         return isAssignableFrom(IdentifiableProvider.class) && getGenericTypes().size() == 1;
     }
 
-    public boolean isBean() {
-        return isAssignableFrom(Bean.class) && getGenericTypes().size() == 1;
-    }
-
     public boolean referencesBeanType() {
-        return isNativeProvider() || isBean();
+        return isNativeProvider();
     }
 
     public boolean referenceConcreteType() {
@@ -267,7 +269,7 @@ public class TypeIdentifier<T> {
         return genericTypes;
     }
 
-    public QualifiedTypeIdentifier<T> qualify(QualifierType qualifierType) {
+    public QualifiedTypeIdentifier<T> qualified(QualifierType qualifierType) {
         return new QualifiedTypeIdentifier<>(this, qualifierType);
     }
 

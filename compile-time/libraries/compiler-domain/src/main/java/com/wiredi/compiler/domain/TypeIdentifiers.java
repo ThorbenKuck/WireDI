@@ -1,6 +1,9 @@
 package com.wiredi.compiler.domain;
 
 import com.squareup.javapoet.CodeBlock;
+import com.wiredi.runtime.qualifier.QualifierType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.values.Value;
 import jakarta.inject.Inject;
@@ -51,6 +54,45 @@ public class TypeIdentifiers {
 		}
 
 		return builder.build();
+	}
+
+	@NotNull
+	public CodeBlock newTypeIdentifier(@NotNull TypeMirror typeMirror, @Nullable QualifierType qualifierType) {
+		if (qualifierType == null) {
+			return newTypeIdentifier(typeMirror);
+		}
+		CodeBlock.Builder builder = CodeBlock.builder()
+				.add("$T.of($T.class)", TypeIdentifier.class, types.erasure(typeMirror));
+		builder.indent();
+
+		if (typeMirror instanceof DeclaredType declaredType) {
+			for (TypeMirror argument : declaredType.getTypeArguments()) {
+				if (argument.getKind() == TypeKind.TYPEVAR) {
+					continue;
+				}
+				builder.add("\n").add(".withGeneric($L)", newTypeIdentifier(argument));
+			}
+		}
+
+		builder.add("\n.qualified(")
+				.indent()
+				.add("\n$T.builder($S)", QualifierType.class, qualifierType.name());
+		qualifierType.forEach((key, value) -> {
+			builder.add("\n.add($S, ", key);
+            switch (value) {
+                case String s -> builder.add("$S", s);
+                case Character character -> builder.add("'$L'", character);
+                case Class<?> c -> builder.add("$S", c.getName());
+                default -> builder.add("$L", value);
+            }
+			builder.add("\n)");
+		});
+
+		return builder.add("\n.build()")
+				.unindent()
+				.add(")")
+				.unindent()
+				.build();
 	}
 
 	public TypeMirror objectType() {

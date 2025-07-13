@@ -1,7 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
-import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.junit.jupiter.api.Test;
@@ -17,7 +16,7 @@ class SimpleProviderTest {
     void shouldCreateInstanceWithDefaultConstructor() {
         // Arrange
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(new TestComponent()).build();
-        WireRepository repository = mock(WireRepository.class);
+        WireContainer repository = mock(WireContainer.class);
 
         // Act
         TestComponent instance = provider.get(repository);
@@ -34,7 +33,7 @@ class SimpleProviderTest {
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
                 .withInstance(() -> expectedInstance)
                 .build();
-        WireRepository repository = mock(WireRepository.class);
+        WireContainer repository = mock(WireContainer.class);
 
         // Act
         TestComponent instance = provider.get(repository);
@@ -50,7 +49,7 @@ class SimpleProviderTest {
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
                 .withInstance(expectedInstance)
                 .build();
-        WireRepository repository = mock(WireRepository.class);
+        WireContainer repository = mock(WireContainer.class);
 
         // Act
         TestComponent instance1 = provider.get(repository);
@@ -133,7 +132,7 @@ class SimpleProviderTest {
     @Test
     void shouldSupportSingletonProviders() {
         // Arrange
-        WireRepository repository = WireRepository.create();
+        WireContainer repository = WireContainer.create();
         SimpleProvider<TestComponent> provider = SimpleProvider.builder(TestComponent.class)
                 .withInstance(TestComponent::new)
                 .withSingleton(true)

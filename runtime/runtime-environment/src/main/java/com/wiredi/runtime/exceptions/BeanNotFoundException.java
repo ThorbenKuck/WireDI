@@ -1,8 +1,8 @@
 package com.wiredi.runtime.exceptions;
 
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.qualifier.QualifierType;
-import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,11 +15,11 @@ public class BeanNotFoundException extends RuntimeException {
 	private final QualifierType qualifierType;
 
 	@NotNull
-	private final WireRepository wireRepository;
+	private final WireContainer wireRepository;
 
 	public <T>BeanNotFoundException(
 			@NotNull TypeIdentifier<T> typeIdentifier,
-			@NotNull WireRepository wireRepository
+			@NotNull WireContainer wireRepository
 	) {
 		super("Could not find a bean for the type " + typeIdentifier);
 		this.typeIdentifier = typeIdentifier;
@@ -30,12 +30,20 @@ public class BeanNotFoundException extends RuntimeException {
 	public <T>BeanNotFoundException(
 			@NotNull TypeIdentifier<T> typeIdentifier,
 			@Nullable QualifierType qualifierType,
-			@NotNull WireRepository wireRepository
+			@NotNull WireContainer wireRepository
 	) {
-		super("Could not find a bean for the type " + typeIdentifier + " with qualifier " + qualifierType);
+		super(constructMessage(typeIdentifier, qualifierType));
 		this.typeIdentifier = typeIdentifier;
 		this.qualifierType = qualifierType;
 		this.wireRepository = wireRepository;
+	}
+
+	private static String constructMessage(TypeIdentifier<?> typeIdentifier, QualifierType qualifierType) {
+		if (qualifierType == null) {
+			return "Could not find a bean for the type " + typeIdentifier;
+		} else {
+			return "Could not find a bean for the type " + typeIdentifier + " with qualifier " + qualifierType;
+		}
 	}
 
 	public TypeIdentifier<?> getTypeIdentifier() {
@@ -46,7 +54,7 @@ public class BeanNotFoundException extends RuntimeException {
 		return qualifierType;
 	}
 
-	public WireRepository wireRepository() {
+	public WireContainer wireRepository() {
 		return wireRepository;
 	}
 }

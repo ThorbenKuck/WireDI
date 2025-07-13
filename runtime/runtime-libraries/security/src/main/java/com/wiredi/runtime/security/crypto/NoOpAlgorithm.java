@@ -43,6 +43,7 @@ public class NoOpAlgorithm implements CryptographicAlgorithm {
      * Logger instance for emitting warnings about this insecure implementation.
      */
     private static final Logging logger = Logging.getInstance(NoOpAlgorithm.class);
+    public static final NoOpAlgorithm INSTANCE = new NoOpAlgorithm();
 
     /**
      * Creates a new NoOpAlgorithm instance.

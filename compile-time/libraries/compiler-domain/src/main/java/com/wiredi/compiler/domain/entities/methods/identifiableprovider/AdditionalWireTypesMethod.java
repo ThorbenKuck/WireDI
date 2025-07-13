@@ -31,7 +31,7 @@ public class AdditionalWireTypesMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         List<CodeBlock> typeIdentifier = typeIdentifiers();
 
         entity.addField(TYPE_IDENTIFIER_LIST, "ADDITIONAL_WIRE_TYPES", field ->
@@ -65,12 +65,12 @@ public class AdditionalWireTypesMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "additionalWireTypes";
     }
 
     @Override
-    public boolean applies(ClassEntity<?> entity) {
+    public boolean applies(@NotNull ClassEntity<?> entity) {
         return !typeIdentifiers().isEmpty();
     }
 }

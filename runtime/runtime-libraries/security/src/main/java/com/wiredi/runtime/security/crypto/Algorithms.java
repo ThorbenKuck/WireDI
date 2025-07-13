@@ -1,8 +1,11 @@
 package com.wiredi.runtime.security.crypto;
 
+import org.jetbrains.annotations.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -45,8 +48,11 @@ public class Algorithms {
     private final Map<String, CryptographicAlgorithm> algorithms = new ConcurrentHashMap<>();
     private final CryptographicAlgorithm systemAlgorithm;
 
-    public Algorithms(List<CryptographicAlgorithm> algorithms, CryptographicAlgorithm systemAlgorithm) {
-        this.systemAlgorithm = systemAlgorithm;
+    public Algorithms(
+            List<CryptographicAlgorithm> algorithms,
+            @Nullable CryptographicAlgorithm systemAlgorithm
+    ) {
+        this.systemAlgorithm = Objects.requireNonNullElse(systemAlgorithm, NoOpAlgorithm.INSTANCE);
         algorithms.forEach(a -> {
             if (this.algorithms.containsKey(a.identifier())) {
                 throw new IllegalArgumentException("Multiple algorithms with the same identifier registered: " + a.identifier());
@@ -57,11 +63,11 @@ public class Algorithms {
     }
 
     public Algorithms(List<CryptographicAlgorithm> algorithms) {
-        this(algorithms, new NoOpAlgorithm());
+        this(algorithms, NoOpAlgorithm.INSTANCE);
     }
 
     public Algorithms() {
-        this(Collections.emptyList(), new NoOpAlgorithm());
+        this(Collections.emptyList(), NoOpAlgorithm.INSTANCE);
     }
 
     /**

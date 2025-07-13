@@ -9,8 +9,8 @@ import com.wiredi.compiler.domain.injection.FieldInjectionPoint;
 import com.wiredi.compiler.domain.injection.MethodInjectionPoint;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.injection.VariableContext;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.qualifier.QualifierType;
-import com.wiredi.runtime.WireRepository;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Modifier;
@@ -50,7 +50,7 @@ public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 				MethodSpec.methodBuilder(methodName)
 						.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 						.addParameter(
-								ParameterSpec.builder(WireRepository.class, "wireRepository")
+								ParameterSpec.builder(WireContainer.class, "wireRepository")
 										.addAnnotation(NotNull.class)
 										.addModifiers(Modifier.FINAL)
 										.build()
@@ -77,7 +77,7 @@ public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 				MethodSpec.methodBuilder(methodName)
 						.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 						.addParameter(
-								ParameterSpec.builder(WireRepository.class, "wireRepository")
+								ParameterSpec.builder(WireContainer.class, "wireRepository")
 										.addAnnotation(NotNull.class)
 										.addModifiers(Modifier.FINAL)
 										.build()

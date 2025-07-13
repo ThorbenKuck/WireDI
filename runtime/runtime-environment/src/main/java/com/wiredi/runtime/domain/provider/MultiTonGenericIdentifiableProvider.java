@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -9,10 +9,10 @@ import java.util.function.Function;
 public class MultiTonGenericIdentifiableProvider<T> extends AbstractIdentifiableProvider<T> {
 
 	@NotNull
-	private final Function<WireRepository, T> creationFunction;
+	private final Function<WireContainer, T> creationFunction;
 
 	public MultiTonGenericIdentifiableProvider(
-			@NotNull final Function<WireRepository, T> creationFunction,
+			@NotNull final Function<WireContainer, T> creationFunction,
 			@NotNull List<TypeIdentifier<?>> wireTypes,
 			@NotNull TypeIdentifier<T> type
 	) {
@@ -28,7 +28,7 @@ public class MultiTonGenericIdentifiableProvider<T> extends AbstractIdentifiable
 	@Override
 	@NotNull
 	public T get(
-			@NotNull final WireRepository wireRepository,
+			@NotNull final WireContainer wireRepository,
 			@NotNull final TypeIdentifier<T> concreteType
 			) {
 		return creationFunction.apply(wireRepository);

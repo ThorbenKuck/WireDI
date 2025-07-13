@@ -4,6 +4,7 @@ import com.squareup.javapoet.*;
 import com.wiredi.annotations.PrimaryWireType;
 import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.Annotations;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.aspects.AspectHandler;
 import com.wiredi.runtime.aspects.ExecutionChain;
 import com.wiredi.runtime.aspects.ExecutionChainRegistry;
@@ -14,8 +15,8 @@ import com.wiredi.compiler.domain.TypeIdentifiers;
 import com.wiredi.compiler.domain.injection.NameContext;
 import com.wiredi.compiler.domain.values.ProxyMethod;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
-import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.values.Value;
+import jakarta.inject.Singleton;
 import org.jetbrains.annotations.Nullable;
 
 import javax.lang.model.element.*;
@@ -179,7 +180,6 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
         builder.addAnnotation(
                 AnnotationSpec.builder(Wire.class)
                         .addMember("to", "{$L}", CodeBlock.join(wireValues, ", "))
-                        .addMember("singleton", "true")
                         .addMember("proxy", "false")
                         .build()
         );
@@ -188,7 +188,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
     }
 
     public AspectAwareProxyEntity inheritAnnotationsFrom(TypeElement typeElement) {
-        List<? extends AnnotationMirror> annotations = Annotations.findAll(typeElement, it -> !it.getAnnotationType().asElement().getSimpleName().toString().equals("Wire"));
+        List<? extends AnnotationMirror> annotations = Annotations.findAll(typeElement, it -> !it.getAnnotationType().asElement().getSimpleName().toString().equals("Wire")).toList();
         annotations.forEach(annotationMirror -> {
             builder.addAnnotation(AnnotationSpec.get(annotationMirror));
         });
@@ -200,7 +200,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
         CodeBlock.Builder manualInitialization = CodeBlock.builder();
         ConstructorBuilder constructorBuilder = new ConstructorBuilder();
         constructorBuilder.addParameter(TypeName.get(ExecutionChainRegistry.class), EXECUTION_CHAIN_REGISTRY_PARAMETER_NAME);
-        constructorBuilder.initializeField(TypeName.get(WireRepository.class), WIRE_REPOSITORY_FIELD_NAME);
+        constructorBuilder.initializeField(TypeName.get(WireContainer.class), WIRE_REPOSITORY_FIELD_NAME);
 
         // Inherit parameters and call super as the first thing in the constructor
         if (inheritedConstructor != null) {
@@ -234,7 +234,7 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
                                 .build()
                 )
                 .addField(
-                        FieldSpec.builder(WireRepository.class, WIRE_REPOSITORY_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL)
+                        FieldSpec.builder(WireContainer.class, WIRE_REPOSITORY_FIELD_NAME, Modifier.PRIVATE, Modifier.FINAL)
                                 .build()
                 );
     }

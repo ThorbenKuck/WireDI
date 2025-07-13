@@ -1,5 +1,6 @@
 package com.wiredi.runtime.aspects;
 
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.lang.Ordered;
 import com.wiredi.runtime.domain.aop.AspectAwareProxy;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import java.util.function.Consumer;
  * </code></pre>
  * <p>
  * It is important, that this class is annotated with {@link com.wiredi.annotations.Wire @Wire}, or
- * manually added to the {@link com.wiredi.runtime.WireRepository} before loading classes. Only then
+ * manually added to the {@link WireContainer} before loading classes. Only then
  * will it be picked up and inserted into the {@link AspectAwareProxy Proxy} instances.
  * <p>
  * The second possibility is, that you annotate a handler method in any wire bean with

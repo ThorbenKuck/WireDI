@@ -24,7 +24,7 @@ public class TypeMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         String variableName = "PRIMARY_WIRE_TYPE";
         ParameterizedTypeName typeName = ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(primaryWireType));
 
@@ -40,7 +40,7 @@ public class TypeMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "type";
     }
 }

@@ -3,17 +3,17 @@ package com.wiredi.runtime.domain;
 import com.google.auto.service.AutoService;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@AutoService(WireRepositoryContextCallback.class)
-public class LoggingWireRepositoryContextCallbacks implements WireRepositoryContextCallback {
+@AutoService(WireContainerCallback.class)
+public class LoggingWireRepositoryContextCallbacks implements WireContainerCallback {
 
-    private static final Logging logger = Logging.getInstance(WireRepository.class);
+    private static final Logging logger = Logging.getInstance(WireContainer.class);
     private static final AtomicBoolean LOGGED_PROCESSORS_WARNING = new AtomicBoolean(false);
     private static final Key ENABLED_KEY = Key.just("wiredi.callbacks.logging.enabled");
     private static final Key CHECK_PROCESSOR_JAR = Key.just("wiredi.check-processors");
@@ -39,7 +39,7 @@ public class LoggingWireRepositoryContextCallbacks implements WireRepositoryCont
     }
 
     @Override
-    public void loadingStarted(@NotNull WireRepository wireRepository) {
+    public void loadingStarted(@NotNull WireContainer wireRepository) {
         if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
             logger.debug("Starting to load the WireRepository");
         }
@@ -61,7 +61,7 @@ public class LoggingWireRepositoryContextCallbacks implements WireRepositoryCont
     }
 
     @Override
-    public void loadingFinished(@NotNull Timed timed, @NotNull WireRepository wireRepository) {
+    public void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireRepository) {
         if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
             logger.info(() -> "WireRepository was completely loaded in " + timed);
         }

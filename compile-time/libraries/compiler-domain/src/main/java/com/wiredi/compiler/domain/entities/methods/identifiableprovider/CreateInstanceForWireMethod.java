@@ -6,8 +6,8 @@ import com.wiredi.compiler.domain.WireRepositories;
 import com.wiredi.compiler.domain.injection.InjectionPoints;
 import com.wiredi.compiler.domain.injection.VariableContext;
 import com.wiredi.compiler.domain.injection.constructor.ConstructorInjectionPoint;
+import com.wiredi.runtime.WireContainer;
 import org.slf4j.Logger;import com.wiredi.compiler.repository.CompilerRepository;
-import com.wiredi.runtime.WireRepository;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,14 +36,14 @@ public class CreateInstanceForWireMethod extends CreateInstanceMethodFactory {
 
     @Override
     public void append(
-            MethodSpec.Builder builder,
-            ClassEntity<?> entity
+            MethodSpec.@NotNull Builder builder,
+            @NotNull ClassEntity<?> entity
     ) {
         VariableContext variableContext = new VariableContext();
 
         builder.returns(TypeName.get(entity.rootType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireRepository.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(constructorInvocationStep(injectionPoints.constructorInjectionPoint(), entity, variableContext))
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))

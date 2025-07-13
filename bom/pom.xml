@@ -148,6 +148,11 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>processor-plugin-scopes</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>processor-plugin-conditional</artifactId>
                 <version>${revision}</version>
             </dependency>

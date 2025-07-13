@@ -1,6 +1,6 @@
 package com.wiredi.test.inner;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.annotations.Wire;
 import com.wiredi.test.CountInvocations;
 import com.wiredi.test.IDependency;
@@ -21,7 +21,7 @@ public class SuperDi {
     private IDependency iDependency2;
 
     @Inject
-    private WireRepository wireRepository;
+    private WireContainer wireRepository;
 
     @Inject
     @Nullable

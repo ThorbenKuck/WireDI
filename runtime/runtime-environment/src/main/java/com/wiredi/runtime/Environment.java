@@ -1,12 +1,12 @@
 package com.wiredi.runtime;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.environment.DefaultEnvironmentKeys;
 import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.environment.Placeholder;
 import com.wiredi.runtime.environment.PlaceholderResolver;
 import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
+import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.properties.Key;
 import com.wiredi.runtime.properties.PropertyLoader;
 import com.wiredi.runtime.properties.TypedProperties;
@@ -31,24 +31,24 @@ import java.util.stream.Collectors;
  * An Environment is maintaining a state of meta-data for the WireRepository and the runtime context.
  * <p>
  * Its main purpose is to maintain file-access and properties and is deeply connected into the WireRepository.
- * To access the Environment, call {@link WireRepository#environment()}.
+ * To access the Environment, call {@link WireContainer#environment()}.
  * <p>
  * You can modify the Environment by providing {@link EnvironmentConfiguration}.
  * For details see the {@link EnvironmentConfiguration} configuration.
  * <p>
  * Notes: In general, it is not recommended to manually construct an Environment, but if you really have to,
  * make sure to call {@link #autoconfigure()}.
- * Otherwise, try to confine the usages to instances maintained in the {@link WireRepository}.
+ * Otherwise, try to confine the usages to instances maintained in the {@link WireContainer}.
  * <p>
  * The environment can be used generically, by using {@link #resolve(String)}
  *
- * @see WireRepository
+ * @see WireContainer
  * @see EnvironmentExpressionResolver
  * @see EnvironmentConfiguration
  */
 public class Environment {
 
-    public static final Logging logger = Logging.getInstance(Environment.class);
+    private static final Logging logger = Logging.getInstance(Environment.class);
     private static final String PLACE_HOLDER_START = "{";
     private static final String PLACE_HOLDER_END = "}";
     private static final PlaceholderResolver placeholderResolver = new PlaceholderResolver(PLACE_HOLDER_START, PLACE_HOLDER_END);
@@ -147,6 +147,19 @@ public class Environment {
      */
     public TypeMapper typeMapper() {
         return typeMapper;
+    }
+
+    /**
+     * Whether the environment is set to "debug".
+     * <p>
+     * Debug mode is controlled simply by setting the property "debug" to "true".
+     * Alternatively to using this method, any developer can just request the debug property.
+     * This method serves as a utility method for ease of use
+     *
+     * @return true, if debug mode is enabled
+     */
+    public boolean debugEnabled() {
+        return getProperty(PropertyKeys.DEBUG.getKey(), false);
     }
 
     /**

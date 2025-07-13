@@ -56,7 +56,7 @@ public class ProcessMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
         final CodeBlock.Builder invokeDelegate = CodeBlock.builder();
         final List<ConstructorParameter> parameterList = new ArrayList<>();
 
@@ -117,7 +117,7 @@ public class ProcessMethod implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "process";
     }
 

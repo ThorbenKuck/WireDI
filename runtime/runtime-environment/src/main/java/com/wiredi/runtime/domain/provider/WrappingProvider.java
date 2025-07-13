@@ -1,6 +1,6 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,11 +13,11 @@ public final class WrappingProvider<T> implements Provider<T> {
     private final IdentifiableProvider<T> provider;
 
     @NotNull
-    private final WireRepository wireRepository;
+    private final WireContainer wireRepository;
 
     public WrappingProvider(
             @NotNull IdentifiableProvider<T> provider,
-            @NotNull WireRepository wireRepository
+            @NotNull WireContainer wireRepository
     ) {
         this.provider = provider;
         this.wireRepository = wireRepository;
@@ -37,7 +37,7 @@ public final class WrappingProvider<T> implements Provider<T> {
      *
      * A wrapping provider is equal to another Wrapping Provider, if:
      *
-     * - Both are referencing the same {@link WireRepository}
+     * - Both are referencing the same {@link WireContainer}
      * - Both have an equal native {@link IdentifiableProvider}
      *
      * Please note, that nearly all IdentifiableProviders should not override

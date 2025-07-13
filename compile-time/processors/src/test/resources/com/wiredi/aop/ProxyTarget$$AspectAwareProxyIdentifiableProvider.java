@@ -1,7 +1,7 @@
 package com.wiredi.aop;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.aspects.ExecutionChainRegistry;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
@@ -26,11 +26,11 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
 
     private final Value<ProxyTarget$$AspectAwareProxy> instance = Value.empty();
 
-    private ProxyTarget$$AspectAwareProxy createInstance(final WireRepository wireRepository,
+    private ProxyTarget$$AspectAwareProxy createInstance(final WireContainer wireRepository,
                                                          final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
         // We will start by Fetching all 2 constructor parameters
         ExecutionChainRegistry variable = wireRepository.get(TypeIdentifier.of(ExecutionChainRegistry.class));
-        WireRepository variable1 = wireRepository.get(TypeIdentifier.of(WireRepository.class));
+        WireContainer variable1 = wireRepository.get(TypeIdentifier.of(WireContainer.class));
         ProxyTarget$$AspectAwareProxy instance = new ProxyTarget$$AspectAwareProxy(variable,variable1);
         return instance;
     }
@@ -43,7 +43,7 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
 
     @Override
     public final synchronized ProxyTarget$$AspectAwareProxy get(
-            @NotNull final WireRepository wireRepository,
+            @NotNull final WireContainer wireRepository,
             @NotNull final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
         return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
     }

@@ -52,7 +52,7 @@ public interface ExceptionHandlingResult<T extends Throwable> {
     }
 
     /**
-     * Executes the Processing result and returns whether it is successful or not.
+     * Executes the Processing appliedConditionalProviders and returns whether it is successful or not.
      * <p>
      * If the method returns true, the connected {@link ExceptionHandler} successfully processed the exception.
      * <p>

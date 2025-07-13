@@ -32,4 +32,9 @@ public final class Counter {
         this.counter += by;
         return this.counter;
     }
+
+    @Override
+    public String toString() {
+        return "Counter{" + counter + '}';
+    }
 }

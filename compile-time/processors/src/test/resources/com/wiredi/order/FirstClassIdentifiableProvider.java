@@ -1,10 +1,9 @@
 package com.wiredi.order.input;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
 import java.lang.Override;
 import org.jetbrains.annotations.NotNull;
@@ -17,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class FirstClassIdentifiableProvider implements IdentifiableProvider<FirstClass> {
     private static final TypeIdentifier<FirstClass> PRIMARY_WIRE_TYPE = TypeIdentifier.of(FirstClass.class);
 
-    private final Value<FirstClass> instance = Value.empty();
-
-    private FirstClass createInstance(final WireRepository wireRepository,
+    private FirstClass createInstance(final WireContainer wireRepository,
                                       final TypeIdentifier<FirstClass> concreteType) {
         FirstClass instance = new FirstClass();
         return instance;
@@ -31,9 +28,9 @@ public final class FirstClassIdentifiableProvider implements IdentifiableProvide
     }
 
     @Override
-    public final synchronized FirstClass get(@NotNull final WireRepository wireRepository,
-                                             @NotNull final TypeIdentifier<FirstClass> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+    public final FirstClass get(@NotNull final WireContainer wireRepository,
+                                @NotNull final TypeIdentifier<FirstClass> concreteType) {
+        return createInstance(wireRepository, concreteType);
     }
 
     @Override

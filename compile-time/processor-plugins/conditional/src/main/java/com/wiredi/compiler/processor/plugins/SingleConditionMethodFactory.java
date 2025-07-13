@@ -12,6 +12,7 @@ import com.wiredi.runtime.domain.provider.condition.EagerLoadCondition;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.domain.provider.condition.SingleLoadCondition;
 import com.wiredi.runtime.values.Value;
+import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
@@ -28,7 +29,7 @@ public class SingleConditionMethodFactory implements StandaloneMethodFactory {
     }
 
     @Override
-    public void append(MethodSpec.Builder builder, ClassEntity<?> entity) {
+    public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
 //        Class<? extends ConditionEvaluator> evaluatorType = conditionEntry.annotationMetaData().requireClass("value");
         boolean isWired = Annotations.isAnnotatedWith(conditionEntry.evaluatorTypeElement(), Wire.class);
         List<? extends Element> constructors = conditionEntry.evaluatorTypeElement()
@@ -89,7 +90,7 @@ public class SingleConditionMethodFactory implements StandaloneMethodFactory {
     }
 
     @Override
-    public String methodName() {
+    public @NotNull String methodName() {
         return "condition";
     }
 }

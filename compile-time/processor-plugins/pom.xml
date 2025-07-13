@@ -15,8 +15,9 @@
     </parent>
 
     <modules>
-        <module>qualifiers</module>
         <module>conditional</module>
+        <module>qualifiers</module>
+        <module>scopes</module>
     </modules>
 
     <distributionManagement>

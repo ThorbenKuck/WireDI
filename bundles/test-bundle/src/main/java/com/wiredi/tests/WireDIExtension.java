@@ -1,11 +1,9 @@
 package com.wiredi.tests;
 
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.WiredApplicationInstance;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.WireRepository;
-import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.*;
-import org.junit.jupiter.api.parallel.Execution;
 
 public class WireDIExtension implements TestInstanceFactory, TestInstancePreDestroyCallback, ParameterResolver {
 
@@ -52,12 +50,10 @@ public class WireDIExtension implements TestInstanceFactory, TestInstancePreDest
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
 		WiredApplicationInstance applicationInstance = ExtensionCache.getOrCreate(extensionContext);
-		WireRepository repository = applicationInstance.wireRepository();
+		WireContainer repository = applicationInstance.wireRepository();
 
 		if (typeIdentifier.isNativeProvider()) {
 			return repository.getNativeProvider(typeIdentifier.getGenericTypes().getFirst());
-		} else if(typeIdentifier.isBean()) {
-			return repository.getBean(typeIdentifier.getGenericTypes().getFirst());
 		} else {
 			return repository.get(typeIdentifier);
 		}

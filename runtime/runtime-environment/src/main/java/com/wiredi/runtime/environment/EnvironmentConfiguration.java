@@ -2,6 +2,7 @@ package com.wiredi.runtime.environment;
 
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.ServiceFiles;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.lang.Ordered;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  *     <li><b>Wiring:</b> Provide it as a bean by annotating it with <code>@com.wiredi.annotations.Wire</code>.</li>
  * </ol>
  * The Environment itself will use the {@link ServiceFiles} to load {@code META-INF/services} files
- * when utilizing {@link Environment#autoconfigure}, whilst the {@link com.wiredi.runtime.WireRepository} will invoke
+ * when utilizing {@link Environment#autoconfigure}, whilst the {@link WireContainer} will invoke
  * all instances when it is loaded.
  * <p>
  * This means that the {@code META-INF/services} files will always be applied before the bean instances and if you
@@ -29,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
  * Additionally, services that are invoking {@link #configure(Environment)} should not invoke them in parallel.
  *
  * @see Environment
- * @see com.wiredi.runtime.WireRepository
+ * @see WireContainer
  */
 public interface EnvironmentConfiguration extends Ordered {
 

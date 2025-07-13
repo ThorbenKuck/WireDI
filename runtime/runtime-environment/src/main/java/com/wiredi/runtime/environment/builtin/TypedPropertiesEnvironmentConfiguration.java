@@ -5,13 +5,13 @@ import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.types.TypeConverter;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import java.util.Collection;
 
 public class TypedPropertiesEnvironmentConfiguration implements EnvironmentConfiguration {
 
-    private final List<TypeConverter<?>> converters;
+    private final Collection<TypeConverter<?>> converters;
 
-    public TypedPropertiesEnvironmentConfiguration(List<TypeConverter<?>> converters) {
+    public TypedPropertiesEnvironmentConfiguration(Collection<TypeConverter<?>> converters) {
         this.converters = converters;
     }
 

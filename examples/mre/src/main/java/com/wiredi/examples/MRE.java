@@ -1,7 +1,7 @@
 package com.wiredi.examples;
 
 import com.wiredi.annotations.Wire;
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.time.Timed;
 
 public class MRE {
@@ -9,7 +9,7 @@ public class MRE {
     public static void main(String[] args) {
         for (int i = 0 ; i < 100 ; i++) {
             Timed.of(() -> {
-                WireRepository wireRepository = WireRepository.open();
+                WireContainer wireRepository = WireContainer.open();
                 Parent a = wireRepository.get(Parent.class);
                 System.out.println(a);
             }).then(time -> System.out.println("MRE took " + time));
