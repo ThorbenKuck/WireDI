@@ -19,7 +19,7 @@ public class ExecutionChainRegistryProvider implements IdentifiableProvider<Exec
     }
 
     @Override
-    public @Nullable ExecutionChainRegistry get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<ExecutionChainRegistry> concreteType) {
-        return instance.getOrSet(() -> new ExecutionChainRegistry(wireRepository.getAll(AspectHandler.class)));
+    public @Nullable ExecutionChainRegistry get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<ExecutionChainRegistry> concreteType) {
+        return instance.getOrSet(() -> new ExecutionChainRegistry(wireContainer.getAll(AspectHandler.class)));
     }
 }

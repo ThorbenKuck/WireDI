@@ -33,8 +33,8 @@ class YourClass {
 and then you can extract the class with all wired classes like this:
 
 ```java
-WireRepository wireRepository = WireRepository.open();
-MyClass instance = wireRepository.get(MyClass.class);
+WireRepository wireContainer = WireRepository.open();
+MyClass instance = wireContainer.get(MyClass.class);
 ```
 
 All classes that you want to connect in this fashion have to be annotated with @Wire.
@@ -174,8 +174,8 @@ class B {}
 
 public class Main {
     public static void main(String[] args)  {
-        WireRepository wireRepository = WireRepository.open();
-        A a = wireRepository.get(A.class);
+        WireRepository wireContainer = WireRepository.open();
+        A a = wireContainer.get(A.class);
         // Do fancy stuff
     }
 }

@@ -28,10 +28,10 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
     private final Value<TransactionalHandler$handle$AspectHandler> instance = Value.empty();
 
     private TransactionalHandler$handle$AspectHandler createInstance(
-            final WireContainer wireRepository,
+            final WireContainer wireContainer,
             final TypeIdentifier<TransactionalHandler$handle$AspectHandler> concreteType) {
         // We will start by Fetching all 1 constructor parameters
-        TransactionalHandler variable = wireRepository.get(TypeIdentifier.of(TransactionalHandler.class));
+        TransactionalHandler variable = wireContainer.get(TypeIdentifier.of(TransactionalHandler.class));
         TransactionalHandler$handle$AspectHandler instance = new TransactionalHandler$handle$AspectHandler(variable);
         return instance;
     }
@@ -44,9 +44,9 @@ public final class TransactionalHandler$handle$AspectHandlerIdentifiableProvider
 
     @Override
     public final synchronized TransactionalHandler$handle$AspectHandler get(
-            @NotNull final WireContainer wireRepository,
+            @NotNull final WireContainer wireContainer,
             @NotNull final TypeIdentifier<TransactionalHandler$handle$AspectHandler> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+        return instance.getOrSet(() -> createInstance(wireContainer, concreteType));
     }
 
     @Override

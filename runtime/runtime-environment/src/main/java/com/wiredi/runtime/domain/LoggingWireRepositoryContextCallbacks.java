@@ -39,8 +39,8 @@ public class LoggingWireRepositoryContextCallbacks implements WireContainerCallb
     }
 
     @Override
-    public void loadingStarted(@NotNull WireContainer wireRepository) {
-        if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
+    public void loadingStarted(@NotNull WireContainer wireContainer) {
+        if (wireContainer.environment().getProperty(ENABLED_KEY, true)) {
             logger.debug("Starting to load the WireRepository");
         }
     }
@@ -61,8 +61,8 @@ public class LoggingWireRepositoryContextCallbacks implements WireContainerCallb
     }
 
     @Override
-    public void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireRepository) {
-        if (wireRepository.environment().getProperty(ENABLED_KEY, true)) {
+    public void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireContainer) {
+        if (wireContainer.environment().getProperty(ENABLED_KEY, true)) {
             logger.info(() -> "WireRepository was completely loaded in " + timed);
         }
     }

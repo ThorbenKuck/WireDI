@@ -27,15 +27,15 @@ import java.util.function.Consumer;
  * WiredApplication.run();
  *
  * // Start and run an application with custom configuration
- * WiredApplication.run(wireRepository -> {
- *     // Configure the wireRepository
- *     wireRepository.announce(new CustomComponent());
+ * WiredApplication.run(wireContainer -> {
+ *     // Configure the wireContainer
+ *     wireContainer.announce(new CustomComponent());
  * });
  *
  * // Start an application with custom configuration and get the instance
- * WiredApplicationInstance instance = WiredApplication.start(wireRepository -> {
- *     // Configure the wireRepository
- *     wireRepository.announce(new CustomComponent());
+ * WiredApplicationInstance instance = WiredApplication.start(wireContainer -> {
+ *     // Configure the wireContainer
+ *     wireContainer.announce(new CustomComponent());
  * });
  * }</pre>
  *
@@ -116,13 +116,13 @@ public class WiredApplication {
      * @return the created {@link WiredApplicationInstance}
      */
     public static WiredApplicationInstance start(Environment environment, @NotNull Consumer<WireContainer> configuration) {
-        WireContainer wireRepository = WireContainer.create(environment);
+        WireContainer wireContainer = WireContainer.create(environment);
         MutableBarrier barrier = Barrier.create();
 
-        configuration.accept(wireRepository);
-        wireRepository.announce(new WiredApplicationInstance.ShutdownListenerProvider(barrier));
+        configuration.accept(wireContainer);
+        wireContainer.announce(new WiredApplicationInstance.ShutdownListenerProvider(barrier));
 
-        WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireRepository, barrier);
+        WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireContainer, barrier);
         wiredApplication.start();
 
         logger.info(() -> "Application setup");

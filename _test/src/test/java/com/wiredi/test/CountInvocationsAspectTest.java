@@ -11,14 +11,14 @@ class CountInvocationsAspectTest extends AbstractIntegrationTest {
     @Test
     public void testThatSimpleInvocationsAreIntercepted() {
         // Arrange
-        WireContainer wireRepository = loadWireRepository();
-        CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
+        WireContainer wireContainer = loadWireRepository();
+        CountInvocationsAspect aspect = wireContainer.get(CountInvocationsAspect.class);
         assertThat(aspect.invocations())
                 .withFailMessage("Precondition failed, CountInvocations was not zero")
                 .isEqualTo(0);
 
         // Act
-        wireRepository.get(SuperDi.class).countMe();
+        wireContainer.get(SuperDi.class).countMe();
 
         // Assert
         assertThat(aspect.invocations()).isEqualTo(1);
@@ -27,14 +27,14 @@ class CountInvocationsAspectTest extends AbstractIntegrationTest {
     @Test
     public void testThatPrivateMethodInvocationsAreInterceptedTwice() {
         // Arrange
-        WireContainer wireRepository = loadWireRepository();
-        CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
+        WireContainer wireContainer = loadWireRepository();
+        CountInvocationsAspect aspect = wireContainer.get(CountInvocationsAspect.class);
         assertThat(aspect.invocations())
                 .withFailMessage("Precondition failed, CountInvocations was not zero")
                 .isEqualTo(0);
 
         // Act
-        wireRepository.get(SuperDi.class).countMeAndInvokeOtherCountMe();
+        wireContainer.get(SuperDi.class).countMeAndInvokeOtherCountMe();
 
         // Assert
         assertThat(aspect.invocations()).isEqualTo(2);

@@ -108,7 +108,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
 
         builder.returns(TypeName.get(entity.rootType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireContainer", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(instantiation)
                 .build();
@@ -122,9 +122,9 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
         CodeBlock.Builder builder = CodeBlock.builder();
 
         if (file.isBlank()) {
-            builder.addStatement("$T properties = wireRepository.environment().properties()", TypedProperties.class);
+            builder.addStatement("$T properties = wireContainer.environment().properties()", TypedProperties.class);
         } else {
-            builder.beginControlFlow("try ($T properties = wireRepository.environment().loadProperties($S))", TypedProperties.class, file);
+            builder.beginControlFlow("try ($T properties = wireContainer.environment().loadProperties($S))", TypedProperties.class, file);
         }
 
         builder.addStatement("return $L", runtimeConstructorInvocation((TypeElement) types().asElement(entity.rootType()), prefix));

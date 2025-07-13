@@ -29,8 +29,8 @@ public class ExtensionCache {
     }
 
     private static WiredApplicationInstance newApplication(ApplicationIdentifier identifier) {
-        return WiredApplication.start(wireRepository -> {
-            wireRepository.announce(
+        return WiredApplication.start(wireContainer -> {
+            wireContainer.announce(
                     SimpleProvider.builder(new ApplicationIdentifierWireRepositoryContextCallbacks(identifier))
                             .withAdditionalType(WireContainerCallback.class)
                             .withOrder(Ordered.LAST - 10)

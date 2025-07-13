@@ -13,7 +13,7 @@ public class ConditionalOnBeanEvaluator implements ConditionEvaluator {
     public void test(ConditionEvaluation.@NotNull Context context) {
         final TypeIdentifier<?> beanType = context.annotationMetadata().requireType("type");
 
-        if (!context.wireRepository().contains(beanType)) {
+        if (!context.wireContainer().contains(beanType)) {
             context.negativeMatch("Missing bean of type " + beanType);
         } else {
             context.positiveMatch("Bean of type " + beanType + " is present");

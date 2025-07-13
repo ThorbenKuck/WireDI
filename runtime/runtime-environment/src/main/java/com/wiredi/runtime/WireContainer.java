@@ -340,7 +340,7 @@ public class WireContainer {
     }
 
     /**
-     * Loads the wireRepository, and thereby the underlying {@link WireContainerInitializer}.
+     * Loads the wireContainer, and thereby the underlying {@link WireContainerInitializer}.
      *
      * @return the time it took to load the WireRepository.
      */
@@ -350,7 +350,7 @@ public class WireContainer {
     }
 
     /**
-     * Loads the wireRepository, and thereby the underlying {@link WireContainerInitializer}.
+     * Loads the wireContainer, and thereby the underlying {@link WireContainerInitializer}.
      * <p>
      * If the {@code loadConfigFunction} function returns true, the repository automatically loads all providers
      * implementing the {@link Eager} interface.

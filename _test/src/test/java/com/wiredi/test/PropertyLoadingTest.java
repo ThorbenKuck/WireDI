@@ -12,10 +12,10 @@ public class PropertyLoadingTest extends AbstractIntegrationTest {
     @Test
     public void testThatSeparatePropertiesAreLoadedCorrectly()  {
         // Arrange
-        WireContainer wireRepository = loadWireRepository();
+        WireContainer wireContainer = loadWireRepository();
 
         // Act
-        SeparateProperties separateProperties = wireRepository.get(SeparateProperties.class);
+        SeparateProperties separateProperties = wireContainer.get(SeparateProperties.class);
 
         // Assert
         assertThat(separateProperties.getFoo()).isNotNull().isEqualTo("baz");
@@ -25,10 +25,10 @@ public class PropertyLoadingTest extends AbstractIntegrationTest {
     @Test
     public void testThatExamplePropertiesAreLoadedCorrectly()  {
         // Arrange
-        WireContainer wireRepository = loadWireRepository();
+        WireContainer wireContainer = loadWireRepository();
 
         // Act
-        ExampleProperties separateProperties = wireRepository.get(ExampleProperties.class);
+        ExampleProperties separateProperties = wireContainer.get(ExampleProperties.class);
 
         // Assert
         assertThat(separateProperties.getFoo()).isNotNull().isEqualTo("bar");

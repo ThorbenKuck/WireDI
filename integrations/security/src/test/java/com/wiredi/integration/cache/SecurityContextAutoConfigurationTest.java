@@ -10,21 +10,21 @@ class SecurityContextAutoConfigurationTest {
     @Test
     public void testThatTheSecurityContextIsWired() {
         // Arrange
-        WireContainer wireRepository = WireContainer.open();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(SecurityContext.class)).isTrue();
+        assertThat(wireContainer.contains(SecurityContext.class)).isTrue();
     }
 
     @Test
     public void testThatTheSecurityContextCanBeWiredInADependency() {
         // Arrange
-        WireContainer wireRepository = WireContainer.open();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(SecurityContextDependency.class)).isTrue();
-        assertThat(wireRepository.get(SecurityContextDependency.class).securityContext()).isNotNull();
+        assertThat(wireContainer.contains(SecurityContextDependency.class)).isTrue();
+        assertThat(wireContainer.get(SecurityContextDependency.class).securityContext()).isNotNull();
     }
 }

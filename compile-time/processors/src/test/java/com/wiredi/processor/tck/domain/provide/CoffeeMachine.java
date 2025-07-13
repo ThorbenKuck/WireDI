@@ -21,7 +21,7 @@ public class CoffeeMachine implements TckTestCase {
 	private final Coffee earthyCoffee;
 	private final Robusta robusta;
 	private final Coffee primaryCoffee;
-	private final WireContainer wireRepository;
+	private final WireContainer wireContainer;
 
 	public CoffeeMachine(
 			@Fruity Coffee fruityCoffee,
@@ -29,14 +29,14 @@ public class CoffeeMachine implements TckTestCase {
 			@Earthy Coffee earthyCoffee,
 			Robusta robusta,
 			Coffee primaryCoffee,
-			WireContainer wireRepository
+			WireContainer wireContainer
 	) {
 		this.fruityCoffee = fruityCoffee;
 		this.arabica = arabica;
 		this.earthyCoffee = earthyCoffee;
 		this.robusta = robusta;
  		this.primaryCoffee = primaryCoffee;
-		this.wireRepository = wireRepository;
+		this.wireContainer = wireContainer;
 	}
 
 	@Override
@@ -48,8 +48,8 @@ public class CoffeeMachine implements TckTestCase {
 				dynamicTest("The fruity coffee should not be a singleton", () -> assertThat(fruityCoffee).isNotSameAs(arabica)),
 				dynamicTest("The earthy coffee should be a singleton", () -> assertThat(earthyCoffee).isSameAs(robusta)),
 				dynamicTest("The primary coffee should be robusta coffee", () -> assertThat(primaryCoffee).isSameAs(robusta)),
-				dynamicTest("There should be two types of coffee registered", () -> Assertions.assertThat(wireRepository.getAll(Coffee.class)).hasSize(2)),
-				dynamicTest("The registered coffee classes should be robusta and arabica", () -> Assertions.assertThat(wireRepository.getAll(Coffee.class).stream().<Class<? extends Coffee>>map(Coffee::getClass).toList()).containsExactlyInAnyOrder(Arabica.class, Robusta.class))
+				dynamicTest("There should be two types of coffee registered", () -> Assertions.assertThat(wireContainer.getAll(Coffee.class)).hasSize(2)),
+				dynamicTest("The registered coffee classes should be robusta and arabica", () -> Assertions.assertThat(wireContainer.getAll(Coffee.class).stream().<Class<? extends Coffee>>map(Coffee::getClass).toList()).containsExactlyInAnyOrder(Arabica.class, Robusta.class))
 		);
 	}
 }

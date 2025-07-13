@@ -21,9 +21,9 @@ public interface Eager {
 	 * Since this method is invoked after the WireRepository is completely set up and all dependent classes have been
      * constructed, it is safe to use the {@link WireContainer} in this context.
 	 *
-	 * @param wireRepository the WireRepository the current bean is instantiated at.
+	 * @param wireContainer the WireRepository the current bean is instantiated at.
 	 */
-	default void setup(WireContainer wireRepository) {
+	default void setup(WireContainer wireContainer) {
 		// This method can be overwritten by implementations.
 	}
 

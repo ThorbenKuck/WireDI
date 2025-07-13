@@ -234,8 +234,8 @@ public class CompositeScope implements Scope {
     }
 
     @Override
-    public void link(WireContainer wireRepository) {
-        scopes.forEach(it -> it.link(wireRepository));
+    public void link(WireContainer wireContainer) {
+        scopes.forEach(it -> it.link(wireContainer));
     }
 
     @Override

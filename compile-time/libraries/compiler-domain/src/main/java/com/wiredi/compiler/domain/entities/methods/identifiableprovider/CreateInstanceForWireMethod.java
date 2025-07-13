@@ -43,7 +43,7 @@ public class CreateInstanceForWireMethod extends CreateInstanceMethodFactory {
 
         builder.returns(TypeName.get(entity.rootType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireContainer", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(constructorInvocationStep(injectionPoints.constructorInjectionPoint(), entity, variableContext))
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))

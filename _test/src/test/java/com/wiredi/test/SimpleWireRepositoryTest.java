@@ -13,20 +13,20 @@ public class SimpleWireRepositoryTest extends AbstractIntegrationTest {
     @Test
     public void testWireRepositoryCreation() {
         // Arrange & Act
-        WireContainer wireRepository = loadWireRepository();
+        WireContainer wireContainer = loadWireRepository();
 
         // Assert
-        assertThat(wireRepository).isNotNull();
+        assertThat(wireContainer).isNotNull();
         System.out.println("[DEBUG_LOG] WireRepository created successfully");
     }
 
     @Test
     public void testGetExistingBean() {
         // Arrange
-        WireContainer wireRepository = loadWireRepository();
+        WireContainer wireContainer = loadWireRepository();
 
         // Act
-        CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
+        CountInvocationsAspect aspect = wireContainer.get(CountInvocationsAspect.class);
 
         // Assert
         assertThat(aspect).isNotNull();

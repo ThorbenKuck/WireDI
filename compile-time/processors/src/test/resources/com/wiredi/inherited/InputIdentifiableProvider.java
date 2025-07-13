@@ -19,7 +19,7 @@ public final class InputIdentifiableProvider implements IdentifiableProvider<Inp
 
     private final Value<Input> instance = Value.empty();
 
-    private Input createInstance(final WireContainer wireRepository,
+    private Input createInstance(final WireContainer wireContainer,
                                  final TypeIdentifier<Input> concreteType) {
         Input instance = new Input();
         return instance;
@@ -31,9 +31,9 @@ public final class InputIdentifiableProvider implements IdentifiableProvider<Inp
     }
 
     @Override
-    public final synchronized Input get(@NotNull final WireContainer wireRepository,
+    public final synchronized Input get(@NotNull final WireContainer wireContainer,
                                         @NotNull final TypeIdentifier<Input> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+        return instance.getOrSet(() -> createInstance(wireContainer, concreteType));
     }
 
     @Override

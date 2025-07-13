@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
 public final class SecondClassIdentifiableProvider implements IdentifiableProvider<SecondClass> {
     private static final TypeIdentifier<SecondClass> PRIMARY_WIRE_TYPE = TypeIdentifier.of(SecondClass.class);
 
-    private SecondClass createInstance(final WireContainer wireRepository,
+    private SecondClass createInstance(final WireContainer wireContainer,
                                        final TypeIdentifier<SecondClass> concreteType) {
         SecondClass instance = new SecondClass();
         return instance;
@@ -28,9 +28,9 @@ public final class SecondClassIdentifiableProvider implements IdentifiableProvid
     }
 
     @Override
-    public final SecondClass get(@NotNull final WireContainer wireRepository,
+    public final SecondClass get(@NotNull final WireContainer wireContainer,
                                  @NotNull final TypeIdentifier<SecondClass> concreteType) {
-        return createInstance(wireRepository, concreteType);
+        return createInstance(wireContainer, concreteType);
     }
 
     @Override

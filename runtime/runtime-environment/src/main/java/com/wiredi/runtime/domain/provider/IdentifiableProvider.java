@@ -114,16 +114,16 @@ public interface IdentifiableProvider<T> extends Ordered {
      * To resolve dependencies, the WireRepository instance this IdentifiableProvider is created through is passed
      * into this method.
      *
-     * @param wireRepository the {@link WireContainer wireRepository} instance this Provider is created through
+     * @param wireContainer the {@link WireContainer wireContainer} instance this Provider is created through
      * @param concreteType the type that was requested
      * @return the instance, which might be null
      */
     @Nullable
-    T get(@NotNull final WireContainer wireRepository, @NotNull final TypeIdentifier<T> concreteType);
+    T get(@NotNull final WireContainer wireContainer, @NotNull final TypeIdentifier<T> concreteType);
 
     @Nullable
-    default T get(@NotNull final WireContainer wireRepository) {
-        return get(wireRepository, (TypeIdentifier<T>) type());
+    default T get(@NotNull final WireContainer wireContainer) {
+        return get(wireContainer, (TypeIdentifier<T>) type());
     }
 
     /**

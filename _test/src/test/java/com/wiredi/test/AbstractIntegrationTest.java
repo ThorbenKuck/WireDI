@@ -5,9 +5,9 @@ import com.wiredi.runtime.WireContainer;
 public abstract class AbstractIntegrationTest {
 
     public WireContainer loadWireRepository() {
-        WireContainer wireRepository = WireContainer.create();
-        wireRepository.load();
-        return wireRepository;
+        WireContainer wireContainer = WireContainer.create();
+        wireContainer.load();
+        return wireContainer;
     }
 
 }

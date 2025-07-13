@@ -286,7 +286,7 @@ public class WiredApplicationInstance {
      *
      * @return the wire repository
      */
-    public WireContainer wireRepository() {
+    public WireContainer wireContainer() {
         return wireContainer;
     }
 
@@ -333,7 +333,7 @@ public class WiredApplicationInstance {
         }
 
         @Override
-        public @Nullable ShutdownListener get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<ShutdownListener> concreteType) {
+        public @Nullable ShutdownListener get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<ShutdownListener> concreteType) {
             return instance;
         }
 

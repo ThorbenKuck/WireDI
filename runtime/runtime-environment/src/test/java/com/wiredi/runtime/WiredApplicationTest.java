@@ -28,17 +28,17 @@ class WiredApplicationTest {
                                 .withAdditionalTypeIdentifier(TypeIdentifier.just(Disposable.class))
                 );
             });
-            WireContainer wireRepository = application.wireRepository();
+            WireContainer wireContainer = application.wireContainer();
 
             // Act
-            assertThat(wireRepository.tryGet(Case.class)).isPresent().contains(testCase);
-            assertThat(wireRepository.getAll(Eager.class)).containsExactly(testCase);
-            assertThat(wireRepository.getAll(Disposable.class)).contains(testCase);
+            assertThat(wireContainer.tryGet(Case.class)).isPresent().contains(testCase);
+            assertThat(wireContainer.getAll(Eager.class)).containsExactly(testCase);
+            assertThat(wireContainer.getAll(Disposable.class)).contains(testCase);
             application.shutdown();
-            assertThatCode(() -> wireRepository.get(Case.class)).isInstanceOf(ScopeNotActivatedException.class).hasMessage("Tried to access inactive scope SingletonScope{active=false}");
-            assertThat(wireRepository.tryGet(Case.class)).isEmpty();
-            assertThat(wireRepository.getAll(Eager.class)).isEmpty();
-            assertThat(wireRepository.getAll(Disposable.class)).isEmpty();
+            assertThatCode(() -> wireContainer.get(Case.class)).isInstanceOf(ScopeNotActivatedException.class).hasMessage("Tried to access inactive scope SingletonScope{active=false}");
+            assertThat(wireContainer.tryGet(Case.class)).isEmpty();
+            assertThat(wireContainer.getAll(Eager.class)).isEmpty();
+            assertThat(wireContainer.getAll(Disposable.class)).isEmpty();
 
             // Assert
             assertThat(testCase.wasInitialized).withFailMessage(() -> "TestCase was not initialized").isTrue();
@@ -56,7 +56,7 @@ class WiredApplicationTest {
             }
 
             @Override
-            public void setup(WireContainer wireRepository) {
+            public void setup(WireContainer wireContainer) {
                 wasInitialized = true;
             }
         }

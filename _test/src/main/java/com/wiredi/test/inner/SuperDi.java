@@ -21,7 +21,7 @@ public class SuperDi {
     private IDependency iDependency2;
 
     @Inject
-    private WireContainer wireRepository;
+    private WireContainer wireContainer;
 
     @Inject
     @Nullable
@@ -37,7 +37,7 @@ public class SuperDi {
         System.out.println("Dependency 1 = " + iDependency.id());
         System.out.println("Dependency 2 = " + iDependency2.id());
         System.out.println("NonExisting = " + nonExisting);
-        System.out.println("Repository = " + wireRepository);
+        System.out.println("Repository = " + wireContainer);
         System.out.println("#####\n");
     }
 

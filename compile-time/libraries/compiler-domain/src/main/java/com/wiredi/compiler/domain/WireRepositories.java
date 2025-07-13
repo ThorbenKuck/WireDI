@@ -43,7 +43,7 @@ public class WireRepositories {
             String resolve
     ) {
         CodeBlock.Builder codeBlock = CodeBlock.builder()
-                .add("wireRepository.environment().resolve");
+                .add("wireContainer.environment().resolve");
 
         TypeChecker.Checker rootType = typeChecker.theType(typeMirror);
         if (rootType.isOf(String.class)) {
@@ -101,7 +101,7 @@ public class WireRepositories {
             boolean nullable
     ) {
         var codeBlock = CodeBlock.builder()
-                .add("wireRepository.");
+                .add("wireContainer.");
         List<CodeBlock> codeBlocks = new ArrayList<>();
         TypeChecker.Checker type = typeChecker.theType(typeMirror);
 
@@ -158,7 +158,7 @@ public class WireRepositories {
             propertyName = Key.format(name);
         }
         CodeBlock.Builder builder = CodeBlock.builder()
-                .add("wireRepository.environment()\n")
+                .add("wireContainer.environment()\n")
                 .indent();
 
         if (defaultValue.isBlank()) {

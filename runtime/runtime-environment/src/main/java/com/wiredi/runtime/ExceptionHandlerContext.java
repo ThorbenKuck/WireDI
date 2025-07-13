@@ -30,21 +30,21 @@ import java.util.*;
 public class ExceptionHandlerContext {
 
     private static final Logging logger = Logging.getInstance(ExceptionHandlerContext.class);
-    private WireContainer wireRepository;
+    private WireContainer wireContainer;
     private final Map<Class<? extends Throwable>, Collection<ExceptionHandler<? extends Throwable>>> cache = new HashMap<>();
 
-    public ExceptionHandlerContext(WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+    public ExceptionHandlerContext(WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
     }
 
     /**
      * Sets the WireContext for this ExceptionHandlerContext.
      * This method is used to resolve circular dependencies during initialization.
      *
-     * @param wireRepository the WireContext to set
+     * @param wireContainer the WireContext to set
      */
-    public void setWireContext(WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+    public void setWireContext(WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
     }
 
     /**
@@ -100,7 +100,7 @@ public class ExceptionHandlerContext {
 
     private <T extends Throwable> Collection<ExceptionHandler<? extends Throwable>> getHandler(@NotNull final T throwable) {
         return cache.computeIfAbsent(throwable.getClass(), k ->
-                wireRepository.getAll(
+                wireContainer.getAll(
                         TypeIdentifier.of(ExceptionHandler.class)
                                 .withGeneric(k)
                 )

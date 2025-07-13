@@ -28,9 +28,9 @@ public class MultiTonGenericIdentifiableProvider<T> extends AbstractIdentifiable
 	@Override
 	@NotNull
 	public T get(
-			@NotNull final WireContainer wireRepository,
+			@NotNull final WireContainer wireContainer,
 			@NotNull final TypeIdentifier<T> concreteType
 			) {
-		return creationFunction.apply(wireRepository);
+		return creationFunction.apply(wireContainer);
 	}
 }

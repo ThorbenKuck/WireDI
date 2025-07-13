@@ -59,7 +59,7 @@ class WireBootstrapTest {
         }
 
         @Override
-        public @Nullable String get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<String> concreteType) {
+        public @Nullable String get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<String> concreteType) {
             return "Test";
         }
 
@@ -77,7 +77,7 @@ class WireBootstrapTest {
         }
 
         @Override
-        public @Nullable Integer get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<Integer> concreteType) {
+        public @Nullable Integer get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<Integer> concreteType) {
             return 1;
         }
 
@@ -103,7 +103,7 @@ class WireBootstrapTest {
         }
 
         @Override
-        public @Nullable Float get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<Float> concreteType) {
+        public @Nullable Float get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<Float> concreteType) {
             return 0.1f;
         }
 
@@ -126,7 +126,7 @@ class WireBootstrapTest {
         }
 
         @Override
-        public @Nullable Integer get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<Integer> concreteType) {
+        public @Nullable Integer get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<Integer> concreteType) {
             return 0;
         }
 

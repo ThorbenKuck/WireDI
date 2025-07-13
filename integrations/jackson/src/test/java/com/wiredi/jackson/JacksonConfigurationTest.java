@@ -21,7 +21,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperIsLoadedIntoTheWireRepository() {
         // Arrange
-        WireContainer repository = WiredApplication.start().wireRepository();
+        WireContainer repository = WiredApplication.start().wireContainer();
 
         // Act
         // Assert
@@ -49,7 +49,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperCanBeDynamicallyConfigured() {
         // Arrange
-        WireContainer repository = WiredApplication.start().wireRepository();
+        WireContainer repository = WiredApplication.start().wireContainer();
         repository.announce(IdentifiableProvider.singleton(objectMapper -> objectMapper.enable(SerializationFeature.CLOSE_CLOSEABLE), ObjectMapperConfigurer.class));
 
         // Act
@@ -74,7 +74,7 @@ class JacksonConfigurationTest {
     @Test
     public void verifyThatTheObjectMapperCanBeUsedAsASingletonDependency() {
         // Arrange
-        WireContainer repository = WiredApplication.start().wireRepository();
+        WireContainer repository = WiredApplication.start().wireContainer();
 
         // Act
         // Assert

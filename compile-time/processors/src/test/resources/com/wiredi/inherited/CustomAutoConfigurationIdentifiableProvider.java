@@ -19,7 +19,7 @@ public final class CustomAutoConfigurationIdentifiableProvider implements Identi
 
     private final Value<CustomAutoConfiguration> instance = Value.empty();
 
-    private CustomAutoConfiguration createInstance(final WireContainer wireRepository,
+    private CustomAutoConfiguration createInstance(final WireContainer wireContainer,
                                                    final TypeIdentifier<CustomAutoConfiguration> concreteType) {
         CustomAutoConfiguration instance = new CustomAutoConfiguration();
         return instance;
@@ -32,9 +32,9 @@ public final class CustomAutoConfigurationIdentifiableProvider implements Identi
 
     @Override
     public final synchronized CustomAutoConfiguration get(
-            @NotNull final WireContainer wireRepository,
+            @NotNull final WireContainer wireContainer,
             @NotNull final TypeIdentifier<CustomAutoConfiguration> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+        return instance.getOrSet(() -> createInstance(wireContainer, concreteType));
     }
 
     @Override

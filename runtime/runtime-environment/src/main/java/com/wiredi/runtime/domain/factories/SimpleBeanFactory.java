@@ -60,12 +60,12 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository) {
-        return getAll(wireRepository, rootType);
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer) {
+        return getAll(wireContainer, rootType);
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> requestedType) {
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<T> requestedType) {
         Set<IdentifiableProvider<T>> allProviders = new HashSet<>();
         if (primary != null) {
             allProviders.add(primary);
@@ -80,7 +80,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         return allProviders.stream()
                 .filter(provider -> canProviderSatisfyRequest(provider, requestedType))
                 .sorted(OrderedComparator.INSTANCE)
-                .map(it -> new Bean<>(it.get(wireRepository, requestedType), it))
+                .map(it -> new Bean<>(it.get(wireContainer, requestedType), it))
                 .toList();
     }
 
@@ -169,11 +169,11 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
 
     @Override
     public @Nullable Bean<T> get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<T> concreteType
     ) {
         if (primary != null) {
-            return new Bean<>(primary.get(wireRepository, concreteType), primary);
+            return new Bean<>(primary.get(wireContainer, concreteType), primary);
         }
 
         // Check if we have a specific match for this exact type (including generics)
@@ -182,7 +182,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
             if (state != null) {
                 IdentifiableProvider<T> current = state.determine(this.conflictResolver);
                 if (current != null) {
-                    return new Bean<>(current.get(wireRepository, concreteType), current);
+                    return new Bean<>(current.get(wireContainer, concreteType), current);
                 }
             }
         }
@@ -193,16 +193,16 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
             List<IdentifiableProvider<T>> all = next.all();
             if (all.size() == 1) {
                 IdentifiableProvider<T> first = all.getFirst();
-                return new Bean<>(first.get(wireRepository, concreteType), first);
+                return new Bean<>(first.get(wireContainer, concreteType), first);
             }
         }
 
-        return fallback(wireRepository, concreteType, conflictResolver);
+        return fallback(wireContainer, concreteType, conflictResolver);
     }
 
     @Override
     public @Nullable Bean<T> get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull QualifiedTypeIdentifier<T> qualifiedTypeIdentifier
     ) {
         // Fast path for cached resolution
@@ -216,7 +216,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         }
 
         if (provider != null) {
-            T instance = provider.get(wireRepository, qualifiedTypeIdentifier.type());
+            T instance = provider.get(wireContainer, qualifiedTypeIdentifier.type());
             if (instance != null) {
                 return new Bean<>(instance, provider);
             }
@@ -226,7 +226,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
     }
 
     protected @Nullable Bean<T> fallback(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<T> concreteType,
             @NotNull Supplier<WireConflictResolver> conflictResolver
     ) {
@@ -242,7 +242,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
             provider = conflictResolver.get().find(all, concreteType);
         }
 
-        T instance = provider.get(wireRepository, concreteType);
+        T instance = provider.get(wireContainer, concreteType);
 
         if (instance == null) {
             return null;

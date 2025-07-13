@@ -13,14 +13,14 @@ import java.util.stream.Stream;
 public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context> {
 
     private final Map<IdentifiableProvider<?>, Context> evaluations = new HashMap<>();
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
 
-    public ConditionEvaluation(WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+    public ConditionEvaluation(WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
     }
 
     public Context access(IdentifiableProvider<?> provider) {
-        return evaluations.computeIfAbsent(provider, p -> new Context(wireRepository, p));
+        return evaluations.computeIfAbsent(provider, p -> new Context(wireContainer, p));
     }
 
     public Stream<Context> stream() {
@@ -46,7 +46,7 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
 
     public static class Context {
 
-        private final WireContainer wireRepository;
+        private final WireContainer wireContainer;
         private final IdentifiableProvider<?> provider;
         private AnnotationMetadata annotationMetadata;
         private final Set<String> dependencies = new HashSet<>();
@@ -54,10 +54,10 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
         private final Set<String> negativeMatches = new HashSet<>();
 
         public Context(
-                WireContainer wireRepository,
+                WireContainer wireContainer,
                 IdentifiableProvider<?> provider
         ) {
-            this.wireRepository = wireRepository;
+            this.wireContainer = wireContainer;
             this.provider = provider;
         }
 
@@ -81,15 +81,15 @@ public class ConditionEvaluation implements Iterable<ConditionEvaluation.Context
         }
 
         public Environment environment() {
-            return wireRepository.environment();
+            return wireContainer.environment();
         }
 
-        public WireContainer wireRepository() {
-            return wireRepository;
+        public WireContainer wireContainer() {
+            return wireContainer;
         }
 
         public <T> T get(Class<T> type) {
-            return wireRepository.onDemandInjector().get(type);
+            return wireContainer.onDemandInjector().get(type);
         }
 
         public void noteDependency(String dependency) {

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxyEntity> {
 
-    private static final String WIRE_REPOSITORY_FIELD_NAME = "wireRepository";
+    private static final String WIRE_REPOSITORY_FIELD_NAME = "wireContainer";
 
     private static final String EXECUTION_CHAIN_REGISTRY_PARAMETER_NAME = "executionChainRegistry";
 

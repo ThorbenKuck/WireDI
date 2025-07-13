@@ -35,7 +35,7 @@ public class SingletonInstanceIdentifiableProvider<T> extends AbstractIdentifiab
     @Override
     @NotNull
     public T get(
-            @NotNull final WireContainer wireRepository,
+            @NotNull final WireContainer wireContainer,
             @NotNull final TypeIdentifier<T> concreteType
     ) {
         return instance;

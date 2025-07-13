@@ -12,18 +12,18 @@ class BaseTest {
     @Test
     public void orderingWorks() {
         // Arrange
-        WireContainer wireRepository = WireContainer.open();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
-        List<Base> bases = wireRepository.getAll(Base.class);
+        List<Base> bases = wireContainer.getAll(Base.class);
 
         // Assert
         assertThat(bases).containsExactly(
-                wireRepository.get(First.class),
-                wireRepository.get(Second.class),
-                wireRepository.get(Third.class),
-                wireRepository.get(Fourth.class),
-                wireRepository.get(Fifth.class)
+                wireContainer.get(First.class),
+                wireContainer.get(Second.class),
+                wireContainer.get(Third.class),
+                wireContainer.get(Fourth.class),
+                wireContainer.get(Fifth.class)
         );
     }
 }

@@ -145,9 +145,9 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
     }
 
     @Override
-    public @Nullable T get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> concreteType) {
+    public @Nullable T get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<T> concreteType) {
         try {
-            return instanceSupplier.apply(wireRepository, concreteType);
+            return instanceSupplier.apply(wireContainer, concreteType);
         } catch (Throwable e) {
             switch (e) {
                 case RuntimeException runtimeException -> throw runtimeException;
@@ -208,9 +208,9 @@ public class SimpleProvider<T> implements IdentifiableProvider<T> {
         }
 
         @Override
-        public T apply(WireContainer wireRepository, TypeIdentifier<T> s) throws E {
+        public T apply(WireContainer wireContainer, TypeIdentifier<T> s) throws E {
             if (instance == null) {
-                instance = delegate.apply(wireRepository, s);
+                instance = delegate.apply(wireContainer, s);
             }
             return instance;
         }

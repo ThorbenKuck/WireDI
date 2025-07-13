@@ -57,11 +57,11 @@ import java.util.function.Supplier;
  */
 public class ObjectReference<T> {
 
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
     private final TypeIdentifier<T> type;
 
-    public ObjectReference(WireContainer wireRepository, TypeIdentifier<T> type) {
-        this.wireRepository = wireRepository;
+    public ObjectReference(WireContainer wireContainer, TypeIdentifier<T> type) {
+        this.wireContainer = wireContainer;
         this.type = type;
     }
 
@@ -72,8 +72,8 @@ public class ObjectReference<T> {
      *
      * @return the wire repository instance used by this reference
      */
-    public WireContainer wireRepository() {
-        return wireRepository;
+    public WireContainer wireContainer() {
+        return wireContainer;
     }
 
 
@@ -85,7 +85,7 @@ public class ObjectReference<T> {
      * @return a list containing all available instances of the referenced type
      */
     public Collection<T> getAll() {
-        return wireRepository.getAll(type);
+        return wireContainer.getAll(type);
     }
 
     /**
@@ -103,7 +103,7 @@ public class ObjectReference<T> {
     @Nullable
     public T getInstance() {
         try {
-            return wireRepository.get(type);
+            return wireContainer.get(type);
         } catch (DiInstantiationException | BeanNotFoundException | MissingBeanException e) {
             return null;
         }

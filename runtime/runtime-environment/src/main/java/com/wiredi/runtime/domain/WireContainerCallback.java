@@ -80,9 +80,9 @@ public interface WireContainerCallback extends Ordered {
      * <p>
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
      *
-     * @param wireRepository the WireRepository that is being loaded
+     * @param wireContainer the WireRepository that is being loaded
      */
-    default void loadingStarted(@NotNull WireContainer wireRepository) {
+    default void loadingStarted(@NotNull WireContainer wireContainer) {
     }
 
     /**
@@ -120,9 +120,9 @@ public interface WireContainerCallback extends Ordered {
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
      *
      * @param timed          the total time that loading the WireRepository took
-     * @param wireRepository the fully configured {@link WireContainer}
+     * @param wireContainer the fully configured {@link WireContainer}
      */
-    default void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireRepository) {
+    default void loadingFinished(@NotNull Timed timed, @NotNull WireContainer wireContainer) {
     }
 
     /**
@@ -130,8 +130,8 @@ public interface WireContainerCallback extends Ordered {
      * <p>
      * Note: It is <b>NOT</b> safe to register additional WireRepositoryContextCallbacks in this method!
      *
-     * @param wireRepository the WireRepository that is being destroyed
+     * @param wireContainer the WireRepository that is being destroyed
      */
-    default void destroyed(@NotNull WireContainer wireRepository) {
+    default void destroyed(@NotNull WireContainer wireContainer) {
     }
 }

@@ -17,9 +17,9 @@ public class WireDIExtension implements TestInstanceFactory, TestInstancePreDest
 		WiredApplicationInstance application = ExtensionCache.getOrCreate(extensionContext);
 		extensionContext.getStore(NAMESPACE).put(WiredApplicationInstance.class, application);
 
-		return application.wireRepository()
+		return application.wireContainer()
 				.tryGet((Class<Object>) factoryContext.getTestClass())
-				.orElseGet(() -> application.wireRepository().onDemandInjector().get(factoryContext.getTestClass()));
+				.orElseGet(() -> application.wireContainer().onDemandInjector().get(factoryContext.getTestClass()));
 	}
 
 	@Override
@@ -40,7 +40,7 @@ public class WireDIExtension implements TestInstanceFactory, TestInstancePreDest
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
 		WiredApplicationInstance applicationInstance = ExtensionCache.getOrCreate(extensionContext);
 
-		return applicationInstance.wireRepository().contains(typeIdentifier);
+		return applicationInstance.wireContainer().contains(typeIdentifier);
 	}
 
 	@Override
@@ -50,7 +50,7 @@ public class WireDIExtension implements TestInstanceFactory, TestInstancePreDest
 	) throws ParameterResolutionException {
 		TypeIdentifier<Object> typeIdentifier = TypeIdentifier.of(parameterContext.getParameter().getParameterizedType());
 		WiredApplicationInstance applicationInstance = ExtensionCache.getOrCreate(extensionContext);
-		WireContainer repository = applicationInstance.wireRepository();
+		WireContainer repository = applicationInstance.wireContainer();
 
 		if (typeIdentifier.isNativeProvider()) {
 			return repository.getNativeProvider(typeIdentifier.getGenericTypes().getFirst());

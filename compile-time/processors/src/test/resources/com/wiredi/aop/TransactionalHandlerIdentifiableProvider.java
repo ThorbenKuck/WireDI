@@ -19,16 +19,16 @@ public final class TransactionalHandlerIdentifiableProvider implements Identifia
 
     private final Value<TransactionalHandler> instance = Value.empty();
 
-    private TransactionalHandler createInstance(final WireContainer wireRepository,
+    private TransactionalHandler createInstance(final WireContainer wireContainer,
                                                 final TypeIdentifier<TransactionalHandler> concreteType) {
         TransactionalHandler instance = new TransactionalHandler();
         return instance;
     }
 
     @Override
-    public final synchronized TransactionalHandler get(@NotNull final WireContainer wireRepository,
+    public final synchronized TransactionalHandler get(@NotNull final WireContainer wireContainer,
                                                        @NotNull final TypeIdentifier<TransactionalHandler> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+        return instance.getOrSet(() -> createInstance(wireContainer, concreteType));
     }
 
     @Override

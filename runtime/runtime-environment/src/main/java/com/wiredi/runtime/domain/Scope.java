@@ -144,9 +144,9 @@ public interface Scope {
      * Repeated calls to link should throw an exception, as any Scope instance can only be linked to one {@link WireContainer}.
      * Only after {@link #unlink()} was called, should another call to this method succeed.
      *
-     * @param wireRepository the repository to use for resolving data.
+     * @param wireContainer the repository to use for resolving data.
      */
-    void link(WireContainer wireRepository);
+    void link(WireContainer wireContainer);
 
     /**
      * Unlinks any associations and allows this Scope to be linked to other {@link WireContainer}.

@@ -31,7 +31,7 @@ public class InstantTypeConverterProvider implements IdentifiableProvider<Instan
 
     @Override
     public @Nullable InstantTypeConverter get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<InstantTypeConverter> concreteType
     ) {
         return value.getOrSet(() -> new InstantTypeConverter());

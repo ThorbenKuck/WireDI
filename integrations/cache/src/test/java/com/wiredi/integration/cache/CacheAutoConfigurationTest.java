@@ -16,35 +16,35 @@ class CacheAutoConfigurationTest {
     @Test
     public void testThatTheCacheManagerIsWired() {
         // Arrange
-        WireContainer wireRepository = WiredApplication.start().wireRepository();
+        WireContainer wireContainer = WiredApplication.start().wireContainer();
 
         // Act
         // Assert
-        assertThat(wireRepository.environment().activeProfiles()).isEqualTo(List.of("test"));
-        assertThat(wireRepository.contains(CacheManager.class)).isTrue();
+        assertThat(wireContainer.environment().activeProfiles()).isEqualTo(List.of("test"));
+        assertThat(wireContainer.contains(CacheManager.class)).isTrue();
     }
 
     @Test
     public void testThatTheCacheManagerCanBeWiredInADependency() {
         // Arrange
-        WireContainer wireRepository = WiredApplication.start().wireRepository();
+        WireContainer wireContainer = WiredApplication.start().wireContainer();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(Dependency.class)).isTrue();
-        assertThat(wireRepository.get(Dependency.class).cacheManager()).isNotNull();
+        assertThat(wireContainer.contains(Dependency.class)).isTrue();
+        assertThat(wireContainer.get(Dependency.class).cacheManager()).isNotNull();
     }
 
 
     @Test
     public void testThatACustomCacheManagerCanBeSupplied() {
         // Arrange
-        WireContainer wireRepository = WireContainer.create();
-        wireRepository.environment().properties().set(Key.just("test"), "true");
-        wireRepository.load();
+        WireContainer wireContainer = WireContainer.create();
+        wireContainer.environment().properties().set(Key.just("test"), "true");
+        wireContainer.load();
 
         // Act
         // Assert
-        assertThat(wireRepository.get(CacheManager.class)).isNotNull().isInstanceOf(OverwrittenCacheManager.class);
+        assertThat(wireContainer.get(CacheManager.class)).isNotNull().isInstanceOf(OverwrittenCacheManager.class);
     }
 }

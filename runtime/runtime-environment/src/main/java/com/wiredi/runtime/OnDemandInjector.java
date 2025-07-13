@@ -18,19 +18,19 @@ import java.util.function.Supplier;
 public class OnDemandInjector {
 
     private static final Map<WireContainer, OnDemandInjector> INSTANCES = new HashMap<>();
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
     private final TypeMap<Object> cache = new TypeMap<>();
     private final TypeMap<Class<?>> typeTranslations = new TypeMap<>();
     private final TypeMap<Supplier<?>> constructors = new TypeMap<>();
 
-    OnDemandInjector(WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+    OnDemandInjector(WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
         bind(OnDemandInjector.class).toValue(this);
-        bind(WireContainer.class).toValue(wireRepository);
+        bind(WireContainer.class).toValue(wireContainer);
     }
 
-    public static OnDemandInjector of(WireContainer wireRepository) {
-        return INSTANCES.computeIfAbsent(wireRepository, OnDemandInjector::new);
+    public static OnDemandInjector of(WireContainer wireContainer) {
+        return INSTANCES.computeIfAbsent(wireContainer, OnDemandInjector::new);
     }
 
     public void clearCache() {
@@ -44,8 +44,8 @@ public class OnDemandInjector {
     }
 
     public <T> T get(Class<T> type) {
-        if (wireRepository.contains(type)) {
-            return wireRepository.get(type);
+        if (wireContainer.contains(type)) {
+            return wireContainer.get(type);
         }
 
         if (cache.containsKey(type)) {
@@ -65,7 +65,7 @@ public class OnDemandInjector {
 
     private <T> T createNewInstance(Class<T> type) {
         if (IdentifiableProvider.class.equals(type)) {
-            return (T) wireRepository.getNativeProvider(TypeIdentifier.just(type));
+            return (T) wireContainer.getNativeProvider(TypeIdentifier.just(type));
         }
         return (T) findTargetConstructor(type)
                 .map(this::invokeConstructor)
@@ -158,16 +158,16 @@ public class OnDemandInjector {
         if (type instanceof ParameterizedType parameterizedType) {
             if (parameterizedType.getRawType().equals(IdentifiableProvider.class)) {
                 Class<?> genericType = (Class<?>) parameterizedType.getActualTypeArguments()[0];
-                return (T) wireRepository.getNativeProvider(TypeIdentifier.just(genericType));
+                return (T) wireContainer.getNativeProvider(TypeIdentifier.just(genericType));
             }
 
             Class<T> genericType = (Class<T>) type;
-            return wireRepository.tryGet(genericType).orElseGet(() -> this.get(genericType));
+            return wireContainer.tryGet(genericType).orElseGet(() -> this.get(genericType));
         }
 
         if (type instanceof Class<?>) {
             Class<T> genericType = (Class<T>) type;
-            return (T) wireRepository.tryGet(genericType).orElseGet(() -> this.get(genericType));
+            return (T) wireContainer.tryGet(genericType).orElseGet(() -> this.get(genericType));
         }
         throw new IllegalStateException("Unsupported type " + type);
     }

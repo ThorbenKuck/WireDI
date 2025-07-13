@@ -56,11 +56,11 @@ public class TypedPropertiesEnvironmentConfigurationIdentifiableProvider impleme
 
     @Override
     public @Nullable TypedPropertiesEnvironmentConfiguration get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<TypedPropertiesEnvironmentConfiguration> concreteType
     ) {
         return this.instance.getOrSet(() -> new TypedPropertiesEnvironmentConfiguration(
-                        wireRepository.getAll(
+                        wireContainer.getAll(
                                 TypeIdentifier.of(TypeConverter.class)
                                         .withWildcard()
                         )

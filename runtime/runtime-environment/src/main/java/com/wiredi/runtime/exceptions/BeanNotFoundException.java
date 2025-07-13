@@ -15,27 +15,27 @@ public class BeanNotFoundException extends RuntimeException {
 	private final QualifierType qualifierType;
 
 	@NotNull
-	private final WireContainer wireRepository;
+	private final WireContainer wireContainer;
 
 	public <T>BeanNotFoundException(
 			@NotNull TypeIdentifier<T> typeIdentifier,
-			@NotNull WireContainer wireRepository
+			@NotNull WireContainer wireContainer
 	) {
 		super("Could not find a bean for the type " + typeIdentifier);
 		this.typeIdentifier = typeIdentifier;
-		this.wireRepository = wireRepository;
+		this.wireContainer = wireContainer;
 		this.qualifierType = null;
 	}
 
 	public <T>BeanNotFoundException(
 			@NotNull TypeIdentifier<T> typeIdentifier,
 			@Nullable QualifierType qualifierType,
-			@NotNull WireContainer wireRepository
+			@NotNull WireContainer wireContainer
 	) {
 		super(constructMessage(typeIdentifier, qualifierType));
 		this.typeIdentifier = typeIdentifier;
 		this.qualifierType = qualifierType;
-		this.wireRepository = wireRepository;
+		this.wireContainer = wireContainer;
 	}
 
 	private static String constructMessage(TypeIdentifier<?> typeIdentifier, QualifierType qualifierType) {
@@ -54,7 +54,7 @@ public class BeanNotFoundException extends RuntimeException {
 		return qualifierType;
 	}
 
-	public WireContainer wireRepository() {
-		return wireRepository;
+	public WireContainer wireContainer() {
+		return wireContainer;
 	}
 }

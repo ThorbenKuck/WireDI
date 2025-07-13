@@ -56,7 +56,7 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 				WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className(), injectionPoint.getDeclaringClass());
 				codeBlockBuilder.add("$T", bridge.className())
 						.add(".$L", bridge.bridgePackagePrivateField(injectionPoint));
-				codeBlockBuilder.addStatement("(wireRepository, instance)");
+				codeBlockBuilder.addStatement("(wireContainer, instance)");
 			} else {
 				String getValue = variableContext.instantiateVariableIfRequired(injectionPoint.field(), wireRepositories, codeBlockBuilder);
 
@@ -115,7 +115,7 @@ public abstract class CreateInstanceMethodFactory implements StandaloneMethodFac
 			WireBridgeEntity bridge = compilerRepository.newWireBridgeEntity(entity.className(), injectionPoint.getDeclaringClass());
 			codeBlockBuilder.add("$T", bridge.className())
 					.add(".$L", bridge.bridgePackagePrivateMethod(injectionPoint));
-			codeBlockBuilder.addStatement("(wireRepository, instance)");
+			codeBlockBuilder.addStatement("(wireContainer, instance)");
 		} else {
 			String fetchVariables = getVariablesFromWireRepository(codeBlockBuilder, injectionPoint.parameters(), variableContext);
 

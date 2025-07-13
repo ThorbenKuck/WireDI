@@ -60,7 +60,7 @@ public class CreateInstanceForFactoryMethod extends CreateInstanceMethodFactory 
 
         builder.returns(TypeName.get(factoryMethod.returnType()))
                 .addModifiers(Modifier.PRIVATE)
-                .addParameter(WireContainer.class, "wireRepository", Modifier.FINAL)
+                .addParameter(WireContainer.class, "wireContainer", Modifier.FINAL)
                 .addParameter(ParameterizedTypeName.get(ClassName.get(TypeIdentifier.class), TypeName.get(entity.rootType())), "concreteType", Modifier.FINAL)
                 .addCode(methodBody.build())
                 .addCode(fieldInjectionStep(injectionPoints.fieldInjections(), entity, variableContext))

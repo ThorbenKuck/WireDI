@@ -79,10 +79,10 @@ public class SimpleWireRepositoryTest extends AbstractIntegrationTest {
     @Test
     public void testGetExistingBean() {
         // Arrange
-        WireRepository wireRepository = loadWireRepository();
+        WireRepository wireContainer = loadWireRepository();
 
         // Act
-        CountInvocationsAspect aspect = wireRepository.get(CountInvocationsAspect.class);
+        CountInvocationsAspect aspect = wireContainer.get(CountInvocationsAspect.class);
 
         // Assert
         assertThat(aspect).isNotNull();

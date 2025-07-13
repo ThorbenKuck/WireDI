@@ -10,7 +10,7 @@ import java.util.Collection;
 public interface StateFullInitializer {
 
     void initialize(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull Collection<StateFull<?>> stateFulls,
             @Nullable Duration timeout
     );
@@ -19,7 +19,7 @@ public interface StateFullInitializer {
 
         @Override
         public void initialize(
-                @NotNull WireContainer wireRepository,
+                @NotNull WireContainer wireContainer,
                 @NotNull Collection<StateFull<?>> stateFulls,
                 @Nullable Duration timeout
         ) {

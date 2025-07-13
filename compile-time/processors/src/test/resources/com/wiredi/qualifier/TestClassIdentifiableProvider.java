@@ -25,16 +25,16 @@ public final class TestClassIdentifiableProvider implements IdentifiableProvider
 
     private static final TypeIdentifier<TestClass> PRIMARY_WIRE_TYPE = TypeIdentifier.of(TestClass.class);
 
-    private TestClass createInstance(final WireContainer wireRepository,
+    private TestClass createInstance(final WireContainer wireContainer,
                                      final TypeIdentifier<TestClass> concreteType) {
         TestClass instance = new TestClass();
         return instance;
     }
 
     @Override
-    public final TestClass get(@NotNull final WireContainer wireRepository,
+    public final TestClass get(@NotNull final WireContainer wireContainer,
                                @NotNull final TypeIdentifier<TestClass> concreteType) {
-        return createInstance(wireRepository, concreteType);
+        return createInstance(wireContainer, concreteType);
     }
 
     @NotNull

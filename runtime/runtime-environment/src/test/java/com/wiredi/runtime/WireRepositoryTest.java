@@ -51,17 +51,17 @@ public class WireRepositoryTest {
         @MethodSource("argumentsList")
         public void test(Class<Object> type, IdentifiableProvider<?> provider, boolean find) {
             // Arrange
-            WireContainer wireRepository = WireContainer.create();
-            wireRepository.initializer().setSources(IdentifiableProviderSource.just(provider));
-            wireRepository.load();
+            WireContainer wireContainer = WireContainer.create();
+            wireContainer.initializer().setSources(IdentifiableProviderSource.just(provider));
+            wireContainer.load();
 
             // Act
-            Optional<Object> result = wireRepository.tryGet(type);
+            Optional<Object> result = wireContainer.tryGet(type);
 
             // Assert
             assertThat(result.isPresent()).isEqualTo(find);
             if (find) {
-                assertThat(result).contains(provider.get(wireRepository));
+                assertThat(result).contains(provider.get(wireContainer));
             }
         }
     }
@@ -268,7 +268,7 @@ public class WireRepositoryTest {
                     }
 
                     @Override
-                    public @Nullable MultiGenericClass<T, S> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<MultiGenericClass<T, S>> concreteType) {
+                    public @Nullable MultiGenericClass<T, S> get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<MultiGenericClass<T, S>> concreteType) {
                         return it;
                     }
                 };
@@ -366,14 +366,14 @@ public class WireRepositoryTest {
         @Test
         public void handlingASpecificExceptionIsPossible() {
             // Arrange
-            WireContainer wireRepository = WireContainer.create();
-            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
-            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
-            wireRepository.load();
+            WireContainer wireContainer = WireContainer.create();
+            wireContainer.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
+            wireContainer.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
+            wireContainer.load();
 
             // Act
             try {
-                wireRepository.exceptionHandler().handle(new IllegalArgumentException());
+                wireContainer.exceptionHandler().handle(new IllegalArgumentException());
             } catch (Throwable e) {
                 fail("Error handling did not work correctly", e);
             }
@@ -387,14 +387,14 @@ public class WireRepositoryTest {
         @Test
         public void handlingASpecificSecondExceptionIsPossible() {
             // Arrange
-            WireContainer wireRepository = WireContainer.create();
-            wireRepository.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
-            wireRepository.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
-            wireRepository.load();
+            WireContainer wireContainer = WireContainer.create();
+            wireContainer.announce(IdentifiableProvider.singleton(illegalArgumentErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalArgumentException.class)));
+            wireContainer.announce(IdentifiableProvider.singleton(illegalStateErrorHandler, TypeIdentifier.of(ExceptionHandler.class).withGeneric(IllegalStateException.class)));
+            wireContainer.load();
 
             // Act
             try {
-                wireRepository.exceptionHandler().handle(new IllegalStateException("This is an IllegalStateException"));
+                wireContainer.exceptionHandler().handle(new IllegalStateException("This is an IllegalStateException"));
                 fail("IllegalStateException should have been rethrown");
             } catch (AssertionError t) {
                 throw t;

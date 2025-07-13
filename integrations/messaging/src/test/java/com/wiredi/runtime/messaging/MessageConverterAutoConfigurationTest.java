@@ -14,8 +14,8 @@ class MessageConverterAutoConfigurationTest {
     @Test
     public void testStringConversion() {
         // Arrange
-        WireContainer wireRepository = WiredApplication.start().wireRepository();
-        MessagingEngine messageConverters = wireRepository.get(MessagingEngine.class);
+        WireContainer wireContainer = WiredApplication.start().wireContainer();
+        MessagingEngine messageConverters = wireContainer.get(MessagingEngine.class);
 
         // Act
         Message<MessageDetails> serialized = messageConverters.serialize("test");
@@ -27,7 +27,7 @@ class MessageConverterAutoConfigurationTest {
     @Test
     public void requestGeneralConsumer() {
         // Arrange
-        WireContainer wireContainer = WiredApplication.start().wireRepository();
+        WireContainer wireContainer = WiredApplication.start().wireContainer();
 
         // Act
         Consumer<Object> consumer = wireContainer.get(TypeIdentifier.of(Consumer.class).withGeneric(Object.class));

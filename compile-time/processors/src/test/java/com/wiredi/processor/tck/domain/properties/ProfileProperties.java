@@ -15,7 +15,7 @@ public class ProfileProperties implements Eager {
     }
 
     @Override
-    public void setup(WireContainer wireRepository) {
+    public void setup(WireContainer wireContainer) {
         System.out.println(property);
     }
 }

@@ -13,14 +13,14 @@ public final class WrappingProvider<T> implements Provider<T> {
     private final IdentifiableProvider<T> provider;
 
     @NotNull
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
 
     public WrappingProvider(
             @NotNull IdentifiableProvider<T> provider,
-            @NotNull WireContainer wireRepository
+            @NotNull WireContainer wireContainer
     ) {
         this.provider = provider;
-        this.wireRepository = wireRepository;
+        this.wireContainer = wireContainer;
     }
 
     /**
@@ -29,7 +29,7 @@ public final class WrappingProvider<T> implements Provider<T> {
     @Override
     @Nullable
     public T get() {
-        return provider.get(wireRepository, (TypeIdentifier<T>) provider.type());
+        return provider.get(wireContainer, (TypeIdentifier<T>) provider.type());
     }
 
     /**
@@ -49,7 +49,7 @@ public final class WrappingProvider<T> implements Provider<T> {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         WrappingProvider<?> that = (WrappingProvider<?>) o;
-        return wireRepository.equals(that.wireRepository) && provider.equals(that.provider);
+        return wireContainer.equals(that.wireContainer) && provider.equals(that.provider);
     }
 
     /**
@@ -57,7 +57,7 @@ public final class WrappingProvider<T> implements Provider<T> {
      */
     @Override
     public int hashCode() {
-        return Objects.hash(provider, wireRepository);
+        return Objects.hash(provider, wireContainer);
     }
 
     /**
@@ -67,7 +67,7 @@ public final class WrappingProvider<T> implements Provider<T> {
     public String toString() {
         return "WrappingProvider{" +
                 "provider=" + provider +
-                ", wireRepository=" + wireRepository +
+                ", wireContainer=" + wireContainer +
                 '}';
     }
 }

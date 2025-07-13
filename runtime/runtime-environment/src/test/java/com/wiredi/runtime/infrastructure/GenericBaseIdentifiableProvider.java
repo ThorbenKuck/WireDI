@@ -24,7 +24,7 @@ public class GenericBaseIdentifiableProvider<T> extends AbstractIdentifiableProv
     }
 
     @Override
-    public @Nullable GenericBase<T> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<GenericBase<T>> concreteType) {
+    public @Nullable GenericBase<T> get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<GenericBase<T>> concreteType) {
         return base.get();
     }
 

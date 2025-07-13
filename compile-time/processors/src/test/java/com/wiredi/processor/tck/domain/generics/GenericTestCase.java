@@ -32,20 +32,20 @@ public class GenericTestCase implements TckTestCase {
     @Inject
     GenericBase<Double> doubleBase;
 
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
 
     public GenericTestCase(
             List<GenericBase<?>> generics,
             DoubleImpl doubleimpl,
             Provider<GenericBase<Double>> doubleProvider,
             IdentifiableProvider<GenericBase<Double>> nativeDoubleProvider,
-            WireContainer wireRepository
+            WireContainer wireContainer
     ) {
         this.generics = generics;
         this.doubleimpl = doubleimpl;
         this.doubleProvider = doubleProvider;
         this.nativeDoubleProvider = nativeDoubleProvider;
-        this.wireRepository = wireRepository;
+        this.wireContainer = wireContainer;
     }
 
     @Override

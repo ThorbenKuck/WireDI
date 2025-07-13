@@ -19,15 +19,15 @@ public interface EagerInitializer {
      * It's expected that all {@link Eager#setup(WireContainer)} methods are called.
      *
      * @param eagerInstances the {@link Eager} instances to setup
-     * @param wireRepository the repository which asks for initialization
+     * @param wireContainer the repository which asks for initialization
      */
-    void initialize(WireContainer wireRepository, Collection<Eager> eagerInstances);
+    void initialize(WireContainer wireContainer, Collection<Eager> eagerInstances);
 
     class ParallelStream implements EagerInitializer {
 
         @Override
-        public void initialize(WireContainer wireRepository, Collection<Eager> eagerInstances) {
-            eagerInstances.parallelStream().forEach(it -> it.setup(wireRepository));
+        public void initialize(WireContainer wireContainer, Collection<Eager> eagerInstances) {
+            eagerInstances.parallelStream().forEach(it -> it.setup(wireContainer));
         }
     }
 }

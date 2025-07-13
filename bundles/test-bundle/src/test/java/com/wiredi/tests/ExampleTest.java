@@ -35,14 +35,14 @@ public class ExampleTest {
     }
 
     @Test
-    public void test(WireContainer wireRepository) {
-        IdentifiableProvider<ExampleService> provider = wireRepository.getNativeProvider(TypeIdentifier.just(ExampleService.class));
-        assertThat(classWireRepositoryFieldInjection).isSameAs(classWireRepositoryConstructorInjection).isSameAs(wireRepository);
-        assertThat(identifiableProviderFieldInjection).isNotNull().isSameAs(provider).isSameAs(wireRepository.getNativeProvider(TypeIdentifier.just(ExampleService.class)));
+    public void test(WireContainer wireContainer) {
+        IdentifiableProvider<ExampleService> provider = wireContainer.getNativeProvider(TypeIdentifier.just(ExampleService.class));
+        assertThat(classWireRepositoryFieldInjection).isSameAs(classWireRepositoryConstructorInjection).isSameAs(wireContainer);
+        assertThat(identifiableProviderFieldInjection).isNotNull().isSameAs(provider).isSameAs(wireContainer.getNativeProvider(TypeIdentifier.just(ExampleService.class)));
         assertThat(exampleServiceFieldInjection)
                 .isSameAs(exampleServiceConstructorInjection)
                 .isNotNull();
-        assertThat(identifiableProviderFieldInjection.get(wireRepository))
+        assertThat(identifiableProviderFieldInjection.get(wireContainer))
                 .withFailMessage("Instances constructed by providers should be new instances")
                 .isNotSameAs(exampleServiceFieldInjection);
     }

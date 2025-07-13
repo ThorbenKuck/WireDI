@@ -9,8 +9,8 @@ public class MRE {
     public static void main(String[] args) {
         for (int i = 0 ; i < 100 ; i++) {
             Timed.of(() -> {
-                WireContainer wireRepository = WireContainer.open();
-                Parent a = wireRepository.get(Parent.class);
+                WireContainer wireContainer = WireContainer.open();
+                Parent a = wireContainer.get(Parent.class);
                 System.out.println(a);
             }).then(time -> System.out.println("MRE took " + time));
         }

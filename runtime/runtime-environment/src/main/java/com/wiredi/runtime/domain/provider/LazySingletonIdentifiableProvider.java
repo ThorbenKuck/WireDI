@@ -30,11 +30,11 @@ public class LazySingletonIdentifiableProvider<T> extends AbstractIdentifiablePr
 	@Override
 	@NotNull
 	public synchronized T get(
-			@NotNull final WireContainer wireRepository,
+			@NotNull final WireContainer wireContainer,
 			@NotNull final TypeIdentifier<T> concreteType
 	) {
 		if(instance == null) {
-			instance = creationFunction.apply(wireRepository);
+			instance = creationFunction.apply(wireContainer);
 		}
 
 		return instance;

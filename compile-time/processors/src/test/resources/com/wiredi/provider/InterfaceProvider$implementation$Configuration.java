@@ -16,17 +16,17 @@ import org.jetbrains.annotations.NotNull;
 public final class InterfaceProvider$implementation$Configuration implements IdentifiableProvider<Interface> {
     private static final TypeIdentifier<Interface> PRIMARY_WIRE_TYPE = TypeIdentifier.of(Interface.class);
 
-    private Interface createInstance(final WireContainer wireRepository,
+    private Interface createInstance(final WireContainer wireContainer,
                                      final TypeIdentifier<Interface> concreteType) {
-        Configuration builder = wireRepository.get(TypeIdentifier.of(Configuration.class));
+        Configuration builder = wireContainer.get(TypeIdentifier.of(Configuration.class));
         Interface instance = builder.implementation(concreteType);
         return instance;
     }
 
     @Override
-    public final Interface get(@NotNull final WireContainer wireRepository,
+    public final Interface get(@NotNull final WireContainer wireContainer,
                                @NotNull final TypeIdentifier<Interface> concreteType) {
-        return createInstance(wireRepository, concreteType);
+        return createInstance(wireContainer, concreteType);
     }
 
     @Override

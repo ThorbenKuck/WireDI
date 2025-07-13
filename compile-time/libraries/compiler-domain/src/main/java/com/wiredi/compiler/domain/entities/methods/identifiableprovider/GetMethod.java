@@ -25,13 +25,13 @@ public class GetMethod implements StandaloneMethodFactory {
         List<Modifier> getMethodModifier = new ArrayList<>(List.of(Modifier.PUBLIC, Modifier.FINAL));
 
         CodeBlock.Builder getCodeBlock = CodeBlock.builder();
-        getCodeBlock.addStatement("return createInstance(wireRepository, concreteType)");
+        getCodeBlock.addStatement("return createInstance(wireContainer, concreteType)");
 
 
         builder.addModifiers(getMethodModifier)
                 .addAnnotation(Override.class)
                 .addParameter(
-                        ParameterSpec.builder(WireContainer.class, "wireRepository", Modifier.FINAL)
+                        ParameterSpec.builder(WireContainer.class, "wireContainer", Modifier.FINAL)
                                 .addAnnotation(NotNull.class)
                                 .build()
                 )

@@ -26,11 +26,11 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
 
     private final Value<ProxyTarget$$AspectAwareProxy> instance = Value.empty();
 
-    private ProxyTarget$$AspectAwareProxy createInstance(final WireContainer wireRepository,
+    private ProxyTarget$$AspectAwareProxy createInstance(final WireContainer wireContainer,
                                                          final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
         // We will start by Fetching all 2 constructor parameters
-        ExecutionChainRegistry variable = wireRepository.get(TypeIdentifier.of(ExecutionChainRegistry.class));
-        WireContainer variable1 = wireRepository.get(TypeIdentifier.of(WireContainer.class));
+        ExecutionChainRegistry variable = wireContainer.get(TypeIdentifier.of(ExecutionChainRegistry.class));
+        WireContainer variable1 = wireContainer.get(TypeIdentifier.of(WireContainer.class));
         ProxyTarget$$AspectAwareProxy instance = new ProxyTarget$$AspectAwareProxy(variable,variable1);
         return instance;
     }
@@ -43,9 +43,9 @@ public final class ProxyTarget$$AspectAwareProxyIdentifiableProvider implements 
 
     @Override
     public final synchronized ProxyTarget$$AspectAwareProxy get(
-            @NotNull final WireContainer wireRepository,
+            @NotNull final WireContainer wireContainer,
             @NotNull final TypeIdentifier<ProxyTarget$$AspectAwareProxy> concreteType) {
-        return instance.getOrSet(() -> createInstance(wireRepository, concreteType));
+        return instance.getOrSet(() -> createInstance(wireContainer, concreteType));
     }
 
     @Override

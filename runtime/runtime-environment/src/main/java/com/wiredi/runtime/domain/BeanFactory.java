@@ -30,19 +30,19 @@ public interface BeanFactory<T> {
     @NotNull TypeIdentifier<T> rootType();
 
     @NotNull
-    default Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository) {
-        return getAll(wireRepository, rootType());
+    default Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer) {
+        return getAll(wireContainer, rootType());
     }
 
-    @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type);
+    @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<T> type);
 
     @Nullable Bean<T> get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<T> type
     );
 
     @Nullable Bean<T> get(
-            @NotNull WireContainer wireRepository,
+            @NotNull WireContainer wireContainer,
             @NotNull QualifiedTypeIdentifier<T> type
     );
 

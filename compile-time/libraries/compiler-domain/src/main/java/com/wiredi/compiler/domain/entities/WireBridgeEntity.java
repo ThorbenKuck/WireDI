@@ -50,7 +50,7 @@ public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 				MethodSpec.methodBuilder(methodName)
 						.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 						.addParameter(
-								ParameterSpec.builder(WireContainer.class, "wireRepository")
+								ParameterSpec.builder(WireContainer.class, "wireContainer")
 										.addAnnotation(NotNull.class)
 										.addModifiers(Modifier.FINAL)
 										.build()
@@ -77,7 +77,7 @@ public class WireBridgeEntity extends AbstractClassEntity<WireBridgeEntity> {
 				MethodSpec.methodBuilder(methodName)
 						.addModifiers(Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
 						.addParameter(
-								ParameterSpec.builder(WireContainer.class, "wireRepository")
+								ParameterSpec.builder(WireContainer.class, "wireContainer")
 										.addAnnotation(NotNull.class)
 										.addModifiers(Modifier.FINAL)
 										.build()

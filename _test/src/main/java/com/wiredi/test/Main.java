@@ -11,24 +11,24 @@ import java.util.List;
 public class Main {
 
 	public static void main(String[] args) {
-		WireContainer wireRepository = WireContainer.open();
-		wireRepository.announce(new Dependency());
+		WireContainer wireContainer = WireContainer.open();
+		wireContainer.announce(new Dependency());
 
-		wireRepository.get(MetaAnnotationTest.class);
-		SuperDi instance = wireRepository.get(SuperDi.class);
+		wireContainer.get(MetaAnnotationTest.class);
+		SuperDi instance = wireContainer.get(SuperDi.class);
 
 		instance.foo();
 
-		List<Command> commandList = wireRepository.getAll(Command.class);
+		List<Command> commandList = wireContainer.getAll(Command.class);
 		commandList.forEach(Command::execute);
 
-		Command command = wireRepository.get(Command.class);
+		Command command = wireContainer.get(Command.class);
 		command.execute();
 
-		CommandNote instance1 = wireRepository.get(CommandNote.class);
+		CommandNote instance1 = wireContainer.get(CommandNote.class);
 		System.out.println(instance1);
 
-		NestedProperties properties = wireRepository.get(NestedProperties.class);
+		NestedProperties properties = wireContainer.get(NestedProperties.class);
 		System.out.println(properties.getThird());
 	}
 }

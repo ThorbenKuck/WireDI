@@ -22,8 +22,8 @@ public final class PropertyBindingExampleIdentifiableProvider implements Identif
 
     private final Value<PropertyBindingExample> instance = Value.empty();
 
-    private PropertyBindingExample createInstance(final WireContainer wireRepository) {
-        TypedProperties properties = wireRepository.environment().properties();
+    private PropertyBindingExample createInstance(final WireContainer wireContainer) {
+        TypedProperties properties = wireContainer.environment().properties();
         return DynamicBuilder.of(
                     new PropertyBindingExample(
                         properties.require(Key.just("test.properties.string")),
@@ -41,8 +41,8 @@ public final class PropertyBindingExampleIdentifiableProvider implements Identif
 
     @Override
     public final synchronized PropertyBindingExample get(
-            @NotNull final WireContainer wireRepository) {
-        return instance.getOrSet(() -> createInstance(wireRepository));
+            @NotNull final WireContainer wireContainer) {
+        return instance.getOrSet(() -> createInstance(wireContainer));
     }
 
     @Override

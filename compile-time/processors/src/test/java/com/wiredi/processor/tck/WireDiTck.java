@@ -35,11 +35,11 @@ public class WireDiTck {
     public void test() {
         // Arrange
         Environment environment = Environment.build();
-//        WireContainer wireRepository = WireContainer.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
-        WireContainer wireRepository = WireContainer.open(environment);
+//        WireContainer wireContainer = WireContainer.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
+        WireContainer wireContainer = WireContainer.open(environment);
 
         // Act
-        Car car = wireRepository.get(Car.class);
+        Car car = wireContainer.get(Car.class);
 
         // Assert
         if (!(car.getEngine() instanceof V1Engine)) {
@@ -49,8 +49,8 @@ public class WireDiTck {
 
     @Test
     public void testLoadTimeOfObjects() {
-        WireContainer wireRepository = WireContainer.create();
-        TimedValue<Collection<TckTestCase>> timedValue = Timed.of(() -> wireRepository.getAll(TypeIdentifier.of(TckTestCase.class)));
+        WireContainer wireContainer = WireContainer.create();
+        TimedValue<Collection<TckTestCase>> timedValue = Timed.of(() -> wireContainer.getAll(TypeIdentifier.of(TckTestCase.class)));
 
         System.out.println(timedValue.time());
         assertThat(timedValue.time().get(TimeUnit.MILLISECONDS)).isLessThan(100);
@@ -58,90 +58,90 @@ public class WireDiTck {
 
     @TestFactory
     public Collection<DynamicNode> verifyScopesWork() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(Scopes.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(Scopes.class))
                 .withFailMessage("The Qualifications was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(Scopes.class).dynamicTests();
+        return wireContainer.get(Scopes.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> verifyThatTheAspectProxiesWork() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(TransactionalTestController.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(TransactionalTestController.class))
                 .withFailMessage("The TransactionalTestController was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(TransactionalTestController.class).dynamicTests();
+        return wireContainer.get(TransactionalTestController.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> verifyThatOrderingWorksCorrectly() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(CommandBasedStringBuilder.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(CommandBasedStringBuilder.class))
                 .withFailMessage("The CommandBasedStringBuilder was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(CommandBasedStringBuilder.class).dynamicTests();
+        return wireContainer.get(CommandBasedStringBuilder.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> verifyThatProducersWithQualifiersWork() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(CoffeeMachine.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(CoffeeMachine.class))
                 .withFailMessage("The Coffee Machine was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(CoffeeMachine.class).dynamicTests();
+        return wireContainer.get(CoffeeMachine.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> verifyThatSimpleInjectionWorks() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(InjectionTest.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(InjectionTest.class))
                 .withFailMessage("The InjectionTest was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(InjectionTest.class).dynamicTests();
+        return wireContainer.get(InjectionTest.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> verifyThatConditionEvaluationWorks() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(ConditionTestCase.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(ConditionTestCase.class))
                 .withFailMessage("The InjectionTest was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(ConditionTestCase.class).dynamicTests();
+        return wireContainer.get(ConditionTestCase.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> overwritingBehaviourTest() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(OverwrittenTestClass.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(OverwrittenTestClass.class))
                 .withFailMessage("The OverwrittenTestClass was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(OverwritingTestClass.class).dynamicTests();
+        return wireContainer.get(OverwritingTestClass.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<DynamicNode> genericBehaviourTest() {
-        WireContainer wireRepository = WireContainer.open();
-        assertThat(wireRepository.tryGet(GenericTestCase.class))
+        WireContainer wireContainer = WireContainer.open();
+        assertThat(wireContainer.tryGet(GenericTestCase.class))
                 .withFailMessage("The OverwrittenTestClass was not wired correctly")
                 .isPresent();
 
-        return wireRepository.get(GenericTestCase.class).dynamicTests();
+        return wireContainer.get(GenericTestCase.class).dynamicTests();
     }
 
     @TestFactory
     public Collection<? extends DynamicNode> repeatingDynamicTestCases() {
         return IntStream.range(0, 20)
                 .mapToObj(round -> {
-                    WireContainer wireRepository = WireContainer.open();
-                    Collection<TckTestCase> tckTestCases = wireRepository.getAll(TypeIdentifier.of(TckTestCase.class));
+                    WireContainer wireContainer = WireContainer.open();
+                    Collection<TckTestCase> tckTestCases = wireContainer.getAll(TypeIdentifier.of(TckTestCase.class));
 
                     return dynamicContainer("Repetition-" + round, () -> tckTestCases.stream()
                             .map(testCase -> dynamicContainer(testCase.getClass().getSimpleName(), () -> testCase.dynamicTests().iterator()))

@@ -23,7 +23,7 @@ public abstract class AbstractScope implements Scope {
     private final Map<@NotNull TypeIdentifier, @NotNull BeanFactory> factories;
     private boolean autostart;
     @Nullable
-    private WireContainer wireRepository;
+    private WireContainer wireContainer;
     private boolean isActive = false;
 
     public AbstractScope(boolean autostart, @NotNull Map<@NotNull TypeIdentifier, @NotNull BeanFactory> factories) {
@@ -287,13 +287,13 @@ public abstract class AbstractScope implements Scope {
     }
 
     @Override
-    public void link(@NotNull WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+    public void link(@NotNull WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
     }
 
     @Override
     public void unlink() {
-        this.wireRepository = null;
+        this.wireContainer = null;
     }
 
     protected void checkActive() {
@@ -304,10 +304,10 @@ public abstract class AbstractScope implements Scope {
 
     @NotNull
     protected WireContainer requireWireRepository() {
-        if (wireRepository == null) {
+        if (wireContainer == null) {
             throw new IllegalStateException("Wire repository is not linked to scope");
         }
-        return wireRepository;
+        return wireContainer;
     }
 
     public String toString() {

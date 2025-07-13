@@ -25,13 +25,13 @@ import java.lang.Override;
         proxy = false
 )
 final class ProxyTarget$$AspectAwareProxy extends ProxyTarget implements AspectAwareProxy {
-    private final WireContainer wireRepository;
+    private final WireContainer wireContainer;
 
     private final Value<ExecutionChain> executionChain;
 
     ProxyTarget$$AspectAwareProxy(final ExecutionChainRegistry executionChainRegistry,
-                          final WireContainer wireRepository) {
-        this.wireRepository = wireRepository;
+                          final WireContainer wireContainer) {
+        this.wireContainer = wireContainer;
         this.executionChain = Value.async(() ->
                 executionChainRegistry.getExecutionChain(
                         RootMethod.builder("toProxy")

@@ -28,22 +28,22 @@ public record EmptyBeanFactory<T>(
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository) {
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer) {
         return Collections.emptyList();
     }
 
     @Override
-    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type) {
+    public @NotNull Collection<Bean<T>> getAll(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<T> type) {
         return Collections.emptyList();
     }
 
     @Override
-    public @Nullable Bean<T> get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<T> type) {
+    public @Nullable Bean<T> get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<T> type) {
         return null;
     }
 
     @Override
-    public @Nullable Bean<T> get(@NotNull WireContainer wireRepository, @NotNull QualifiedTypeIdentifier<T> type) {
+    public @Nullable Bean<T> get(@NotNull WireContainer wireContainer, @NotNull QualifiedTypeIdentifier<T> type) {
         return null;
     }
 

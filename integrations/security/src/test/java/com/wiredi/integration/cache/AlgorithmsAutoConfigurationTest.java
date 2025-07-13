@@ -17,19 +17,19 @@ class AlgorithmsAutoConfigurationTest {
     @Test
     public void testThatAlgorithmsIsWired() {
         // Arrange
-        WireContainer wireRepository = WireContainer.open();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(Algorithms.class)).isTrue();
-        assertThat(wireRepository.get(Algorithms.class).encode("test")).isEqualTo("noop:test");
+        assertThat(wireContainer.contains(Algorithms.class)).isTrue();
+        assertThat(wireContainer.get(Algorithms.class).encode("test")).isEqualTo("noop:test");
     }
 
     @Test
     public void ifAnAlgorithmBeanIsPresentItIsUsedAsSystemAlgorithm() {
         // Arrange
-        WireContainer wireRepository = WireContainer.create();
-        wireRepository.announce(new IdentifiableProvider<BCryptAlgorithm>() {
+        WireContainer wireContainer = WireContainer.create();
+        wireContainer.announce(new IdentifiableProvider<BCryptAlgorithm>() {
             @Override
             public @NotNull List<TypeIdentifier<?>> additionalWireTypes() {
                 return List.of(TypeIdentifier.just(CryptographicAlgorithm.class));
@@ -41,26 +41,26 @@ class AlgorithmsAutoConfigurationTest {
             }
 
             @Override
-            public BCryptAlgorithm get(@NotNull WireContainer wireRepository, @NotNull TypeIdentifier<BCryptAlgorithm> concreteType) {
+            public BCryptAlgorithm get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<BCryptAlgorithm> concreteType) {
                 return new BCryptAlgorithm();
             }
         });
-        wireRepository.load();
+        wireContainer.load();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(Algorithms.class)).isTrue();
-        assertThat(wireRepository.get(Algorithms.class).encode("test")).startsWith("bcrypt:$2a$12$");
+        assertThat(wireContainer.contains(Algorithms.class)).isTrue();
+        assertThat(wireContainer.get(Algorithms.class).encode("test")).startsWith("bcrypt:$2a$12$");
     }
 
     @Test
     public void testThatAlgorithmsCanBeWiredInADependency() {
         // Arrange
-        WireContainer wireRepository = WireContainer.open();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         // Assert
-        assertThat(wireRepository.contains(Algorithms.class)).isTrue();
-        assertThat(wireRepository.get(AlgorithmsDependency.class).algorithms()).isNotNull();
+        assertThat(wireContainer.contains(Algorithms.class)).isTrue();
+        assertThat(wireContainer.get(AlgorithmsDependency.class).algorithms()).isNotNull();
     }
 }
