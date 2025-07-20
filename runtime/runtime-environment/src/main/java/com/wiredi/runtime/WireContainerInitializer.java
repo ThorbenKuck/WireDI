@@ -17,6 +17,25 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.stream.Stream;
 
+/**
+ * The WireContainerInitializer is responsible for initializing a WireContainer by loading
+ * and configuring providers from various sources.
+ * <p>
+ * This class manages the process of:
+ * <ul>
+ *   <li>Loading providers from configured sources</li>
+ *   <li>Resolving the appropriate scope for each provider</li>
+ *   <li>Applying conditional logic to determine which providers should be included</li>
+ *   <li>Registering providers with the WireContainer</li>
+ * </ul>
+ * <p>
+ * The initializer works with {@link IdentifiableProviderSource} instances to obtain
+ * providers that will be registered with the container.
+ * 
+ * @see WireContainer
+ * @see IdentifiableProviderSource
+ * @see IdentifiableProvider
+ */
 public class WireContainerInitializer {
 
     @NotNull
@@ -28,38 +47,85 @@ public class WireContainerInitializer {
     @NotNull
     private final List<@NotNull IdentifiableProviderSource> sources = new ArrayList<>();
 
+    /**
+     * Creates a new WireContainerInitializer with the specified provider sources.
+     *
+     * @param sources the provider sources to use
+     */
     public WireContainerInitializer(IdentifiableProviderSource... sources) {
         this.sources.addAll(Arrays.asList(sources));
     }
 
+    /**
+     * Creates a new WireContainerInitializer with the specified provider sources.
+     *
+     * @param sources the list of provider sources to use
+     */
     public WireContainerInitializer(List<? extends IdentifiableProviderSource> sources) {
         this.sources.addAll(sources);
     }
 
+    /**
+     * Creates a new WireContainerInitializer with a default ServiceLoaderIdentifiableProviderSource.
+     * <p>
+     * This is the recommended way to create a WireContainerInitializer for most use cases.
+     *
+     * @return a new preconfigured WireContainerInitializer
+     */
     public static WireContainerInitializer preconfigured() {
         return new WireContainerInitializer(new ServiceLoaderIdentifiableProviderSource());
     }
 
+    /**
+     * Adds a provider source to the initializer.
+     *
+     * @param source the provider source to add
+     */
     public void addSource(@NotNull IdentifiableProviderSource source) {
         this.sources.add(source);
     }
 
+    /**
+     * Removes a provider source from the initializer.
+     *
+     * @param source the provider source to remove
+     */
     public void removeSource(@NotNull IdentifiableProviderSource source) {
         this.sources.remove(source);
     }
 
+    /**
+     * Adds multiple provider sources to the initializer.
+     *
+     * @param sources the list of provider sources to add
+     */
     public void addSources(@NotNull List<? extends IdentifiableProviderSource> sources) {
         this.sources.addAll(sources);
     }
 
+    /**
+     * Removes multiple provider sources from the initializer.
+     *
+     * @param sources the list of provider sources to remove
+     */
     public void removeSources(@NotNull List<? extends IdentifiableProviderSource> sources) {
         this.sources.removeAll(sources);
     }
 
+    /**
+     * Replaces all current provider sources with the specified ones.
+     *
+     * @param sources the provider sources to set
+     */
     public void setSources(@NotNull IdentifiableProviderSource... sources) {
         this.setSources(Arrays.asList(sources));
     }
 
+    /**
+     * Replaces all current provider sources with the specified ones.
+     *
+     * @param sources the list of provider sources to set
+     */
     public void setSources(@NotNull List<? extends IdentifiableProviderSource> sources) {
         this.sources.clear();
         this.sources.addAll(sources);
@@ -114,6 +180,20 @@ public class WireContainerInitializer {
                 .value();
     }
 
+    /**
+     * Fills the provider catalog with providers from the stream.
+     * <p>
+     * This method processes each provider in the stream and either:
+     * <ul>
+     *   <li>Adds it to the conditional providers list if it has a condition</li>
+     *   <li>Registers it directly with the scope registry if it has no condition</li>
+     * </ul>
+     * Any errors during registration are captured in the provider catalog.
+     *
+     * @param wireContainer    the wire container to use for registration
+     * @param providerCatalog  the catalog to fill with providers
+     * @param providerStream   the stream of providers to process
+     */
     private void fillProviderCatalog(
             @NotNull WireContainer wireContainer,
             @NotNull ProviderCatalog providerCatalog,
@@ -144,8 +224,22 @@ public class WireContainerInitializer {
     }
 
     /**
-     * Resolves the scope of a {@link IdentifiableProvider} for conditional providers.
-     * For immediate registration, use ScopeRegistry.registerProvider() instead.
+     * Resolves the appropriate scope for a provider.
+     * <p>
+     * This method determines which scope a provider should be registered in by:
+     * <ol>
+     *   <li>Checking if the provider has a specified scope</li>
+     *   <li>Using that scope if available</li>
+     *   <li>Falling back to the default scope if no scope is specified or if the specified scope is not available</li>
+     * </ol>
+     * <p>
+     * Note: For immediate registration, use ScopeRegistry.registerProvider() instead.
+     * This method is primarily used for conditional providers that need scope resolution
+     * before their conditions are evaluated.
+     *
+     * @param scopeRegistry        the registry containing available scopes
+     * @param identifiableProvider the provider to resolve the scope for
+     * @return the resolved scope for the provider
      */
     @NotNull
     private Scope resolveScope(
@@ -161,6 +255,22 @@ public class WireContainerInitializer {
         return scope != null ? scope : scopeRegistry.getDefaultScope();
     }
 
+    /**
+     * Applies conditional providers to the wire container.
+     * <p>
+     * This method processes all conditional providers in the catalog by:
+     * <ol>
+     *   <li>Sorting them based on their order</li>
+     *   <li>Evaluating their conditions</li>
+     *   <li>Registering those whose conditions are met</li>
+     * </ol>
+     * <p>
+     * The method may perform multiple rounds of condition evaluation as some conditions
+     * may depend on beans that are registered by other conditional providers.
+     *
+     * @param wireContainer   the wire container to register providers with
+     * @param providerCatalog the catalog containing conditional providers
+     */
     private void applyConditionals(
             @NotNull WireContainer wireContainer,
             @NotNull ProviderCatalog providerCatalog
@@ -192,6 +302,15 @@ public class WireContainerInitializer {
         }
     }
 
+    /**
+     * Prints debug information about condition evaluation.
+     * <p>
+     * This method uses ConditionEvaluationReporter instances to report information about
+     * the condition evaluation process. If no reporters are found in the container,
+     * it falls back to using the SYSTEM_OUT reporter.
+     *
+     * @param context the context containing information about the condition evaluation
+     */
     private void printDebugInfo(ConditionEvaluationContext context) {
         Collection<ConditionEvaluationReporter> reporters = context.wireContainer().getAll(ConditionEvaluationReporter.class);
         if (reporters.isEmpty()) {
@@ -201,6 +320,25 @@ public class WireContainerInitializer {
         }
     }
 
+    /**
+     * Applies conditional providers in multiple rounds.
+     * <p>
+     * This method iteratively evaluates conditions for providers and registers those
+     * whose conditions are met. It continues this process in rounds until either:
+     * <ul>
+     *   <li>All providers have been processed</li>
+     *   <li>No more providers can be applied in a round</li>
+     * </ul>
+     * <p>
+     * This multi-round approach allows for dependencies between conditional providers,
+     * where one provider's registration might satisfy the condition for another provider.
+     *
+     * @param identifiableProviders the list of providers with their scopes to process
+     * @param round                 a counter tracking the number of rounds
+     * @param conditionEvaluation   the evaluation context for conditions
+     * @param providerCatalog       the catalog to register successful providers with
+     * @return a counter indicating how many providers were successfully applied
+     */
     private Counter applyConditionals(
             @NotNull List<ProviderCatalog.ProviderScope> identifiableProviders,
             @NotNull Counter round,

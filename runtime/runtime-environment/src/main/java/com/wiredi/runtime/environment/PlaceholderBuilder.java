@@ -4,6 +4,20 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * A builder class for creating {@link Placeholder} instances.
+ * <p>
+ * This class is used by {@link PlaceholderResolver} to incrementally build placeholder
+ * objects while parsing input strings. It maintains the state of the current placeholder
+ * being built, including its identifier, start and end delimiters, expression content,
+ * parameters, and position information.
+ * <p>
+ * The builder supports nested placeholders and parameters, and provides methods for
+ * adding different parts of a placeholder during the parsing process.
+ *
+ * @see Placeholder
+ * @see PlaceholderResolver
+ */
 public class PlaceholderBuilder {
 
     private final PlaceholderResolver parent;
@@ -19,10 +33,27 @@ public class PlaceholderBuilder {
     private StringBuilder innerContentPointer = innerContent;
     private int depth = 0;
 
+    /**
+     * Creates a new PlaceholderBuilder with the specified parent resolver.
+     *
+     * @param parent the parent PlaceholderResolver that will use this builder
+     */
     public PlaceholderBuilder(PlaceholderResolver parent) {
         this.parent = parent;
     }
 
+    /**
+     * Marks the start of a placeholder.
+     * <p>
+     * This method is called when a start delimiter is encountered during parsing.
+     * If the builder is already active (building a placeholder), the start delimiter
+     * is treated as part of the inner content of the current placeholder.
+     *
+     * @param start the start delimiter string
+     * @param identifier the identifier character preceding the start delimiter
+     * @param relativeStart the position of the identifier in the original string
+     * @return this builder instance for method chaining
+     */
     public PlaceholderBuilder noteStart(
             String start,
             char identifier,
@@ -39,6 +70,15 @@ public class PlaceholderBuilder {
         return this;
     }
 
+    /**
+     * Marks the end of a placeholder.
+     * <p>
+     * This method is called when an end delimiter is encountered during parsing.
+     * It handles parameter finalization and depth tracking for nested placeholders.
+     *
+     * @param consumer a consumer that receives the current depth after decrementing
+     * @return this builder instance for method chaining
+     */
     public PlaceholderBuilder noteEnd(Consumer<Integer> consumer) {
         if (this.depth == 1 && !this.parameterDelimiter.isEmpty()) {
             this.parameters.add(new Placeholder.Parameter(
@@ -107,6 +147,14 @@ public class PlaceholderBuilder {
         return this;
     }
 
+    /**
+     * Builds and returns a new Placeholder instance from the current state of this builder.
+     * <p>
+     * This method creates a new Placeholder with all the components that have been
+     * added to this builder.
+     *
+     * @return a new Placeholder instance
+     */
     public Placeholder build() {
         return new Placeholder(
                 identifier,
@@ -118,6 +166,13 @@ public class PlaceholderBuilder {
                 relativeStart, relativeEnd);
     }
 
+    /**
+     * Returns a string representation of the current state of this builder.
+     * <p>
+     * This method is primarily used for debugging purposes.
+     *
+     * @return a string representation of this builder
+     */
     @Override
     public String toString() {
         StringBuilder result = new StringBuilder();
@@ -132,6 +187,12 @@ public class PlaceholderBuilder {
                 .toString();
     }
 
+    /**
+     * Resets this builder to its initial state.
+     * <p>
+     * This method clears all content and resets all state variables, allowing
+     * the builder to be reused for building a new placeholder.
+     */
     public void reset() {
         relativeStart = -1;
         relativeEnd = -1;
@@ -146,6 +207,12 @@ public class PlaceholderBuilder {
         parameters.clear();
     }
 
+    /**
+     * Completely clears this builder and releases references.
+     * <p>
+     * This method is more thorough than {@link #reset()} and is typically
+     * called when the builder will no longer be used.
+     */
     public void clear() {
         relativeStart = -1;
         relativeEnd = -1;

@@ -47,38 +47,99 @@ public class Placeholder {
         this.identifierChar = identifierChar;
     }
 
+    /**
+     * Returns the identifier character for this placeholder, if present.
+     * <p>
+     * The identifier character is the character that precedes the start delimiter,
+     * such as '$' in "${expression}".
+     *
+     * @return an Optional containing the identifier character, or empty if there is none
+     */
     public Optional<Character> getIdentifierChar() {
         return Optional.ofNullable(identifierChar);
     }
 
+    /**
+     * Returns the list of parameters associated with this placeholder.
+     * <p>
+     * Parameters are additional values that can be provided after the expression,
+     * separated by delimiters.
+     *
+     * @return the list of parameters
+     */
     public List<Parameter> getParameters() {
         return parameters;
     }
 
+    /**
+     * Returns the start delimiter of this placeholder.
+     * <p>
+     * For example, in "${expression}", the start delimiter is "{".
+     *
+     * @return the start delimiter string
+     */
     public String getStart() {
         return start;
     }
 
+    /**
+     * Returns the expression part of this placeholder.
+     * <p>
+     * This is the main content between the start and end delimiters,
+     * excluding any parameters.
+     *
+     * @return the expression string
+     */
     public String getExpression() {
         return expression;
     }
 
+    /**
+     * Returns the end delimiter of this placeholder.
+     * <p>
+     * For example, in "${expression}", the end delimiter is "}".
+     *
+     * @return the end delimiter string
+     */
     public String getEnd() {
         return end;
     }
 
+    /**
+     * Returns the PlaceholderResolver that created this placeholder.
+     *
+     * @return the parent PlaceholderResolver
+     */
     public PlaceholderResolver getParent() {
         return parent;
     }
 
+    /**
+     * Returns the start position of this placeholder in the original string.
+     *
+     * @return the relative start position
+     */
     public int getRelativeStart() {
         return relativeStart;
     }
 
+    /**
+     * Returns the end position of this placeholder in the original string.
+     *
+     * @return the relative stop position
+     */
     public int getRelativeStop() {
         return relativeStop;
     }
 
+    /**
+     * Compiles this placeholder back into its string representation.
+     * <p>
+     * This method reconstructs the complete placeholder string, including the
+     * identifier character, start delimiter, expression, parameters, and end delimiter.
+     *
+     * @return the compiled placeholder string
+     */
     public String compile() {
         StringBuilder stringBuilder = new StringBuilder();
         if (identifierChar != null) {
@@ -91,12 +152,33 @@ public class Placeholder {
         return stringBuilder.append(end).toString();
     }
 
+    /**
+     * Replaces this placeholder in the given string with the replacement value,
+     * using the relative positions stored in this placeholder.
+     * <p>
+     * This method is more efficient than {@link #replaceIn(String, String)} when
+     * the relative positions are known and valid.
+     *
+     * @param wholeString the string containing this placeholder
+     * @param replacement the value to replace this placeholder with
+     * @return the string with this placeholder replaced
+     */
     public String replaceRelativeIn(String wholeString, String replacement) {
         String start = wholeString.substring(0, relativeStart);
         String stop = wholeString.substring(relativeStop);
         return start + replacement + stop;
     }
 
+    /**
+     * Replaces all occurrences of this placeholder in the given string with the replacement value.
+     * <p>
+     * This method compiles the placeholder to its string representation and then
+     * replaces all occurrences of that string in the input.
+     *
+     * @param wholeString the string containing this placeholder
+     * @param replacement the value to replace this placeholder with
+     * @return the string with all occurrences of this placeholder replaced
+     */
     public String replaceIn(String wholeString, String replacement) {
         return wholeString.replace(compile(), replacement);
     }

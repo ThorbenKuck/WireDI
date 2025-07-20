@@ -12,19 +12,22 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * This value holds a content that is lazily resolved.
+ * A Value implementation that lazily initializes its content.
  * <p>
- * It holds the content separately from the supplier.
- * If a content is requested from the value, it checks the following state:
+ * This value holds the content separately from the supplier that creates it.
+ * When content is requested from the value, it follows this process:
  * <ol>
- *     <li>If the content is set, the content is returned.</li>
- *     <li>If the content but a Supplier is set, the supplier generates the content that is set and returned. Then the supplier is removed.</li>
- *     <li>If the content and Supplier is null, the value is considered empty.</li>
+ *     <li>If the content is already set, the content is returned directly.</li>
+ *     <li>If the content is null but a supplier is set, the supplier is used to generate the content,
+ *         which is then stored and returned. The supplier is then removed to avoid repeated computation.</li>
+ *     <li>If both the content and supplier are null, the value is considered empty.</li>
  * </ol>
  * <p>
- * This value provides additional functions ({@link #set(ThrowingSupplier)}), to set a {@link ThrowingSupplier}
+ * This value provides an additional method {@link #set(ThrowingSupplier)} to set a supplier
+ * that will be used to lazily initialize the content when needed.
  *
- * @param <T>
+ * @param <T> The type of value stored in this container
+ * @see Value#lazy(ThrowingSupplier)
  */
 public class LazyValue<T> implements Value<T> {
 
@@ -33,12 +36,26 @@ public class LazyValue<T> implements Value<T> {
     @Nullable
     private T content;
 
+    /**
+     * Creates a new LazyValue with the specified supplier.
+     * <p>
+     * The supplier will be used to initialize the value when it is first accessed.
+     * After the value is initialized, the supplier is discarded to avoid repeated computation.
+     *
+     * @param supplier The supplier that will provide the value when needed
+     */
     public LazyValue(@NotNull ThrowingSupplier<@Nullable T, ?> supplier) {
         this.supplier = supplier;
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the current value, initializing it if necessary.
+     * <p>
+     * This method handles the lazy initialization logic. If the content is not yet set
+     * but a supplier is available, it will use the supplier to initialize the content.
+     * Any exceptions thrown by the supplier are properly handled and rethrown.
+     *
+     * @return The current value, which may be null
      */
     @Nullable
     private T getCurrent() {

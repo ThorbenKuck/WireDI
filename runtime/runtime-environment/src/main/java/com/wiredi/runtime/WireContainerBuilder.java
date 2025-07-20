@@ -77,18 +77,36 @@ public class WireContainerBuilder {
         return this;
     }
 
+    /**
+     * Adds a provider to the list of providers that will be registered with the WireContainer.
+     *
+     * @param provider the provider to add
+     * @return this builder instance
+     */
     @NotNull
     public WireContainerBuilder withProvider(@NotNull IdentifiableProvider<?> provider) {
         this.providers.add(provider);
         return this;
     }
 
+    /**
+     * Adds multiple providers to the list of providers that will be registered with the WireContainer.
+     *
+     * @param providers the list of providers to add
+     * @return this builder instance
+     */
     @NotNull
     public WireContainerBuilder withProviders(@NotNull List<IdentifiableProvider<?>> providers) {
         this.providers.addAll(providers);
         return this;
     }
 
+    /**
+     * Adds multiple providers to the list of providers that will be registered with the WireContainer.
+     *
+     * @param providers the providers to add
+     * @return this builder instance
+     */
     @NotNull
     public WireContainerBuilder withProviders(@NotNull IdentifiableProvider<?>... providers) {
         this.providers.addAll(Arrays.asList(providers));
@@ -148,10 +166,11 @@ public class WireContainerBuilder {
     }
 
     /**
-     * Builds a new WireContext with the configured options.
-     * The WireContext is not loaded.
+     * Builds a new WireContainer with the configured options and applies a post-processor.
+     * The WireContainer is not loaded.
      *
-     * @return a new, unloaded WireContext
+     * @param postProcessor a consumer that can perform additional configuration on the built container
+     * @return a new, unloaded WireContainer
      */
     @NotNull
     public WireContainer build(Consumer<WireContainer> postProcessor) {
@@ -160,6 +179,12 @@ public class WireContainerBuilder {
         return container;
     }
 
+    /**
+     * Builds a new WireContainer, applies the preLoadProcessor, and then loads it.
+     * 
+     * @param preLoadProcessor a consumer that can configure the WireContainer before loading
+     * @return a new, loaded WireContainer
+     */
     @NotNull
     public WireContainer load(Consumer<WireContainer> preLoadProcessor) {
         WireContainer container = build();
@@ -168,6 +193,11 @@ public class WireContainerBuilder {
         return container;
     }
 
+    /**
+     * Builds a new WireContainer and loads it.
+     * 
+     * @return a new, loaded WireContainer
+     */
     @NotNull
     public WireContainer load() {
         WireContainer container = build();

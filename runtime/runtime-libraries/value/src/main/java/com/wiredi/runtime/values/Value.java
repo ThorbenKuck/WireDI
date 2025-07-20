@@ -156,6 +156,17 @@ public interface Value<T> {
     @NotNull
     T get();
 
+    /**
+     * Returns the content of the value, or the result of the defaultValue supplier if the value is not set.
+     * <p>
+     * This method provides a way to get a value with a fallback that can throw exceptions.
+     * If the value is not set, the defaultValue supplier will be called to provide a fallback value.
+     *
+     * @param defaultValue The supplier to provide a fallback value if this value is not set
+     * @param <E>          The type of exception that the supplier might throw
+     * @return The content of this value if set, otherwise the result of the defaultValue supplier
+     * @throws E If the defaultValue supplier throws an exception
+     */
     default <E extends Throwable> T get(ThrowingSupplier<T, E> defaultValue) throws E {
         if (!isSet()) {
             return defaultValue.get();
@@ -164,6 +175,15 @@ public interface Value<T> {
         }
     }
 
+    /**
+     * Returns the content of the value, or the defaultValue if the value is not set.
+     * <p>
+     * This method provides a way to get a value with a simple fallback.
+     * If the value is not set, the defaultValue will be returned instead.
+     *
+     * @param defaultValue The fallback value to return if this value is not set
+     * @return The content of this value if set, otherwise the defaultValue
+     */
     default T get(T defaultValue) {
         if (!isSet()) {
             return defaultValue;
@@ -184,7 +204,8 @@ public interface Value<T> {
     /**
      * Check if the value is set.
      * <p>
-     * The value
+     * The value is considered set if it contains a non-null value.
+     * This method is the opposite of {@link #isEmpty()}.
      *
      * @return true if the value is set, false if it is empty.
      * @see #isEmpty()
@@ -249,6 +270,17 @@ public interface Value<T> {
         return this::get;
     }
 
+    /**
+     * Maps the content of this value using the provided mapping function.
+     * <p>
+     * This method retrieves the value using {@link #get()} and applies the mapping function to it.
+     * It's a convenient way to transform the value without having to manually call get() and apply the function.
+     *
+     * @param mappingFunction The function to apply to the value
+     * @param <S>             The type of the result after applying the mapping function
+     * @return The result of applying the mapping function to the value
+     * @throws NullPointerException If the value is not set and {@link #get()} throws
+     */
     default <S> S map(Function<T, S> mappingFunction) {
         return mappingFunction.apply(get());
     }

@@ -2,6 +2,19 @@ package com.wiredi.runtime.environment;
 
 import com.wiredi.runtime.properties.Key;
 
+/**
+ * This class defines standard environment property keys used throughout the WireDI framework.
+ * <p>
+ * These constants provide a centralized definition of property keys that control
+ * various aspects of the environment configuration, such as active profiles,
+ * additional properties files, and default settings.
+ * <p>
+ * Using these constants instead of hardcoded strings helps maintain consistency
+ * and makes it easier to track and update property keys across the codebase.
+ *
+ * @see com.wiredi.runtime.Environment
+ * @see com.wiredi.runtime.properties.Key
+ */
 public class DefaultEnvironmentKeys {
 
     public static final String ACTIVE_PROFILES_VALUE = "active.profiles";

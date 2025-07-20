@@ -12,24 +12,43 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
- * This value holds a content that is lazily resolved.
+ * A Value implementation that always consults its supplier to retrieve the value.
+ * <p>
+ * Unlike {@link LazyValue} which caches the result of the supplier after the first call,
+ * this implementation is stateless and always delegates to the underlying supplier
+ * whenever the value is requested. This means the value can change over time if the
+ * supplier returns different values on different calls.
+ * <p>
+ * This is useful when you need a value that can dynamically change based on some
+ * external state, but still want to use the Value interface.
  *
- * Contrary to the  {@link LazyValue}, this Value doesn't hold a state.
- * Instead, it always consults the underlying supplier to retrieve its value.
- *
- * @param <T>
+ * @param <T> The type of value provided by this container
+ * @see Value#of(ThrowingSupplier)
+ * @see LazyValue
  */
 public class LazyStatelessValue<T> implements Value<T> {
 
     @Nullable
     private ThrowingSupplier<T, ?> supplier;
 
+    /**
+     * Creates a new LazyStatelessValue with the specified supplier.
+     * <p>
+     * The supplier will be consulted every time the value is accessed.
+     *
+     * @param supplier The supplier that will provide the value when needed
+     */
     public LazyStatelessValue(@NotNull ThrowingSupplier<@Nullable T, ?> supplier) {
         this.supplier = supplier;
     }
 
     /**
-     * {@inheritDoc}
+     * Gets the current value by consulting the supplier.
+     * <p>
+     * This method handles the delegation to the supplier and proper exception handling.
+     * Any exceptions thrown by the supplier are properly handled and rethrown.
+     *
+     * @return The current value from the supplier, which may be null
      */
     @Nullable
     private T getCurrent() {
@@ -130,7 +149,7 @@ public class LazyStatelessValue<T> implements Value<T> {
     @Override
     public String toString() {
         return "LazyStatelessValue{" +
-                "supplier=" + supplier + +
+                "supplier=" + supplier +
                 '}';
     }
 }
