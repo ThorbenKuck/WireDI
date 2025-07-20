@@ -12,7 +12,6 @@
         <groupId>com.wiredi</groupId>
         <artifactId>bundles</artifactId>
         <version>${revision}</version>
-
     </parent>
 
     <developers>
@@ -65,6 +64,11 @@
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>test-utils</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>logback-bundle</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 

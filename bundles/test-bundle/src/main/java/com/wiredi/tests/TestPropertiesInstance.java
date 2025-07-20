@@ -1,5 +1,8 @@
 package com.wiredi.tests;
 
+import com.wiredi.tests.instance.Prop;
+import com.wiredi.tests.instance.TestProperties;
+
 import java.lang.annotation.Annotation;
 
 public record TestPropertiesInstance(

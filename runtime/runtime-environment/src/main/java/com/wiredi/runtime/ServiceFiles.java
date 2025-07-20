@@ -14,7 +14,7 @@ public class ServiceFiles<T> {
     private final Logging logger = Logging.getInstance(ServiceFiles.class);
     private final Class<T> type;
     private final Value<Collection<ServiceLoader.Provider<T>>> providers;
-    private final List<Class<? extends T>> serviceTypes;
+    private final Set<Class<? extends T>> serviceTypes;
     private final List<T> services = new ArrayList<>();
     private boolean initialized = false;
     private boolean ignoreClassNotFound = false;
@@ -22,7 +22,7 @@ public class ServiceFiles<T> {
     public ServiceFiles(Class<T> type) {
         this.type = type;
         this.providers = Value.async(() -> PROVIDER_FACTORY.getProviders(type));
-        this.serviceTypes = new ArrayList<>();
+        this.serviceTypes = new HashSet<>();
     }
 
     public static void setProviderFactory(ProviderFactory factory) {
@@ -39,10 +39,6 @@ public class ServiceFiles<T> {
             initializer.accept(serviceFiles);
             return serviceFiles;
         });
-    }
-
-    public List<Class<? extends T>> serviceTypes() {
-        return serviceTypes;
     }
 
     public Class<T> type() {

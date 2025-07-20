@@ -9,8 +9,6 @@ import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
 import com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource;
-import com.wiredi.runtime.exceptions.DiInstantiationException;
-import com.wiredi.runtime.exceptions.DiLoadingException;
 import com.wiredi.runtime.lang.Counter;
 import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.time.Timed;
@@ -76,6 +74,9 @@ public class WireContainerInitializer {
      */
     @NotNull
     public Timed initialize(@NotNull WireContainer wireContainer) {
+        if (this.sources.isEmpty()) {
+            throw new IllegalStateException("A WireContainer cannot be initialized without any sources.");
+        }
         // pre-check to avoid unnecessary synchronization
         StartupDiagnostics startupDiagnostics = wireContainer.startupDiagnostics();
 

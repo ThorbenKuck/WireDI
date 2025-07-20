@@ -252,7 +252,11 @@ public class Environment {
     }
 
     public void addExpressionResolvers(Collection<? extends EnvironmentExpressionResolver> resolver) {
-        resolver.forEach(this::addExpressionResolver);
+        try {
+            resolver.forEach(this::addExpressionResolver);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Error while registering resolvers " + resolver, e);
+        }
     }
 
     public void addExpressionResolver(EnvironmentExpressionResolver resolver) {

@@ -38,11 +38,14 @@ public abstract class AbstractScope implements Scope {
     public @NotNull <T> IdentifiableProvider<T> getProvider(@NotNull TypeIdentifier<T> typeIdentifier) {
         checkActive();
         BeanFactory<T> factory = factories.get(typeIdentifier.erasure());
-        if (factory != null) {
-            IdentifiableProvider<T> provider = factory.resolveProvider(null);
-            if (provider != null) {
-                return provider;
-            }
+
+        if (factory == null) {
+            throw MissingBeanException.missingFactory(typeIdentifier);
+        }
+
+        IdentifiableProvider<T> provider = factory.resolveProvider(null);
+        if (provider != null) {
+            return provider;
         }
 
         throw MissingBeanException.unableToCreate(typeIdentifier.erasure());
@@ -52,11 +55,14 @@ public abstract class AbstractScope implements Scope {
     public @NotNull <T> IdentifiableProvider<T> getProvider(@NotNull QualifiedTypeIdentifier<T> qualifierType) {
         checkActive();
         BeanFactory<T> factory = factories.get(qualifierType.type().erasure());
-        if (factory != null) {
-            IdentifiableProvider<T> provider = factory.resolveProvider(qualifierType.qualifier());
-            if (provider != null) {
-                return provider;
-            }
+
+        if (factory == null) {
+            throw MissingBeanException.missingFactory(qualifierType.type());
+        }
+
+        IdentifiableProvider<T> provider = factory.resolveProvider(qualifierType.qualifier());
+        if (provider != null) {
+            return provider;
         }
 
         throw MissingBeanException.unableToCreate(qualifierType.type());

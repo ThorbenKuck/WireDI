@@ -1,4 +1,4 @@
-package com.wiredi.tests;
+package com.wiredi.tests.instance;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

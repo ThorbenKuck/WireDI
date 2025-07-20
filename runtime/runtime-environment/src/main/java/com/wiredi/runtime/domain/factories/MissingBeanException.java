@@ -17,11 +17,11 @@ public class MissingBeanException extends RuntimeException {
     }
 
     public static MissingBeanException unableToCreate(TypeIdentifier<?> type) {
-        return new MissingBeanException(type, "Unable to create bean of type " + type + ".");
+        return new MissingBeanException(type, "Unable to create bean of type " + type);
     }
 
     public static MissingBeanException unableToCreate(QualifiedTypeIdentifier<?> type) {
-        return new MissingBeanException(type.type(), "Unable to create bean of type " + type + ".");
+        return new MissingBeanException(type.type(), "Unable to create bean of type " + type);
     }
 
     public TypeIdentifier<?> type() {

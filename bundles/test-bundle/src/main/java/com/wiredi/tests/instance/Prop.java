@@ -1,4 +1,4 @@
-package com.wiredi.tests;
+package com.wiredi.tests.instance;
 
 public @interface Prop {
 

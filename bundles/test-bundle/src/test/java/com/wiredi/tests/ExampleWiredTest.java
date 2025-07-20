@@ -2,7 +2,6 @@ package com.wiredi.tests;
 
 import com.wiredi.annotations.ActiveProfiles;
 import com.wiredi.runtime.WireContainer;
-import com.wiredi.runtime.domain.StandardWireConflictResolver;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import jakarta.inject.Inject;
@@ -12,7 +11,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
 @WiredTest
 @ActiveProfiles("test")
-public class ExampleTest {
+public class ExampleWiredTest {
 
     @Inject
     private ExampleService exampleServiceFieldInjection;
@@ -26,7 +25,7 @@ public class ExampleTest {
     private final ExampleService exampleServiceConstructorInjection;
     private final WireContainer classWireRepositoryConstructorInjection;
 
-    public ExampleTest(
+    public ExampleWiredTest(
             ExampleService exampleServiceConstructorInjection,
             WireContainer classWireRepositoryConstructorInjection
     ) {
