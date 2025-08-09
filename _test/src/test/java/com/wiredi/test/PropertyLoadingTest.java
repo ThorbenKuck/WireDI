@@ -1,36 +1,25 @@
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireContainer;
 import com.wiredi.test.properties.ExampleProperties;
 import com.wiredi.test.properties.SeparateProperties;
+import com.wiredi.tests.ApplicationTest;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 
-public class PropertyLoadingTest extends AbstractIntegrationTest {
+@ApplicationTest
+public class PropertyLoadingTest {
 
     @Test
-    public void testThatSeparatePropertiesAreLoadedCorrectly()  {
-        // Arrange
-        WireContainer wireContainer = loadWireRepository();
-
-        // Act
-        SeparateProperties separateProperties = wireContainer.get(SeparateProperties.class);
-
-        // Assert
-        assertThat(separateProperties.getFoo()).isNotNull().isEqualTo("baz");
-        assertThat(separateProperties.getPi()).isNotNull().isEqualTo(0.0);
+    public void testThatSeparatePropertiesAreLoadedCorrectly(SeparateProperties separateProperties) {
+        // Arrange Act Assert
+        assertThat(separateProperties.foo()).isNotNull().isEqualTo("baz");
+        assertThat(separateProperties.pi()).isNotNull().isEqualTo(3);
     }
 
     @Test
-    public void testThatExamplePropertiesAreLoadedCorrectly()  {
-        // Arrange
-        WireContainer wireContainer = loadWireRepository();
-
-        // Act
-        ExampleProperties separateProperties = wireContainer.get(ExampleProperties.class);
-
-        // Assert
+    public void testThatExamplePropertiesAreLoadedCorrectly(ExampleProperties separateProperties) {
+        // Arrange Act Assert
         assertThat(separateProperties.getFoo()).isNotNull().isEqualTo("bar");
         assertThat(separateProperties.getPi()).isNotNull().isEqualTo(0.0);
     }

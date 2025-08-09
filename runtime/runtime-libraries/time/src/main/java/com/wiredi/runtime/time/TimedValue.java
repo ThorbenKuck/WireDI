@@ -4,6 +4,7 @@ import com.wiredi.runtime.lang.ThrowingRunnable;
 import com.wiredi.runtime.lang.ThrowingSupplier;
 import org.jetbrains.annotations.NotNull;
 
+import java.time.Duration;
 import java.util.function.Consumer;
 
 /**
@@ -17,6 +18,10 @@ import java.util.function.Consumer;
  * @see Timed
  */
 public record TimedValue<T>(@NotNull T value, @NotNull Timed time) {
+
+    public Duration duration() {
+        return time.duration();
+    }
 
     /**
      * Constructs a new TimedValue from the provided supplier.

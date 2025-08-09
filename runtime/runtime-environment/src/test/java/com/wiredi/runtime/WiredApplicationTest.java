@@ -9,6 +9,7 @@ import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static com.wiredi.runtime.PropertyKeys.PRINT_DIAGNOSTICS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 
@@ -22,6 +23,7 @@ class WiredApplicationTest {
             // Arrange
             Case testCase = new Case();
             WiredApplicationInstance application = WiredApplication.start(container -> {
+                container.environment().setProperty(PRINT_DIAGNOSTICS.getKey(), "true");
                 container.announce(
                         IdentifiableProvider.singleton(testCase)
                                 .withAdditionalTypeIdentifier(TypeIdentifier.just(Eager.class))

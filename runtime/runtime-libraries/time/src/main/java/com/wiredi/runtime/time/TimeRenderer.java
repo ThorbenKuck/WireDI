@@ -179,6 +179,9 @@ public class TimeRenderer {
     @Override
     @NotNull
     public String toString() {
+        if (result.isEmpty()) {
+            return "0";
+        }
         return render();
     }
 }

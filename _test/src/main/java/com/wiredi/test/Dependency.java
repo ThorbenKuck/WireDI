@@ -13,6 +13,7 @@ import java.util.UUID;
 class Dependency implements IDependency {
 
     private final String id = UUID.randomUUID().toString();
+    private final ConditionChecker conditionChecker = new ConditionChecker();
 
     Dependency() {
         System.out.println("[CONSTRUCTOR   |Dependency] called");
@@ -25,7 +26,7 @@ class Dependency implements IDependency {
 
     @Inject
     void inject(CommandA command) {
-
+        System.out.println("");
     }
 
     @Inject

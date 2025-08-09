@@ -1,6 +1,8 @@
 package com.wiredi.test;
 
 import com.wiredi.runtime.WireContainer;
+import com.wiredi.runtime.WiredApplication;
+import com.wiredi.runtime.WiredApplicationInstance;
 import com.wiredi.test.commands.Command;
 import com.wiredi.test.commands.CommandNote;
 import com.wiredi.test.inner.SuperDi;
@@ -11,8 +13,10 @@ import java.util.List;
 public class Main {
 
 	public static void main(String[] args) {
-		WireContainer wireContainer = WireContainer.open();
-		wireContainer.announce(new Dependency());
+		WiredApplicationInstance applicationInstance = WiredApplication.start(container -> {
+			container.announce(new Dependency());
+		});
+		WireContainer wireContainer = applicationInstance.wireContainer();
 
 		wireContainer.get(MetaAnnotationTest.class);
 		SuperDi instance = wireContainer.get(SuperDi.class);

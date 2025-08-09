@@ -60,6 +60,7 @@
         <dependency>
             <groupId>com.wiredi</groupId>
             <artifactId>runtime-environment</artifactId>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>

@@ -31,24 +31,43 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>bom</artifactId>
+                <version>${wiredi.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
         <dependency>
             <groupId>com.wiredi</groupId>
-            <artifactId>processors</artifactId>
-            <version>${wiredi.version}</version>
+            <artifactId>runtime-environment</artifactId>
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
-            <artifactId>runtime-environment</artifactId>
-            <version>${wiredi.version}</version>
+            <artifactId>logback-bundle</artifactId>
         </dependency>
 
+        <!-- Compiler -->
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>processors</artifactId>
+            <optional>true</optional>
+        </dependency>
+
+        <!-- Tests -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
+            <artifactId>test-bundle</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

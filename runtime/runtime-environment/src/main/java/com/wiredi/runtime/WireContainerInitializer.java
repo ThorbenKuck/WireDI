@@ -149,17 +149,17 @@ public class WireContainerInitializer {
         ProviderCatalog providerCatalog = new ProviderCatalog();
         logger.debug("Registering all known identifiable providers");
         Timed timed = startupDiagnostics.measure("WireBootstrap.load", () -> {
-            Stream<IdentifiableProvider<?>> providers = startupDiagnostics.measure("WireBootstrap.loadProviders", () -> this.loadProviders(startupDiagnostics))
+            Stream<IdentifiableProvider<?>> providers = startupDiagnostics.measure("loadProviders", this::loadProviders)
                     .then(timedValue -> logger.debug(() -> "Loaded IdentifiableProviders in " + timedValue.time()))
                     .value();
-            startupDiagnostics.measure("WireBootstrap.constructProviderCatalog", () -> fillProviderCatalog(wireContainer, providerCatalog, providers))
+            startupDiagnostics.measure("constructProviderCatalog", () -> fillProviderCatalog(wireContainer, providerCatalog, providers))
                     .then(t -> logger.debug(() -> "Constructed provider catalog in " + t));
 
             if (providerCatalog.hasErrors()) {
                 throw providerCatalog.printErrors();
             }
 
-            startupDiagnostics.measure("WireBootstrap.applyConditionals", () -> applyConditionals(wireContainer, providerCatalog))
+            startupDiagnostics.measure("applyConditionals", () -> applyConditionals(wireContainer, providerCatalog))
                     .then(t -> logger.debug("Applied conditionals in " + t));
         });
         logger.debug(() -> "Registered " + providerCatalog.countRegisteredProviders() + "identifiable providers in " + timed);
@@ -171,13 +171,10 @@ public class WireContainerInitializer {
      * <p>
      * The Stream returned by this method is used to then load scopes and apply conditional providers.
      *
-     * @param startupDiagnostics the diagnostics, to register the time it took to load.
      * @return a standalone stream that can be analyzed.
      */
-    private Stream<IdentifiableProvider<?>> loadProviders(StartupDiagnostics startupDiagnostics) {
-        return startupDiagnostics.measure("WireBootstrap.loadProviders", () -> sources.stream().flatMap(source -> source.load().stream()))
-                .then(timedValue -> logger.debug(() -> "Loaded IdentifiableProviders in " + timedValue.time()))
-                .value();
+    private Stream<IdentifiableProvider<?>> loadProviders() {
+        return sources.stream().flatMap(source -> source.load().stream());
     }
 
     /**
@@ -283,7 +280,7 @@ public class WireContainerInitializer {
         ConditionEvaluation conditionEvaluation = new ConditionEvaluation(wireContainer);
         Integer conditionalRoundThreshold = wireContainer.environment().getProperty(PropertyKeys.CONDITIONAL_ROUND_THRESHOLD.getKey(), 10);
 
-        logger.debug(() -> "Detected " + conditionalProviders.size() + " conditional providers.");
+        logger.trace(() -> "Detected " + conditionalProviders.size() + " conditional providers.");
         Counter additionalRounds = new Counter();
 
         // Sort once upfront for better condition resolution order
@@ -293,7 +290,7 @@ public class WireContainerInitializer {
         if (additionalRounds.get() > conditionalRoundThreshold) {
             logger.warn(() -> ROUND_LOGGING_PREFIX.formatted(appliedConditionalProviders.get(), additionalRounds.get()) + ROUND_WARNING_SUFFIX);
         } else {
-            logger.debug(() -> ROUND_LOGGING_PREFIX.formatted(appliedConditionalProviders.get(), additionalRounds.get()));
+            logger.trace(() -> ROUND_LOGGING_PREFIX.formatted(appliedConditionalProviders.get(), additionalRounds.get()));
         }
 
         // Only do debug output if debug is enabled (avoid property lookup in hot path)
@@ -349,7 +346,7 @@ public class WireContainerInitializer {
         List<ProviderCatalog.ProviderScope> leftoverProviders = new ArrayList<>(OrderedComparator.sorted(identifiableProviders));
         List<ProviderCatalog.ProviderScope> currentNotMatched = new ArrayList<>(leftoverProviders.size());
         boolean anyApplied;
-        logger.debug(() -> "Applying conditional providers; Round " + round.get());
+        logger.trace(() -> "Applying conditional providers; Round " + round.get());
 
         do {
             anyApplied = false;
@@ -378,14 +375,14 @@ public class WireContainerInitializer {
                 }
             }
 
-            logger.debug(() -> "Conditional Round " + round.get() + ". Totally Applied conditional providers: " + applied.get());
+            logger.trace(() -> "Conditional Round " + round.get() + ". Totally Applied conditional providers: " + applied.get());
             // Swap references instead of clearing and adding all
             List<ProviderCatalog.ProviderScope> temp = leftoverProviders;
             leftoverProviders = currentNotMatched;
             currentNotMatched = temp;
         } while (anyApplied && !leftoverProviders.isEmpty());
 
-        logger.debug(() -> "Applied " + applied.get() + " conditions in round " + round.get());
+        logger.trace(() -> "Applied " + applied.get() + " conditions in round " + round.get());
         return applied;
     }
 }

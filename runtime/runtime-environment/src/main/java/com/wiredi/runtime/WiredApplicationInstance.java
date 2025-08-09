@@ -161,25 +161,32 @@ public class WiredApplicationInstance {
         logger.debug(() -> "Printing WireContainer Diagnostics");
         if (environment.getProperty(PRINT_DIAGNOSTICS.getKey(), false)) {
             StartupDiagnostics startupDiagnostics = wireContainer.startupDiagnostics();
-            StartupDiagnostics.TimingState state = startupDiagnostics.state();
-
-            if (!state.isEmpty()) {
-                List<String> lines = new ArrayList<>();
-                printState(state, 0, lines);
-                String diagnostics = String.join("\n", lines);
-                logger.info(() -> "Startup diagnostics:\n" + diagnostics);
-            }
+            startupDiagnostics.accept(new StartupDiagnosticsPrinter());
         }
     }
 
-    private void printState(StartupDiagnostics.TimingState state, int depth, List<String> lines) {
-        lines.add(pad(" - " + state.name() + ": " + state.time(), depth));
-        state.children().forEach(child -> printState(child, depth + 1, lines));
+    private static final class StartupDiagnosticsPrinter implements StartupDiagnostics.Visitor {
+
+        private final List<String> lines = new ArrayList<>();
+
+        @Override
+        public void acceptRoot(StartupDiagnostics.TimingState state) {
+            lines.add("WireContainer startup in " + state.time());
+        }
+
+        @Override
+        public void accept(StartupDiagnostics.TimingState state, int depth) {
+            lines.add("  ".repeat(Math.max(0, depth)) + " - " + state.name() + ": " + state.time());
+        }
+
+        @Override
+        public void cleanup() {
+            String diagnostics = String.join("\n", lines);
+            lines.clear();
+            logger.info(() -> "Startup diagnostics:\n" + diagnostics);
+        }
     }
 
-    private String pad(String string, int depth) {
-        return "  ".repeat(Math.max(0, depth)) + string;
-    }
 
     /**
      * Shuts down this application instance.

@@ -13,8 +13,6 @@ import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.provider.WrappingProvider;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
-import com.wiredi.runtime.exceptions.BeanNotFoundException;
-import com.wiredi.runtime.exceptions.DiInstantiationException;
 import com.wiredi.runtime.properties.PropertyLoader;
 import com.wiredi.runtime.qualifier.QualifierType;
 import com.wiredi.runtime.resources.ResourceLoader;
@@ -36,20 +34,20 @@ import java.util.function.Supplier;
 import static com.wiredi.runtime.lang.Preconditions.is;
 
 /**
- * The WireRepository is the IOC container of WireDI.
+ * The WireContainer is the IOC container of WireDI.
  * Its responsibility is to hold and maintain components, which are named "Wires".
  * <p>
  * This class specifies operations on how to interact with the {@link WireContainerInitializer}.
  * <p>
  * Each {@link WireContainer} has a related {@link Environment} assigned during its creation.
  * <p>
- * Apart from the {@link WireContainerInitializer}, each WireRepository also has an {@link OnDemandInjector} instances that can
+ * Apart from the {@link WireContainerInitializer}, each WireContainer also has an {@link OnDemandInjector} instances that can
  * be used to construct components at runtime and without the need to provide {@link IdentifiableProvider}.
  * This injector uses this repository to resolve dependencies.
  * As the {@link OnDemandInjector} requires reflection to operate, it's generally not recommended to use it.
  * Instead, it's suggested to provide everything required as an {@link IdentifiableProvider}.
  * <p>
- * If you require a WireRepository with features such as {@link }
+ * If you require a WireContainer with features such as {@link }
  *
  * @see WireContainerInitializer
  * @see Environment
@@ -112,13 +110,13 @@ public class WireContainer {
     }
 
     /**
-     * Creates a new fully configured WireRepository using the default properties and loads it.
+     * Creates a new fully configured WireContainer using the default properties and loads it.
      * <p>
      * This method is recommended to be used in nearly all scenarios you could imagine.
      * <p>
      * This method uses the {@link WireContainerBuilder} internally.
      *
-     * @return a new and fully configured WireRepository.
+     * @return a new and fully configured WireContainer.
      * @see WireContainerBuilder
      */
     @NotNull
@@ -127,12 +125,12 @@ public class WireContainer {
     }
 
     /**
-     * Creates a new fully configured WireRepository using the provided environment and loads it.
+     * Creates a new fully configured WireContainer using the provided environment and loads it.
      * <p>
      * This method uses the {@link WireContainerBuilder} internally.
      *
      * @param environment the environment to use
-     * @return a new and fully configured WireRepository.
+     * @return a new and fully configured WireContainer.
      * @see WireContainerBuilder
      */
     @NotNull
@@ -141,11 +139,11 @@ public class WireContainer {
     }
 
     /**
-     * Creates a new, not loaded WireRepository.
+     * Creates a new, not loaded WireContainer.
      * <p>
      * This method uses the {@link WireContainerBuilder} internally.
      *
-     * @return a new WireRepository instance
+     * @return a new WireContainer instance
      * @see WireContainerBuilder
      */
     @NotNull
@@ -154,12 +152,12 @@ public class WireContainer {
     }
 
     /**
-     * Creates a new, not loaded WireRepository with the provided environment.
+     * Creates a new, not loaded WireContainer with the provided environment.
      * <p>
      * This method uses the {@link WireContainerBuilder} internally.
      *
      * @param environment the environment to use
-     * @return a new WireRepository instance
+     * @return a new WireContainer instance
      * @see WireContainerBuilder
      */
     @NotNull
@@ -202,7 +200,7 @@ public class WireContainer {
     }
 
     /**
-     * Whether this WireRepository is loaded.
+     * Whether this WireContainer is loaded.
      * <p>
      * If this method returns true, the underlying {@link WireContainerInitializer} is loaded and ready to be used.
      * If it returns false, you can load the repository by calling {@link #load()}
@@ -214,7 +212,7 @@ public class WireContainer {
     }
 
     /**
-     * Whether this WireRepository is not loaded.
+     * Whether this WireContainer is not loaded.
      * <p>
      * This is the opposite of {@link #isLoaded()}
      *
@@ -225,7 +223,7 @@ public class WireContainer {
     }
 
     /**
-     * The {@link Environment} relating to this WireRepository.
+     * The {@link Environment} relating to this WireContainer.
      * <p>
      * If not explicitly defined while constructing this repository, it's a completely standalone environment.
      * <p>
@@ -245,14 +243,14 @@ public class WireContainer {
     }
 
     /**
-     * Returns the {@link OnDemandInjector} for this WireRepository.
+     * Returns the {@link OnDemandInjector} for this WireContainer.
      * <p>
      * The {@link OnDemandInjector} is instantiated lazily as it fulfills a special purpose.
      * It uses reflections to construct a class that is unknown at compile-time.
      * <p>
      * For more details about the {@link OnDemandInjector} please have a look at its documentation.
      *
-     * @return the {@link OnDemandInjector} of this WireRepository
+     * @return the {@link OnDemandInjector} of this WireContainer
      * @see OnDemandInjector
      */
     @NotNull
@@ -261,12 +259,12 @@ public class WireContainer {
     }
 
     /**
-     * Returns the {@link ExceptionHandlerContext} linked to this WireRepository.
+     * Returns the {@link ExceptionHandlerContext} linked to this WireContainer.
      * <p>
      * You can manually modify it, but in general this is unnecessary.
      * Provide a Bean of the {@link ExceptionHandler} interface and it will be registered automatically.
      *
-     * @return The {@link ExceptionHandlerContext} linked to this WireRepository
+     * @return The {@link ExceptionHandlerContext} linked to this WireContainer
      * @see ExceptionHandlerContext
      * @see ExceptionHandler
      */
@@ -276,9 +274,9 @@ public class WireContainer {
     }
 
     /**
-     * Returns the {@link StartupDiagnostics} linked to this WireRepository.
+     * Returns the {@link StartupDiagnostics} linked to this WireContainer.
      *
-     * @return The {@link StartupDiagnostics} linked to this WireRepository
+     * @return The {@link StartupDiagnostics} linked to this WireContainer
      */
     @NotNull
     public StartupDiagnostics startupDiagnostics() {
@@ -286,7 +284,7 @@ public class WireContainer {
     }
 
     /**
-     * Announces a new object to be maintained in this WireRepository.
+     * Announces a new object to be maintained in this WireContainer.
      * <p>
      * The announced {@code object} will be treated as a singleton instance when referenced, by wrapping it
      * in the {@link IdentifiableProvider#singleton(Object)} instance.
@@ -304,7 +302,7 @@ public class WireContainer {
     }
 
     /**
-     * Announces an {@link IdentifiableProvider} to be maintained in this WireRepository.
+     * Announces an {@link IdentifiableProvider} to be maintained in this WireContainer.
      * <p>
      * The provider is respected in any later {@code get} calls.
      * <p>
@@ -312,7 +310,7 @@ public class WireContainer {
      * If it doesn't match, the method will not register the provider and instead return false.
      * Otherwise, the provider will be passed to the {@link WireContainerInitializer}, where it will be respected from now on.
      * <p>
-     * This method exists to allow manual modifications of the WireRepository.
+     * This method exists to allow manual modifications of the WireContainer.
      * One of the use cases for this is the integration of existing IOC containers into WireDI.
      * <p>
      * You can combine this method with the {@link WireContainerCallback} to register the IdentifiableProvider
@@ -342,7 +340,7 @@ public class WireContainer {
     /**
      * Loads the wireContainer, and thereby the underlying {@link WireContainerInitializer}.
      *
-     * @return the time it took to load the WireRepository.
+     * @return the time it took to load the WireContainer.
      */
     @NotNull
     public Timed load() {
@@ -355,12 +353,12 @@ public class WireContainer {
      * If the {@code loadConfigFunction} function returns true, the repository automatically loads all providers
      * implementing the {@link Eager} interface.
      *
-     * @return the time it took to load the WireRepository.
+     * @return the time it took to load the WireContainer.
      */
     public Timed load(Function<WireContainer, LoadConfig> loadConfigFunction) {
-        is(isNotLoaded(), () -> "The WireRepository is already loaded");
-        logger.debug(() -> "Loading WireRepository");
-        return startupDiagnostics.measure("WireRepository.load", () -> {
+        is(isNotLoaded(), () -> "The WireContainer is already loaded");
+        logger.debug(() -> "Loading WireContainer");
+        return startupDiagnostics.measure("WireContainer.load", () -> {
                     announce(IdentifiableProvider.singleton(environment, TypeIdentifier.just(Environment.class)));
                     announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
                     announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
@@ -374,13 +372,13 @@ public class WireContainer {
                     LoadConfig loadConfig = loadConfigFunction.apply(this);
 
                     if (loadConfig.initializeEagerBeans) {
-                        startupDiagnostics.measure("WireRepository.initializeEagerBeans", this::initializeEagerBeans);
+                        startupDiagnostics.measure("WireContainer.initializeEagerBeans", this::initializeEagerBeans);
                     }
 
                     if (loadConfig.synchronizeOnStates) {
-                        startupDiagnostics.measure("WireRepository.synchronizeOnStates", () -> synchronizeOnStates(loadConfig.stateFullMaxTimeout));
+                        startupDiagnostics.measure("WireContainer.synchronizeOnStates", () -> synchronizeOnStates(loadConfig.stateFullMaxTimeout));
                     }
-                }).then(time -> logger.debug(() -> "The WireRepository has been loaded in " + time))
+                }).then(time -> logger.debug(() -> "The WireContainer has been loaded in " + time))
                 .then(startupDiagnostics::seal);
     }
 
@@ -420,11 +418,11 @@ public class WireContainer {
 
     public Timed clear() {
         is(isLoaded(), () -> "The WiredApplication is not loaded");
-        logger.debug(() -> "Clearing the WireRepository");
+        logger.debug(() -> "Clearing the WireContainer");
         return Timed.of(() -> {
             scopeRegistry.tearDown();
             onDemandInjector.ifPresent(OnDemandInjector::clear);
-        }).then(time -> logger.debug(() -> "The WireRepository has been cleared in " + time));
+        }).then(time -> logger.debug(() -> "The WireContainer has been cleared in " + time));
     }
 
     /**

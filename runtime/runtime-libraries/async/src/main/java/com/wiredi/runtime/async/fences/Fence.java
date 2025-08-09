@@ -1,134 +1,165 @@
 package com.wiredi.runtime.async.fences;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
- * A Fence is a class that holds another code fragment as its state, which allows for repeated invocations.
+ * A Fence encapsulates a code fragment (Runnable) and defines how it is repeatedly executed under concurrency.
  * <p>
- * The problem that Fences aim to solve is synchronized, repeated invocations of code.
- * If you want to have control over synchronization of code executions, you can use these fences.
- * Depending on the type of fence, they ensure that code fragments are executed exactly once and synchronized.
+ * Conceptually, a fence is an execution policy for a statement: calling {@link #pass()} will execute the encapsulated
+ * code, and the concrete fence implementation regulates synchronization and ordering guarantees between concurrent calls.
  * <p>
- * The simples Fence is a {@code Fence.statement(() -> ...)}.
- * This Fence will execute the provided code fragment when {@link #pass()} is called.
+ * How this differs from barriers:
+ * <ul>
+ *   <li>Fences own the code to execute and orchestrate its invocation (including mutual exclusion in synchronized variants).</li>
+ *   <li>Barriers (see {@link com.wiredi.runtime.async.barriers.Barrier}) act as pass/block gates for the calling thread but do not
+ *       own or serialize a particular code fragment; they are typically used to pause/resume progress until a condition is met.</li>
+ *   <li>Fences do not rely on an open/closed state. A call to {@code pass()} always attempts to execute the runnable
+ *       immediately; synchronized implementations may block briefly to acquire a lock, but there is no concept of deferring
+ *       execution until some separate "open" signal.</li>
+ * </ul>
  * <p>
- * A more elaborate Fence (like the local fence), will additionally ensure that the code executions happen in order
- * and mutually exclusive.
+ * Variants:
+ * <ul>
+ *   <li>{@link #statement(Runnable)} returns a non-synchronized fence that simply runs the code when passed.</li>
+ *   <li>{@link #local(Runnable)} returns a fence that provides mutual exclusion across calls to the same fence instance.</li>
+ *   <li>{@link #global(Runnable)} returns a fence that provides mutual exclusion across all fences that share a common key.</li>
+ * </ul>
  * <p>
- * For example, let's say that we want to implement a DataAccessObject which has a buffer and a data source.
- * It uses a Fence to try and flush the buffer, like this:
+ * Typical uses:
+ * <ul>
+ *   <li>Coalescing or serializing repeated background tasks (e.g., batching, periodic flush attempts) to avoid overlap.</li>
+ *   <li>Ensuring a particular action is not executed concurrently by multiple threads.</li>
+ *   <li>Providing a simple, explicit place to centralize safety checks around a critical code fragment.</li>
+ * </ul>
  * <p>
+ * Considerations:
+ * <ul>
+ *   <li>Fences are intended for repeated invocations. For one-off actions, call the method directly instead.</li>
+ *   <li>Choose the appropriate synchronization level: prefer {@link #statement(Runnable)} for maximum throughput when overlap is safe,
+ *       {@link #local(Runnable)} for per-instance serialization, and {@link #global(Runnable)} when multiple instances must not overlap.</li>
+ *   <li>Global fences coordinate via a shared key space; use stable, low-cardinality keys and avoid excessive churn.</li>
+ * </ul>
  *
+ * <h2>Examples</h2>
+ *
+ * <h3>1) Local serialization of a batched flush</h3>
  * <pre><code>
- * public class DataAccessObject {
- *
- *     private final Datasource datasource;
- *     private final Buffer buffer;
- *     private final Fence flushBufferFence = Fence.statement(() -> {
- *          if (this.buffer.isFull()) {
- *              this.datasource.writeAll(this.buffer.content());
- *              this.buffer.clear();
- *          }
- *     });
- *
- *     public DataAccessObject(Datasource datasource) {
- *         this.datasource = datasource;
- *         buffer = new Buffer(datasource);
+ * class Dao {
+ *   private final Datasource datasource;
+ *   private final Buffer buffer = new Buffer();
+ *   private final Fence flushFence = Fence.local(() -> {
+ *     if (buffer.isFull()) {
+ *       datasource.writeAll(buffer.drain());
  *     }
+ *   });
  *
- *     public void handle(Entity entity) {
- *         buffer.append(entity);
- *         flushBufferFence.pass();
- *     }
+ *   Dao(Datasource datasource) {
+ *     this.datasource = datasource;
+ *   }
  *
- *     public void flush() {
- *         flushBufferFence.pass();
- *     }
+ *   void handle(Event e) {
+ *     buffer.append(e);
+ *     flushFence.pass(); // ensures flush runs without overlapping with itself on this instance
+ *   }
+ *
+ *   void flushNow() {
+ *     flushFence.pass();
+ *   }
  * }
  * </code></pre>
- * <p>
- * For this example, let us imagine that {@code DataAccessObject} is invoked asynchronously and concurrent writes to the
- * sink can lead to ConcurrentModificationExceptions.
- * With every {@code append} to the buffer, the DataAccessObject will try to flush the buffer.
- * A simple {@code Fence.statement} will have potential issues with synchronizations.
- * It basically will "just invoke" the code statement when {@link #pass()} is called, which could mean that the writeAll
- * statement in the code sequence is called, given that multiple threads are executing the handle at the same time
- * However, fences understand more, they support two kinds of synchronizations: Local and Global.
  *
- * <h2>Local Synchronization</h2>
- * A locally synchronized fence will make sure that all method invocations to {@link #pass()} on the same instance
- * of this fence are synchronized.
- * If two separate Threads execute {@link #pass()} at the same time, the {@link Fence} will make sure that these
- * executions are mutually exclusive.
- * <p>
- * A locally synchronized fence can be created using {@code Fence.local(() -> this.buffer.flush())}
+ * <h3>2) Global coordination across components using a shared key</h3>
+ * <pre><code>
+ * // In component A
+ * final SynchronizedFence saveFenceA =
+ *     SynchronizedFence.global("orders-save", () -> orderRepository.save(batchA.drain()));
  *
- * <h2>Global Synchronizations</h2>
- * A globally synchronized fence will make sure that all invocations of {@link #pass()} on any thread are mutually
- * exclusive.
- * <p>
- * You can directly reference the {@link SynchronizedFence#global(Object, Runnable)}.
- * All global fences with the same {@code key} are synchronized.
- * <p>
- * A globally synchronized fence can be created using {@code Fence.global(() -> this.buffer.flush())}
+ * // In component B
+ * final SynchronizedFence saveFenceB =
+ *     SynchronizedFence.global("orders-save", () -> orderRepository.save(batchB.drain()));
  *
- * <h2>Considerations</h2>
- * - Fences should only be used if the code fragment is used repeatably. Exactly once invocations might make the code complex.
- * - Fences should only be used in concurrent environments. Otherwise, you can achieve the same behavior by just calling a method.
+ * // Anywhere they run, passing either fence will serialize write access under the same key:
+ * saveFenceA.pass();
+ * saveFenceB.pass();
+ * </code></pre>
  *
- * @see SynchronizedFence
+ * <h3>3) Non-synchronized execution when overlap is safe</h3>
+ * <pre><code>
+ * final Fence emitMetrics = Fence.statement(() -> metrics.emitGauge("alive", 1));
+ * emitMetrics.pass(); // executes immediately; concurrent calls may overlap
+ * </code></pre>
+ *
  * @see SimpleFence
+ * @see SynchronizedFence
+ * @see com.wiredi.runtime.async.barriers.Barrier
  */
 public interface Fence {
 
     /**
      * Creates a new, globally synchronized fence.
      * <p>
-     * All calls to the globally synchronized fence will be synchronized between all processes that use it.
-     * This is achieved by using the same lock instance for all global fences.
+     * Calls to {@link #pass()} on any fence created with the same global key are mutually exclusive across threads.
+     * This is achieved by sharing a single lock per key. Use this when different components must serialize the same action.
+     * <p>
+     * Note: while passing the fence may block briefly to acquire the shared lock, there is no "open/closed" gating as with barriers.
      *
-     * @param runnable the code to execute when the fence is passed
-     * @return a new instance of a Fence that is globally synchronized
+     * @param runnable the code to execute when the fence is passed; it should be idempotent or safe to run repeatedly
+     * @return a new globally synchronized fence
      * @see SynchronizedFence#global(Object, Runnable)
      * @see SynchronizedFence
      */
-    static Fence global(Runnable runnable) {
+    @NotNull
+    static Fence global(@NotNull Runnable runnable) {
         return SynchronizedFence.global(Fence.class.getName(), runnable);
     }
 
     /**
      * Creates a new, locally synchronized fence.
      * <p>
-     * Individual calls to the Fence are synchronized if the same instance is shared between multiple processes.
+     * Calls to {@link #pass()} on the same fence instance are mutually exclusive and will be executed in a serialized fashion.
+     * Use this when a single component must ensure its own action does not overlap with itself.
      *
-     * @param runnable the code to execute when the fence is passed
-     * @return a new instance of a Fence that is locally synchronized
+     * @param runnable the code to execute when the fence is passed; it should be idempotent or safe to run repeatedly
+     * @return a new locally synchronized fence
      * @see SynchronizedFence#local(Runnable)
      * @see SynchronizedFence
      */
-    static Fence local(Runnable runnable) {
+    @NotNull
+    static Fence local(@NotNull Runnable runnable) {
         return SynchronizedFence.local(runnable);
     }
 
     /**
-     * Will construct a simple fence statement, that is not synchronized.
+     * Constructs a simple, non-synchronized fence.
+     * <p>
+     * Each call to {@link #pass()} invokes the runnable immediately without any locking or serialization.
+     * Use this when overlapping executions are safe or when external coordination already exists.
      *
      * @param runnable the code to execute when the fence is passed
-     * @return a new instance of a Fence
+     * @return a new non-synchronized fence
      * @see SimpleFence
      */
-    static Fence statement(Runnable runnable) {
+    @NotNull
+    static Fence statement(@NotNull Runnable runnable) {
         return new SimpleFence(runnable);
     }
 
     /**
-     * Pass the fence.
+     * Executes the fence's code according to the implementation's synchronization policy.
      * <p>
-     * Invoking this method will cause the underlying process to be executed.
-     * <p>
-     * The execution of the underlying process is dependent on the implementation of the fence.
-     *
-     * @see SynchronizedFence#pass()
-     * @see SimpleFence#pass()
+     * - Non-synchronized fences run immediately.<br>
+     * - Locally synchronized fences may block briefly while acquiring an instance-local lock.<br>
+     * - Globally synchronized fences may block briefly while acquiring a shared lock for their key.<br>
+     * Any exception thrown by the runnable is propagated to the caller.
      */
     void pass();
 
+    /**
+     * Updates the fence's underlying code.
+     * <p>
+     * Implementations should be thread-safe when replacing the runnable.
+     *
+     * @param runnable the new runnable to execute when the fence is passed
+     */
+    void set(@NotNull Runnable runnable);
 }
