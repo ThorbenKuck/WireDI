@@ -132,7 +132,7 @@ public class WiredApplicationInstance {
                     if (wireContainer.isNotLoaded()) {
                         logger.trace(() -> "Registering all known static types");
                         wireContainer.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
-                        logger.debug(() -> "Loading WireContainer");
+                        logger.debug(() -> "Loading WireContainer for the new application");
 
                         wireContainer.load(repository -> {
                             logger.debug(() -> "Configuring Environment with Bean instances");

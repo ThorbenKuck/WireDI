@@ -162,7 +162,7 @@ public class WireContainerInitializer {
             startupDiagnostics.measure("applyConditionals", () -> applyConditionals(wireContainer, providerCatalog))
                     .then(t -> logger.debug("Applied conditionals in " + t));
         });
-        logger.debug(() -> "Registered " + providerCatalog.countRegisteredProviders() + "identifiable providers in " + timed);
+        logger.debug(() -> "Registered " + providerCatalog.countRegisteredProviders() + " identifiable providers in " + timed);
         return timed;
     }
 

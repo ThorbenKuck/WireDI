@@ -2,6 +2,7 @@ package com.wiredi.runtime.messaging;
 
 import com.wiredi.runtime.lang.ThrowingFunction;
 import com.wiredi.runtime.messaging.errors.MessagingException;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -181,7 +182,7 @@ class MessagingContextTest {
 
     private static class TestInterceptor implements MessageInterceptor {
         @Override
-        public <D extends MessageDetails> Message<D> postConstruction(Message<D> message) {
+        public <D extends MessageDetails> @NotNull Message<D> postConstruction(@NotNull Message<D> message) {
             return message;
         }
     }

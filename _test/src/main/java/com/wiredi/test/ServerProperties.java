@@ -16,7 +16,7 @@ public class ServerProperties {
 //        this.aliveTimeSeconds = aliveTimeSeconds;
 //    }
 
-    public ServerProperties(@Name(value = "somOtherString") String url) {
+    public ServerProperties(@Name(value = "url") String url) {
         this.url = url;
         this.aliveTimeSeconds = 0;
     }

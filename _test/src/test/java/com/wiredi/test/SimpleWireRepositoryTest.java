@@ -10,13 +10,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
  * A simple test to demonstrate how to test WireDI functionality.
  */
 @ApplicationTest
-public class SimpleWireRepositoryTest {
-
-    private final WireContainer wireContainer;
-
-    public SimpleWireRepositoryTest(WireContainer wireContainer) {
-        this.wireContainer = wireContainer;
-    }
+public record SimpleWireRepositoryTest(WireContainer wireContainer) {
 
     @Test
     public void testWireRepositoryCreation() {

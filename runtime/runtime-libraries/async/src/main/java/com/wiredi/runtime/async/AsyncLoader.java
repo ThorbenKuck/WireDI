@@ -45,12 +45,19 @@ public class AsyncLoader {
     }
 
     public static <T> void load(ThrowingSupplier<T, ?> supplier, Consumer<T> resultConsumer) {
+        logger.trace("Executing async load");
         executorService.execute(() -> {
             try {
+                logger.trace("Started async load task");
                 resultConsumer.accept(supplier.get());
+                logger.trace("Completed async load task");
             } catch (Throwable e) {
+                logger.debug(() -> "Error while executing async load task: " + e.getMessage(), e);
                 if (e instanceof RuntimeException r) {
-                    throw r;
+                    throw new AsyncLoaderException(r);
+                }
+                if (e instanceof Error er) {
+                    throw new AsyncLoaderError(er);
                 }
                 throw new UndeclaredThrowableException(e);
             }
@@ -58,10 +65,14 @@ public class AsyncLoader {
     }
 
     public static <T, E extends Throwable> void load(ThrowingSupplier<T, E> supplier, Consumer<T> resultConsumer, Consumer<Throwable> exceptionHandler) {
+        logger.trace("Executing async load");
         executorService.execute(() -> {
             try {
+                logger.trace("Started async load task");
                 resultConsumer.accept(supplier.get());
+                logger.trace("Completed async load task");
             } catch (Throwable e) {
+                logger.debug(() -> "Error while executing async load task: " + e.getMessage(), e);
                 exceptionHandler.accept(e);
             }
         });
@@ -74,15 +85,31 @@ public class AsyncLoader {
     }
 
     public static CompletionStage<Void> run(@NotNull final Runnable runnable) {
+        logger.trace("Executing async run");
         CompletableFuture<Void> completionStage = new CompletableFuture<>();
         executorService.execute(() -> {
             try {
+                logger.trace("Started async load task");
                 runnable.run();
+                logger.trace("Started async load task");
                 completionStage.complete(null);
             } catch (Throwable t) {
+                logger.debug(() -> "Error while executing async load task: " + t.getMessage(), t);
                 completionStage.completeExceptionally(t);
             }
         });
         return completionStage;
+    }
+
+    public static class AsyncLoaderException extends RuntimeException {
+        public AsyncLoaderException(Throwable cause) {
+            super(cause);
+        }
+    }
+
+    public static class AsyncLoaderError extends Error {
+        public AsyncLoaderError(Throwable cause) {
+            super(cause);
+        }
     }
 }

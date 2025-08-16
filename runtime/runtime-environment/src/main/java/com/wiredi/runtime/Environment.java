@@ -255,7 +255,9 @@ public class Environment {
         try {
             resolver.forEach(this::addExpressionResolver);
         } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("Error while registering resolvers " + resolver, e);
+            throw new IllegalArgumentException("Error while registering resolvers " + resolver.stream()
+                    .map(it -> it.getClass().getSimpleName() + "@" + Integer.toHexString(it.hashCode()))
+                    .toList(), e);
         }
     }
 

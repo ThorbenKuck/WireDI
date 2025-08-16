@@ -10,9 +10,6 @@ import org.jetbrains.annotations.Nullable;
  * This interface is used inside the {@link MessagingEngine} implementations to (de)serialize messages, with
  * {@link Message} being an abstraction for messaging implementations.
  * <p>
- * Both serialized and deserialized instances are represented as a Message.
- * Serialized instances are messages containing raw byte-arrays.
- * <p>
  * Instances should consider to use {@link com.wiredi.annotations.Order} or {@link Ordered}
  * to define executions.
  * If multiple converters can (de)serialize messages, the first that is found will be asked to convert.

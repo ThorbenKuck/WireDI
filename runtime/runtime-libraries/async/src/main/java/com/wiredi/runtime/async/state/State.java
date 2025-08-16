@@ -186,6 +186,18 @@ public interface State<T> {
      */
     StateOnSetSubscription onSet(Consumer<T> consumer);
 
+    /**
+     * Sinks the state to another state.
+     * <p>
+     * With this operation, the provided state {@code other} will be updated whenever the state of this state changes.
+     * There will be no inverse connection, i.e. this state will not be updated whenever the state of {@code other} changes.
+     * <p>
+     * This method returns a class to cut this connection.
+     * Callers must make sure to maintain these subscriptions if they want to break this sink in the future.
+     *
+     * @param other the state that should be updated whenever the state of this state changes.
+     * @return a subscription that can be used to unsubscribe.
+     */
     default StateOnSetSubscription sinkTo(ModifiableState<? super T> other) {
         return onSet(other::set);
     }

@@ -65,6 +65,40 @@ public interface IdentifiableProvider<T> extends Ordered {
         return new LazySingletonIdentifiableProvider<>(function, wireTypes, type);
     }
 
+    /**
+     * Creates a new builder for a SimpleProvider.
+     *
+     * @param typeIdentifier the type identifier this provider will provide
+     * @param <T>            the type parameter
+     * @return a new builder
+     */
+    static <T> SimpleProvider.Builder<T> builder(TypeIdentifier<T> typeIdentifier) {
+        return SimpleProvider.builder(typeIdentifier);
+    }
+
+    /**
+     * Creates a new builder for a SimpleProvider.
+     *
+     * @param type the class type this provider will provide
+     * @param <T>  the type parameter
+     * @return a new builder
+     */
+    static <T> SimpleProvider.Buildable<T> builder(Class<T> type) {
+        return SimpleProvider.builder(TypeIdentifier.of(type));
+    }
+
+    /**
+     * Creates a new builder for a SimpleProvider.
+     *
+     * @param instance the instance to use
+     * @param <T>      the type parameter
+     * @return a new builder
+     */
+    static <T> SimpleProvider.Builder<T> builder(T instance) {
+        SimpleProvider.Buildable<T> buildable = (SimpleProvider.Buildable<T>) builder(instance.getClass());
+        return buildable.withInstance(instance);
+    }
+
     // #################################
     // ### Concrete member functions ###
     // #################################

@@ -1,4 +1,4 @@
-package com.wiredi.tests;
+package com.wiredi.tests.callback;
 
 import com.wiredi.runtime.WireContainer;
 import org.junit.jupiter.api.extension.ExtensionContext;

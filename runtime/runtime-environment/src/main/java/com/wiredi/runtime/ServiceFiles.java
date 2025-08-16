@@ -14,7 +14,7 @@ public class ServiceFiles<T> {
     private final Logging logger = Logging.getInstance(ServiceFiles.class);
     private final Class<T> type;
     private final Value<Collection<ServiceLoader.Provider<T>>> providers;
-    private final Set<Class<? extends T>> serviceTypes;
+    private final List<Class<? extends T>> serviceTypes;
     private final List<T> services = new ArrayList<>();
     private boolean initialized = false;
     private boolean ignoreClassNotFound = false;
@@ -22,7 +22,7 @@ public class ServiceFiles<T> {
     public ServiceFiles(Class<T> type) {
         this.type = type;
         this.providers = Value.async(() -> PROVIDER_FACTORY.getProviders(type));
-        this.serviceTypes = new HashSet<>();
+        this.serviceTypes = new ArrayList<>();
     }
 
     public static void setProviderFactory(ProviderFactory factory) {
@@ -63,7 +63,8 @@ public class ServiceFiles<T> {
 
     public ServiceFiles<T> initialize(OnDemandInjector onDemandInjector) {
         if (initialized) {
-            throw new IllegalStateException("ServiceFiles already initialized");
+            logger.trace(() -> this + " already initialized");
+            return this;
         }
 
         initializeServiceTypes();
@@ -74,7 +75,7 @@ public class ServiceFiles<T> {
 
     public void initialize() {
         if (initialized) {
-            throw new IllegalStateException("ServiceFiles already initialized");
+            return;
         }
 
         for (ServiceLoader.Provider<T> provider : providers.get()) {
@@ -92,8 +93,10 @@ public class ServiceFiles<T> {
     }
 
     private void initializeServiceTypes() {
+        logger.debug(() -> "Loading services of type " + type.getName());
         for (ServiceLoader.Provider<T> provider : providers.get()) {
             try {
+                logger.trace(() -> "Loaded service provider: " + provider.type());
                 serviceTypes.add(provider.type());
             } catch (Throwable throwable) {
                 if (ignoreClassNotFound && isClassNotFoundError(throwable)) {
@@ -125,6 +128,7 @@ public class ServiceFiles<T> {
 
     public ServiceFiles<T> add(Class<? extends T> clazz) {
         this.serviceTypes.add(clazz);
+        this.initialized = false;
         return this;
     }
 
@@ -137,11 +141,34 @@ public class ServiceFiles<T> {
         <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type);
     }
 
+    public String toString() {
+        return "ServiceFiles<" + type.getName() + ">";
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof ServiceFiles<?> that)) return false;
+        return initialized == that.initialized
+                && ignoreClassNotFound == that.ignoreClassNotFound
+                && Objects.equals(type, that.type)
+                && Objects.equals(providers, that.providers)
+                && Objects.equals(serviceTypes, that.serviceTypes)
+                && Objects.equals(services, that.services);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(type, providers, serviceTypes, services, initialized, ignoreClassNotFound);
+    }
+
     public static class ServiceLoaderProviderFactory implements ProviderFactory {
 
         @Override
         public <T> Collection<ServiceLoader.Provider<T>> getProviders(Class<T> type) {
-            return ServiceLoader.load(type, Thread.currentThread().getContextClassLoader()).stream().toList();
+            return ServiceLoader.load(type, Thread.currentThread().getContextClassLoader())
+                    .stream()
+                    .distinct() // Required to avoid duplicated providers for the same concrete types
+                    .toList();
         }
     }
 }

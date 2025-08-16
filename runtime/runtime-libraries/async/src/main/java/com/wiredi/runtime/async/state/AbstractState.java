@@ -1,5 +1,6 @@
 package com.wiredi.runtime.async.state;
 
+import com.wiredi.logging.Logging;
 import com.wiredi.runtime.async.DataAccess;
 import com.wiredi.runtime.lang.ThrowingConsumer;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ import java.util.function.Consumer;
  */
 public abstract class AbstractState<T> implements State<T> {
 
+    private static final Logging logger = Logging.getInstance(AbstractState.class);
     private final DataAccess callbacksLock = new DataAccess();
     private final List<Consumer<T>> callbacks = new ArrayList<>();
     @Nullable

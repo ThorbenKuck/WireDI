@@ -12,12 +12,12 @@ import java.io.UncheckedIOException;
 import java.util.List;
 
 /**
- * A message is a generic representation of any I/O operation.
+ * A message is a generic representation of any I/O data packet.
  * <p>
  * It is used to transport different kinds of data, containing a body, headers and details.
  * <p>
- * Each message hast to hav a body.
- * This body is the concrete received payload.
+ * Each message hast to have a body.
+ * This body is the concrete-received payload.
  * Implementations of this interface can determine how the body is received.
  * <p>
  * Inbound messages are commonly raw messages, containing a byte array as their body.

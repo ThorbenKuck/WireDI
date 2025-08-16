@@ -2,6 +2,7 @@ package com.wiredi.tests;
 
 import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.lang.ThrowingBiConsumer;
+import com.wiredi.tests.callback.TestCallback;
 import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
@@ -30,7 +31,7 @@ public abstract class AbstractTestExtension implements BeforeEachCallback, After
         executeOnAllCallbacks(context, (testCallback, wireContainer) -> testCallback.afterAll(context, wireContainer));
     }
 
-    private void executeOnAllCallbacks(ExtensionContext context, ThrowingBiConsumer<TestCallback, WireContainer, Exception> callbackConsumer) throws Exception {
+    protected void executeOnAllCallbacks(ExtensionContext context, ThrowingBiConsumer<TestCallback, WireContainer, Exception> callbackConsumer) throws Exception {
         WireContainer wireContainer = wireContainerOf(context);
         List<TestCallback> callbacks = wireContainer.getAll(TestCallback.class);
         for (TestCallback callback : callbacks) {

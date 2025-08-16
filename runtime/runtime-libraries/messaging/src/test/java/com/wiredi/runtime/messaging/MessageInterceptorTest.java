@@ -1,5 +1,6 @@
 package com.wiredi.runtime.messaging;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
@@ -75,14 +76,14 @@ class MessageInterceptorTest {
 
     private static class PassThroughInterceptor implements MessageInterceptor {
         @Override
-        public <D extends MessageDetails> Message<D> postConstruction(Message<D> message) {
+        public <D extends MessageDetails> @NotNull Message<D> postConstruction(@NotNull Message<D> message) {
             return message;
         }
     }
 
     private static class HeaderModifyingInterceptor implements MessageInterceptor {
         @Override
-        public <D extends MessageDetails> Message<D> postConstruction(Message<D> message) {
+        public <D extends MessageDetails> @NotNull Message<D> postConstruction(@NotNull Message<D> message) {
             return Message.builder(message.body())
                     .addHeaders(message.headers())
                     .addHeader("intercepted", "true")
@@ -93,7 +94,7 @@ class MessageInterceptorTest {
 
     private static class ContentModifyingInterceptor implements MessageInterceptor {
         @Override
-        public <D extends MessageDetails> Message<D> postConstruction(Message<D> message) {
+        public <D extends MessageDetails> @NotNull Message<D> postConstruction(@NotNull Message<D> message) {
             String originalContent = new String(message.body(), StandardCharsets.UTF_8);
             String newContent = "INTERCEPTED: " + originalContent;
             return Message.builder(newContent.getBytes(StandardCharsets.UTF_8))

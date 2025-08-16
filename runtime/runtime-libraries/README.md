@@ -23,11 +23,12 @@ Core language extensions and utilities for enhanced Java development
 - Enhanced exception handling
 
 #### Collections Module
-Specialized collection implementations and utilities
-- Thread-safe collection types
-- Performance-optimized collections
-- Specialized data structures
-- Collection transformation utilities
+Practical collection helpers focused on everyday needs:
+- TypeMap and ConcurrentTypeMap: type-keyed maps resilient to classloader reloads
+- EnumSet: O(1) name-to-enum lookup with case-insensitive matching
+- Paging primitives: Page, Pageable, Paged, Unpaged, Sort, Order for transporting paged results
+
+See runtime/runtime-libraries/collections/README.md for examples and details
 
 #### Type Converter
 Comprehensive type conversion framework

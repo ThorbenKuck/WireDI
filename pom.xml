@@ -19,24 +19,22 @@
         <!-- Dependencies -->
         <google-auto-service.version>1.1.1</google-auto-service.version>
         <java-poet.version>1.13.0</java-poet.version>
-        <javax-inject.version>1</javax-inject.version>
-        <slf4j.version>2.0.7</slf4j.version>
+        <slf4j.version>2.0.17</slf4j.version>
         <jakarta.inject-api.version>2.0.1</jakarta.inject-api.version>
         <jakarta.annotation-api.version>2.1.1</jakarta.annotation-api.version>
         <assertj-core.version>3.22.0</assertj-core.version>
-        <junit.version>5.10.1</junit.version>
-        <jetbrains-annotations.version>23.0.0</jetbrains-annotations.version>
+        <junit.version>5.13.4</junit.version>
+        <jetbrains-annotations.version>26.0.2</jetbrains-annotations.version>
         <yaml-simple.version>1.16.0</yaml-simple.version>
-        <mockito-core.version>5.8.0</mockito-core.version>
+        <mockito-core.version>5.18.0</mockito-core.version>
         <auto-service.version>1.1.1</auto-service.version>
-        <snakeyaml.version>2.0</snakeyaml.version>
+        <snakeyaml.version>2.4</snakeyaml.version>
         <javapoet.version>1.13.0</javapoet.version>
-        <logback.bundle>1.4.12</logback.bundle>
-        <jackson.version>2.16.1</jackson.version>
-        <logback.version>1.4.12</logback.version>
+        <jackson.version>2.19.2</jackson.version>
+        <logback.version>1.5.18</logback.version>
 
         <!-- Plugins -->
-        <flatten-maven-plugin.version>1.1.0</flatten-maven-plugin.version>
+        <flatten-maven-plugin.version>1.7.2</flatten-maven-plugin.version>
         <jacoco-maven-plugin.version>0.8.11</jacoco-maven-plugin.version>
         <maven-failsafe-plugin.version>3.2.5</maven-failsafe-plugin.version>
         <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>

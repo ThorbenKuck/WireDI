@@ -28,8 +28,12 @@ public class ApplicationTestExtension extends AbstractTestExtension implements A
         return INSTANCE_CACHE.get(context);
     }
 
+    public WiredApplicationInstance applicationInstanceOf(ExtensionContext context) {
+        return INSTANCE_CACHE.getOrCreate(context);
+    }
+
     private static WiredApplicationInstance newApplication(InstanceIdentifier identifier) {
-        logger.info("Creating new WiredApplication");
+        logger.debug("Creating new WiredApplication");
         return WiredApplication.start(wireContainer -> {
             wireContainer.announce(
                     SimpleProvider.builder(new ApplicationIdentifierWireRepositoryContextCallbacks(identifier))
@@ -38,10 +42,6 @@ public class ApplicationTestExtension extends AbstractTestExtension implements A
                             .withSingleton(true)
             );
         });
-    }
-
-    public WiredApplicationInstance applicationInstanceOf(ExtensionContext context) {
-        return INSTANCE_CACHE.getOrCreate(context);
     }
 
     @Override

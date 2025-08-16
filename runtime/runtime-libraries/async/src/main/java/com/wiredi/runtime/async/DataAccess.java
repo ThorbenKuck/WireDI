@@ -1,5 +1,6 @@
 package com.wiredi.runtime.async;
 
+import com.wiredi.logging.Logging;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,67 +41,93 @@ public final class DataAccess {
     @NotNull
     private final ReadWriteLock readWriteLock = new ReentrantReadWriteLock();
 
+    private static final Logging logger = Logging.getInstance(DataAccess.class);
+
     public void read(@NotNull final Runnable supplier) {
+        logger.debug("Reading data");
         @NotNull final Lock lock = readWriteLock.readLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             supplier.run();
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 
     @NotNull
     public <T> T readValue(@NotNull final Supplier<@NotNull T> supplier) {
+        logger.debug("Reading data");
         @NotNull final Lock lock = readWriteLock.readLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             return Objects.requireNonNull(supplier.get());
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 
     @Nullable
     public <T> T readNullableValue(@NotNull final Supplier<@Nullable T> supplier) {
+        logger.debug("Reading data");
         @NotNull final Lock lock = readWriteLock.readLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             return supplier.get();
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 
     public void write(@NotNull final Runnable runnable) {
+        logger.debug("Writing data");
         @NotNull final Lock lock = readWriteLock.writeLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             runnable.run();
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 
     @NotNull
     public <T> T writeValue(@NotNull final Supplier<@NotNull T> supplier) {
+        logger.debug("Writing data");
         @NotNull final Lock lock = readWriteLock.writeLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             return Objects.requireNonNull(supplier.get());
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 
     @Nullable
     public <T> T writeNullableValue(@NotNull final Supplier<@Nullable T> supplier) {
+        logger.debug("Writing data");
         @NotNull final Lock lock = readWriteLock.writeLock();
         try {
+            logger.trace("Acquiring lock");
             lock.lock();
+            logger.trace("Lock acquired");
             return supplier.get();
         } finally {
             lock.unlock();
+            logger.trace("Lock released");
         }
     }
 }

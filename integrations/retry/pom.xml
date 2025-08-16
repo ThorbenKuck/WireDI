@@ -13,10 +13,6 @@
         <version>${revision}</version>
     </parent>
 
-    <properties>
-        <jackson.version>2.14.2</jackson.version>
-    </properties>
-
     <dependencies>
         <dependency>
             <groupId>com.wiredi</groupId>

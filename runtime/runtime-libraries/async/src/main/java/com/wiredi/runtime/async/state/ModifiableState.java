@@ -2,6 +2,8 @@ package com.wiredi.runtime.async.state;
 
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.async.AsyncLoader;
+import com.wiredi.runtime.async.barriers.Barrier;
+import com.wiredi.runtime.async.barriers.MutableBarrier;
 import com.wiredi.runtime.async.barriers.SemaphoreBarrier;
 import com.wiredi.runtime.lang.ThrowingSupplier;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +45,7 @@ import java.time.Duration;
 public class ModifiableState<T> extends AbstractState<T> {
 
     @NotNull
-    private final SemaphoreBarrier setupBarrier;
+    private final MutableBarrier setupBarrier;
 
     private static final Logging logger = Logging.getInstance(ModifiableState.class);
 
@@ -64,11 +66,11 @@ public class ModifiableState<T> extends AbstractState<T> {
 
     public ModifiableState(@NotNull T t) {
         super(t);
-        setupBarrier = SemaphoreBarrier.opened();
+        setupBarrier = Barrier.opened();
     }
 
     public ModifiableState() {
-        setupBarrier = SemaphoreBarrier.closed();
+        setupBarrier = Barrier.closed();
     }
 
     @NotNull

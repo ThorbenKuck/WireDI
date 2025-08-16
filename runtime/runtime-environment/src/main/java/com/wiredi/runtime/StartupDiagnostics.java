@@ -47,7 +47,9 @@ public class StartupDiagnostics {
     }
 
     private TimingState nestState(String name) {
-        checkSealed();
+        if (sealed) {
+            return new TimingState(name);
+        }
         if (this.pointer == root) {
             root.start();
         }
@@ -57,7 +59,9 @@ public class StartupDiagnostics {
     }
 
     private void unnest() {
-        checkSealed();
+        if (sealed) {
+            return;
+        }
         TimingState state = pointer;
         if (state != root) {
             this.pointer = state.unwrap();
@@ -96,12 +100,6 @@ public class StartupDiagnostics {
     public void reset() {
         sealed = false;
         root.reset();
-    }
-
-    private void checkSealed() {
-        if (sealed) {
-            throw new IllegalStateException("Cannot add timings to a sealed StartupDiagnostics instance. Make sure to add the diagnostics before the WireRepository is loaded completely.");
-        }
     }
 
     @Nullable
