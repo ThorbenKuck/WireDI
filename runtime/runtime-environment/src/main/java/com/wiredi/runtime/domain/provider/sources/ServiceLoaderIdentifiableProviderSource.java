@@ -1,10 +1,11 @@
 package com.wiredi.runtime.domain.provider.sources;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.IdentifiableProviderSource;
 import com.wiredi.runtime.lang.OrderedComparator;
+import com.wiredi.runtime.services.DefaultServiceFileSource;
+import com.wiredi.runtime.services.ServiceFileSource;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -23,21 +24,21 @@ import java.util.ServiceLoader;
 public class ServiceLoaderIdentifiableProviderSource implements IdentifiableProviderSource {
 
     private static final Logging logger = Logging.getInstance(ServiceLoaderIdentifiableProviderSource.class);
-    private final ServiceFiles<IdentifiableProvider> serviceLoader;
+    private final ServiceFileSource source;
 
-    public ServiceLoaderIdentifiableProviderSource(ServiceFiles<IdentifiableProvider> serviceLoader) {
-        this.serviceLoader = serviceLoader;
+    public ServiceLoaderIdentifiableProviderSource(ServiceFileSource source) {
+        this.source = source;
     }
 
     public ServiceLoaderIdentifiableProviderSource() {
-        this.serviceLoader = ServiceFiles.getInstance(IdentifiableProvider.class);
+        this.source = DefaultServiceFileSource.INSTANCE;
     }
 
     @Override
     public Collection<IdentifiableProvider<?>> load() {
         final List<IdentifiableProvider<?>> content = new ArrayList<>();
         logger.trace(() -> "Starting to load IdentifiableProviders");
-        serviceLoader.instances().forEach(content::add);
+        this.source.loadServiceFiles(IdentifiableProvider.class).forEach(content::add);
         return OrderedComparator.sorted(content);
     }
 }

@@ -18,7 +18,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Wire(proxy = false)
+@Wire
 @Order(Order.DEFAULT_CONFIGURATION)
 public @interface DefaultConfiguration {
 }

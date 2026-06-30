@@ -57,7 +57,7 @@ public class ExecutorServiceThreadBarrier implements ThreadBarrier {
 		ArrayList<ContextRunnable> currentRunnableList = new ArrayList<>(runnableList);
 		Semaphore semaphore = new Semaphore(initialSemaphoreCount);
 		int requiredInvocations = -(1 - currentRunnableList.size());
-		logger.debug(() -> "ThreadBarrier awaiting " + requiredInvocations);
+		logger.trace(() -> "ThreadBarrier awaiting " + requiredInvocations + " completed threads");
 
 		try {
 			currentRunnableList.forEach(runnable -> {

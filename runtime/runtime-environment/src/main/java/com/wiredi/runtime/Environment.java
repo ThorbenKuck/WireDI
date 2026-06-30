@@ -14,6 +14,8 @@ import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.resources.Resource;
 import com.wiredi.runtime.resources.ResourceLoader;
 import com.wiredi.runtime.resources.ResourceProtocolResolver;
+import com.wiredi.runtime.services.DefaultServiceFileSource;
+import com.wiredi.runtime.services.ServiceFileSource;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.types.TypeConverter;
 import com.wiredi.runtime.types.TypeMapper;
@@ -58,10 +60,6 @@ public class Environment {
     private final TypedProperties properties = new TypedProperties(typeMapper);
     private final ResourceLoader resourceLoader = new ResourceLoader();
     private final PropertyLoader propertyLoader = new PropertyLoader();
-    private final ServiceFiles<EnvironmentExpressionResolver> environmentExpressionResolverServiceFiles = ServiceFiles.getInstance(EnvironmentExpressionResolver.class);
-    private final ServiceFiles<ResourceProtocolResolver> resourceProtocolResolverServiceFiles = ServiceFiles.getInstance(ResourceProtocolResolver.class);
-    private final ServiceFiles<PropertyFileTypeLoader> propertyFileTypeLoaderServiceFiles = ServiceFiles.getInstance(PropertyFileTypeLoader.class);
-    private final ServiceFiles<EnvironmentConfiguration> environmentConfigurationServiceFiles = ServiceFiles.getInstance(EnvironmentConfiguration.class);
     private boolean loaded = false;
 
     public Environment(EnvironmentExpressionResolver... expressionResolvers) {
@@ -194,18 +192,38 @@ public class Environment {
      *
      * @return How long the autoconfiguration took.
      */
-    public Timed autoconfigure() {
+    public Timed autoconfigure(ServiceFileSource serviceFileSource) {
         if (loaded) {
             return Timed.ZERO;
         }
         return Timed.of(() -> {
-            addExpressionResolvers(environmentExpressionResolverServiceFiles.instances());
-            resourceLoader.addProtocolResolvers(resourceProtocolResolverServiceFiles.instances());
-            propertyLoader.addPropertyFileLoaders(propertyFileTypeLoaderServiceFiles.instances());
-            configurations.addAll(environmentConfigurationServiceFiles.instances());
-            configurations.forEach(config -> config.configure(this));
+            addExpressionResolvers(serviceFileSource.loadServiceFiles(EnvironmentExpressionResolver.class));
+            resourceLoader.addProtocolResolvers(serviceFileSource.loadServiceFiles(ResourceProtocolResolver.class));
+            propertyLoader.addPropertyFileLoaders(serviceFileSource.loadServiceFiles(PropertyFileTypeLoader.class));
+            configurations.addAll(serviceFileSource.loadServiceFiles(EnvironmentConfiguration.class));
+            configurations.forEach(config -> {
+                logger.debug(() -> "Applying Configuration: " + config.getClass().getSimpleName() + " ... ");
+                config.configure(this);
+            });
             this.loaded = true;
         }).then(time -> logger.debug("Environment autoconfigured in " + time));
+    }
+
+    /**
+     * This method configures this Environment instance based on the {@link java.util.ServiceLoader}.
+     * <p>
+     * It will attempt to load:
+     * <ul>
+     *     <li>{@link EnvironmentExpressionResolver}</li>
+     *     <li>{@link com.wiredi.runtime.resources.ResourceProtocolResolver}</li>
+     *     <li>{@link PropertyFileTypeLoader}</li>
+     *     <li>{@link EnvironmentConfiguration}</li>
+     * </ul>
+     *
+     * @return How long the autoconfiguration took.
+     */
+    public Timed autoconfigure() {
+        return autoconfigure(new DefaultServiceFileSource());
     }
 
     /**

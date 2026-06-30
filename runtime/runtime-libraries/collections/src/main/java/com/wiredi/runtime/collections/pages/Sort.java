@@ -7,7 +7,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * A value object describing how to sort a result set. A Sort is a sequence of {@link Order} entries.
+ * A value object describing how to sort a result set.
+ * A Sort is a sequence of {@link Order} entries.
  * Use the static {@code by(...)} factory methods to construct Sort instances from properties or Order objects.
  * <p>
  * Example:
@@ -138,7 +139,6 @@ public class Sort implements Iterable<Order> {
 
     @Override
     public boolean equals(@Nullable Object obj) {
-
         if (this == obj) {
             return true;
         }

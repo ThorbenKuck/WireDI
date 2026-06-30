@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import org.jetbrains.annotations.NotNull;
 
 import javax.lang.model.util.Elements;
+import javax.lang.model.util.Types;
 import java.util.List;
 
 @AutoService(CompilerEntityPlugin.class)
@@ -22,11 +23,11 @@ public class ScopeProcessorPlugin implements CompilerEntityPlugin {
     private Scopes scopes;
 
     @Inject
-    private Elements elements;
+    private Types types;
 
     @Override
     public void handle(@NotNull IdentifiableProviderEntity entity) {
-        logger.info(() -> "Handling scopes in " + entity);
+        logger.info(() -> "Handling scopes in " + entity.getSource());
         doHandleOn(entity);
         entity.onChildren(this::doHandleOn);
     }
@@ -35,7 +36,7 @@ public class ScopeProcessorPlugin implements CompilerEntityPlugin {
         List<ScopeType> scopes = this.scopes.allScopesOf(entity.getSource());
         if (!scopes.isEmpty()) {
             logger.info(() -> "The entity " + entity.className() + " defined by " + entity.getSource() + " has the scopes " + scopes);
-            entity.addMethod(new ScopeMethod(scopes, elements));
+            entity.addMethod(new ScopeMethod(scopes, types));
         }
     }
 }

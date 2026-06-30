@@ -21,8 +21,8 @@ public class ProcessingElement {
         this.element = element;
         this.annotations = annotations;
         this.matchedAnnotationType = matchedAnnotationType;
-        this.annotationMirror = Value.lazy(() -> annotations.getAnnotationMirror(element, matchedAnnotationType));
-        this.annotation = Value.lazy(() -> Annotations.getAnnotation(element, matchedAnnotationType)
+        this.annotationMirror = Value.lazy(() -> Annotations.search().by(matchedAnnotationType).findFirstMirrorIn(element).orElseThrow());
+        this.annotation = Value.lazy(() -> Annotations.search().byType(matchedAnnotationType).findFirstIn(element)
                 .orElseThrow(() -> new IllegalStateException("Annotation not found. However this is possible."))
         );
         this.annotationMetadata = Value.lazy(() -> AnnotationMetadata.of(annotationMirror.get()));
@@ -31,9 +31,9 @@ public class ProcessingElement {
     public AnnotationMirror annotationMirror() {
         return annotationMirror.get();
     }
-    
+
     public Annotation annotation() {
-        return annotation.get() ;
+        return annotation.get();
     }
 
     public AnnotationMetadata annotationMetadata() {

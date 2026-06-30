@@ -34,6 +34,11 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>health</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>flow</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -64,6 +69,11 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>telemetry</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>type-converter</artifactId>
                 <version>${revision}</version>
             </dependency>
@@ -84,7 +94,17 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
+                <artifactId>scheduler</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
                 <artifactId>time</artifactId>
+                <version>${revision}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.wiredi</groupId>
+                <artifactId>transaction</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>
@@ -170,7 +190,7 @@
             </dependency>
             <dependency>
                 <groupId>com.wiredi</groupId>
-                <artifactId>metrics-integration</artifactId>
+                <artifactId>micrometer-integration</artifactId>
                 <version>${revision}</version>
             </dependency>
             <dependency>

@@ -6,6 +6,13 @@ import com.wiredi.runtime.types.Bytes;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Converts textual or byte-oriented inputs to enum constants of a specific enum type.
+ *
+ * Create an instance per enum class using the constructor or {@link #createFor(Class)}.
+ * Resolution is case-insensitive and uses {@code EnumSet} to validate membership. This converter
+ * is not globally preconfigured because it depends on the concrete enum type at runtime.
+ */
 public class EnumTypeConverter<T extends Enum<T>> extends TypeConverterBase<T> {
 
     private final EnumSet<T> values;

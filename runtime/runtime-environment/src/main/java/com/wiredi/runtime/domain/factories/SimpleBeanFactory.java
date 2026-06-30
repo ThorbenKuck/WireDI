@@ -1,5 +1,7 @@
 package com.wiredi.runtime.domain.factories;
 
+import com.google.common.primitives.Primitives;
+import com.wiredi.logging.Logging;
 import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.BeanFactory;
 import com.wiredi.runtime.domain.StandardWireConflictResolver;
@@ -7,23 +9,33 @@ import com.wiredi.runtime.domain.WireConflictResolver;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.exceptions.DiLoadingException;
-import com.wiredi.runtime.exceptions.MultiplePrimaryProvidersRegisteredException;
-import com.wiredi.runtime.exceptions.MultipleSameQualifierProviderRegisteredExceptions;
+import com.wiredi.runtime.exceptions.*;
 import com.wiredi.runtime.lang.OrderedComparator;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.google.common.primitives.Primitives;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
+/**
+ * The default {@link BeanFactory} implementation.
+ * <p>
+ * This implementation is defining how injection points are constructed.
+ * It behaves differently for qualified and unqualified injection points.
+ * <p>
+ * The following order resolves unqualified injection points:
+ * <p>
+ * 1) If the requested injection point is a generic type, the factory will try to find a provider that matches the requested type exactly.
+ *
+ * @param <T>
+ */
 public class SimpleBeanFactory<T> implements BeanFactory<T> {
 
     // Cache resolved providers to avoid repeated conflict resolution
     private final ConcurrentHashMap<QualifierType, IdentifiableProvider<T>> resolvedCache = new ConcurrentHashMap<>();
+    private static final Logging logger = Logging.getInstance(SimpleBeanFactory.class);
 
     @NotNull
     private final Map<QualifierType, IdentifiableProvider<T>> qualifiedProviders;
@@ -80,7 +92,15 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         return allProviders.stream()
                 .filter(provider -> canProviderSatisfyRequest(provider, requestedType))
                 .sorted(OrderedComparator.INSTANCE)
-                .map(it -> new Bean<>(it.get(wireContainer, requestedType), it))
+                .map(it -> {
+                    T instance = it.get(wireContainer, requestedType);
+                    if (instance == null) {
+                        return null;
+                    } else {
+                        return new Bean<>(instance, it);
+                    }
+                })
+                .filter(Objects::nonNull)
                 .toList();
     }
 
@@ -166,42 +186,94 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         return false;
     }
 
+    @Override
+    public @Nullable Bean<T> get(
+            @NotNull WireContainer wireContainer,
+            @NotNull QualifiedTypeIdentifier<T> concreteType
+    ) {
+        if (concreteType.qualifier() == null) {
+            return getUnqualifiedBean(wireContainer, concreteType.type());
+        } else {
+            return getQualifiedBean(wireContainer, concreteType);
+        }
+    }
 
     @Override
     public @Nullable Bean<T> get(
             @NotNull WireContainer wireContainer,
             @NotNull TypeIdentifier<T> concreteType
     ) {
-        if (primary != null) {
-            return new Bean<>(primary.get(wireContainer, concreteType), primary);
+        return getUnqualifiedBean(wireContainer, concreteType);
+    }
+
+    @Nullable
+    private Bean<T> createBean(
+            @Nullable IdentifiableProvider<T> provider,
+            @NotNull WireContainer wireContainer,
+            @NotNull TypeIdentifier<T> concreteType
+    ) {
+        if (provider != null) {
+            T currentInstance = provider.get(wireContainer, concreteType);
+            if (currentInstance != null) {
+                return new Bean<>(currentInstance, provider);
+            }
+        }
+
+        return null;
+    }
+
+    public @Nullable Bean<T> getUnqualifiedBean(
+            @NotNull WireContainer wireContainer,
+            @NotNull TypeIdentifier<T> concreteType
+    ) {
+        logger.trace(() -> "Getting bean for type " + concreteType);
+        // Check for primary bean first
+        Bean<T> bean = createBean(primary, wireContainer, concreteType);
+        if (bean != null) {
+            logger.trace(() -> "[" + concreteType + "]: Found existing bean instance. Returning.");
+            return bean;
         }
 
         // Check if we have a specific match for this exact type (including generics)
         if (concreteType.willErase()) {
+            logger.trace(() -> "[" + concreteType + "]: Bean is erasable. Determining matching provider.");
             TypedProviderState<T> state = typedUnqualifiedProviders.get(concreteType);
             if (state != null) {
-                IdentifiableProvider<T> current = state.determine(this.conflictResolver);
-                if (current != null) {
-                    return new Bean<>(current.get(wireContainer, concreteType), current);
+                logger.trace(() -> "[" + concreteType + "]: Found directly matching provider. Returning.");
+                return createBean(state.determine(this.conflictResolver), wireContainer, concreteType);
+            }
+
+            // Fallback: No direct match, let's try to find a matching key
+            logger.trace(() -> "[" + concreteType + "]: No directly matching provider found. Trying to find best matching key.");
+            for (TypeIdentifier<T> matchingType : typedUnqualifiedProviders.keySet()) {
+                if (concreteType.isInstanceOf(matchingType)) {
+                    TypedProviderState<T> resolvedProvider = typedUnqualifiedProviders.get(matchingType);
+                    typedUnqualifiedProviders.put(concreteType, resolvedProvider);
+                    logger.trace(() -> "[" + concreteType + "]: Found best matching provider of type " + matchingType + ". Returning.");
+                    return createBean(resolvedProvider.determine(this.conflictResolver), wireContainer, concreteType);
                 }
             }
+
+            logger.trace(() -> "[" + concreteType + "]: Could not find matching resolver.");
         }
 
         // Fallback to single provider if available
         if (this.typedUnqualifiedProviders.size() == 1) {
-            TypedProviderState<T> next = this.typedUnqualifiedProviders.values().iterator().next();
-            List<IdentifiableProvider<T>> all = next.all();
-            if (all.size() == 1) {
-                IdentifiableProvider<T> first = all.getFirst();
-                return new Bean<>(first.get(wireContainer, concreteType), first);
+            logger.trace(() -> "[" + concreteType + "]: Only one provider available. Attempting to use this provider.");
+            Map.Entry<TypeIdentifier<T>, TypedProviderState<T>> next = this.typedUnqualifiedProviders.entrySet().iterator().next();
+            TypeIdentifier<T> key = next.getKey();
+            TypedProviderState<T> value = next.getValue();
+            if (concreteType.isInstanceOf(key)) {
+                logger.trace(() -> "[" + concreteType + "]: Provider matches. Attempting to instantiate identifiable provider.");
+
+                return createBean(value.determine(this.conflictResolver), wireContainer, concreteType);
             }
         }
 
         return fallback(wireContainer, concreteType, conflictResolver);
     }
 
-    @Override
-    public @Nullable Bean<T> get(
+    public @Nullable Bean<T> getQualifiedBean(
             @NotNull WireContainer wireContainer,
             @NotNull QualifiedTypeIdentifier<T> qualifiedTypeIdentifier
     ) {
@@ -255,17 +327,15 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
     public void register(@NotNull IdentifiableProvider<T> identifiableProvider) {
         TypeIdentifier type = identifiableProvider.type();
         if (identifiableProvider.qualifiers().isEmpty()) {
-            if (identifiableProvider.primary()) {
-                registerPrimaryProvider(type, identifiableProvider);
-            } else {
+            if (!identifiableProvider.primary()) {
                 addUnqualifiedProvider(type, identifiableProvider);
             }
         } else {
             addQualifiedProvider(identifiableProvider, identifiableProvider.qualifiers());
+        }
 
-            if (identifiableProvider.primary()) {
-                registerPrimaryProvider(type, identifiableProvider);
-            }
+        if (identifiableProvider.primary()) {
+            registerPrimaryProvider(type, identifiableProvider);
         }
     }
 
@@ -306,7 +376,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
                     .add(identifiableProvider);
         } else {
             if (primary != null) {
-                throw new MultiplePrimaryProvidersRegisteredException(concreteType, primary, identifiableProvider);
+                throw new MultiplePrimaryProviderRegisteredException(concreteType, primary, identifiableProvider);
             }
 
             primary = identifiableProvider;
@@ -379,6 +449,52 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         return result;
     }
 
+    /**
+     * Finds all providers that are compatible with the requested type.
+     */
+    private Set<IdentifiableProvider<T>> findCompatibleProviders(@NotNull TypeIdentifier<T> requestedType) {
+        Set<IdentifiableProvider<T>> result = new HashSet<>();
+
+        // Check qualified providers
+        result.addAll(getAllQualifiedCompatible(requestedType));
+
+        // Check unqualified providers
+        result.addAll(getAllUnqualifiedCompatible(requestedType));
+
+        return result;
+    }
+
+    protected @NotNull List<IdentifiableProvider<T>> getAllQualifiedCompatible(TypeIdentifier<T> typeIdentifier) {
+        return qualifiedProviders.values()
+                .stream()
+                .toList();
+    }
+
+    protected @NotNull List<IdentifiableProvider<T>> getAllUnqualifiedCompatible(TypeIdentifier<T> concreteType) {
+        return typedUnqualifiedProviders.entrySet()
+                .stream()
+                .flatMap(it -> it.getValue().all().stream())
+                .toList();
+    }
+
+    protected @NotNull List<IdentifiableProvider<T>> getAllUnqualifiedForType(TypeIdentifier<T> concreteType) {
+        Set<IdentifiableProvider<T>> result = new HashSet<>();
+
+        // Since all providers under this factory can handle the erased type,
+        // we return all of them and let each provider handle the specific generics
+        for (TypedProviderState<T> state : typedUnqualifiedProviders.values()) {
+            result.addAll(state.all());
+        }
+
+        return new ArrayList<>(result);
+    }
+
+    @Override
+    public String toString() {
+        return "SimpleBeanFactory{" +
+                rootType + ", size=" + (typedUnqualifiedProviders.size() + qualifiedProviders.size() + (primary != null ? 1 : 0)) + '}';
+    }
+
     public static class TypedProviderState<T> {
         @NotNull
         private final List<IdentifiableProvider<T>> providers = new ArrayList<>();
@@ -420,7 +536,7 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
         public void add(IdentifiableProvider<T> identifiableProvider) {
             if (identifiableProvider.primary()) {
                 if (primary != null) {
-                    throw new MultiplePrimaryProvidersRegisteredException(concreteType, primary, identifiableProvider);
+                    throw new MultiplePrimaryProviderRegisteredException(concreteType, primary, identifiableProvider);
                 } else {
                     primary = identifiableProvider;
                 }
@@ -428,45 +544,5 @@ public class SimpleBeanFactory<T> implements BeanFactory<T> {
                 this.providers.add(identifiableProvider);
             }
         }
-    }
-
-    /**
-     * Finds all providers that are compatible with the requested type.
-     */
-    private Set<IdentifiableProvider<T>> findCompatibleProviders(@NotNull TypeIdentifier<T> requestedType) {
-        Set<IdentifiableProvider<T>> result = new HashSet<>();
-        
-        // Check qualified providers
-        result.addAll(getAllQualifiedCompatible(requestedType));
-        
-        // Check unqualified providers
-        result.addAll(getAllUnqualifiedCompatible(requestedType));
-        
-        return result;
-    }
-
-    protected @NotNull List<IdentifiableProvider<T>> getAllQualifiedCompatible(TypeIdentifier<T> typeIdentifier) {
-        return qualifiedProviders.values()
-                .stream()
-                .toList();
-    }
-
-    protected @NotNull List<IdentifiableProvider<T>> getAllUnqualifiedCompatible(TypeIdentifier<T> concreteType) {
-        return typedUnqualifiedProviders.entrySet()
-                .stream()
-                .flatMap(it -> it.getValue().all().stream())
-                .toList();
-    }
-
-    protected @NotNull List<IdentifiableProvider<T>> getAllUnqualifiedForType(TypeIdentifier<T> concreteType) {
-        Set<IdentifiableProvider<T>> result = new HashSet<>();
-        
-        // Since all providers under this factory can handle the erased type,
-        // we return all of them and let each provider handle the specific generics
-        for (TypedProviderState<T> state : typedUnqualifiedProviders.values()) {
-            result.addAll(state.all());
-        }
-        
-        return new ArrayList<>(result);
     }
 }

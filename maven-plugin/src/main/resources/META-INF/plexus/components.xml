@@ -1,0 +1,10 @@
+<component-set>
+    <components>
+        <component>
+            <role>org.apache.maven.AbstractMavenLifecycleParticipant</role>
+            <role-hint>wiredi</role-hint>
+            <implementation>com.wiredi.maven.WireDiLifecycleParticipant</implementation>
+            <description>WireDi Lifecycle Participant</description>
+        </component>
+    </components>
+</component-set>

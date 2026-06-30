@@ -84,6 +84,10 @@ public class Compiler {
         return withClass(fileObjectFactory.loadClass(fullyQualifiedClassName));
     }
 
+    public Compiler withClass(Class<?> clazz) {
+        return withClass(fileObjectFactory.loadClass(clazz));
+    }
+
     public Compiler withAllClassesFromFolder(String folderName) {
         fileObjectFactory.loadClassesInFolder(folderName).forEach(this::withClass);
         return this;

@@ -11,6 +11,7 @@ import com.wiredi.compiler.domain.injection.constructor.ConstructorInjectionPoin
 import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
 import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
 import com.wiredi.compiler.processor.lang.utils.TypeElements;
+import com.wiredi.runtime.domain.Eager;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
@@ -19,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -43,7 +45,7 @@ public class InjectionPointService {
     public List<FieldInjectionPoint> findFieldInjectionPoints(TypeElement typeElement) {
         return typeElements.fieldsOf(typeElement)
                 .stream()
-                .filter(it -> Annotations.hasByName(it, Inject.class))
+                .filter(it -> Annotations.search().byName("Inject").isPresentIn(it))
                 .filter(it -> {
                     boolean isFinal = it.getModifiers().contains(Modifier.FINAL);
                     if (isFinal) {
@@ -58,7 +60,7 @@ public class InjectionPointService {
     public List<MethodInjectionPoint> findMethodInjectionPoints(TypeElement typeElement) {
         return typeElements.methodsOf(typeElement)
                 .stream()
-                .filter(it -> Annotations.hasByName(it, Inject.class))
+                .filter(it -> Annotations.search().byName("Inject").isPresentIn(it))
                 .map(MethodInjectionPoint::new)
                 .toList();
     }
@@ -72,18 +74,38 @@ public class InjectionPointService {
 
     @NotNull
     public List<? extends PostConstructInjectionPoint> findPostConstructFunctions(TypeElement typeElement) {
-        return typeElements.methodsOf(typeElement)
+        List<PostConstructInjectionPoint> injectionPoints = new ArrayList<>();
+        typeElements.methodsOf(typeElement)
                 .stream()
                 .map(it -> {
-                    if (Annotations.hasByName(it, PostConstruct.class)) {
+                    if (Annotations.search().byName("PostConstruct").isPresentIn(it)) {
                         return new PostConstructInjectionPoint(it, false);
                     }
 
-                    return Annotations.getAnnotation(it, Initialize.class)
+                    return Annotations.search().byType(Initialize.class)
+                            .findFirstIn(it)
                             .map(annotation -> new PostConstructInjectionPoint(it, annotation.async()))
                             .orElse(null);
                 })
                 .filter(Objects::nonNull)
-                .toList();
+                .forEach(injectionPoints::add);
+
+        if (typeElements.iSOfType(typeElement.asType(), Eager.class)) {
+            logger.debug(() -> "Detected " + typeElement + " as eager initialized type. Invoking setup method post construct.");
+            typeElements.methodsOf(typeElement)
+                    .stream()
+                    .filter(method -> method.getSimpleName().toString().equals("setup"))
+                    .filter(method -> method.getParameters().isEmpty())
+                    .filter(method -> !method.getModifiers().contains(Modifier.ABSTRACT))
+                    .filter(method -> !method.getModifiers().contains(Modifier.DEFAULT))
+                    .findFirst()
+                    .ifPresent(method -> {
+                        // Füge die initialize() Methode als PostConstruct Injection Point hinzu
+                        PostConstructInjectionPoint eagerInitPoint = new PostConstructInjectionPoint(method, false);
+                        injectionPoints.add(eagerInitPoint);
+                    });
+        }
+
+        return injectionPoints;
     }
 }

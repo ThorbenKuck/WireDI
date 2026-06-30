@@ -36,7 +36,7 @@ public class TypeUtils {
         }
 
         List<? extends ExecutableElement> suitableConstructors = constructors.stream()
-                .filter(it -> Annotations.hasByName(it, Inject.class))
+                .filter(it -> Annotations.search().byName("Inject").isPresentIn(it))
                 .toList();
 
         if (suitableConstructors.isEmpty()) {

@@ -65,7 +65,8 @@ public class CompilerRepository {
     public void flush(@NotNull Filer filer) {
         synchronized (classEntries) {
             if (!classEntries.isEmpty()) {
-                logger.info("Flushing compiler repository with {} classes in {}", classEntries.size(), this);
+                logger.info("Flushing compiler repository with {} classes", classEntries.size());
+                logger.debug("Flushing compiler repository {}", this);
             }
 
             Map<String, ClassEntity> entries = new HashMap<>();

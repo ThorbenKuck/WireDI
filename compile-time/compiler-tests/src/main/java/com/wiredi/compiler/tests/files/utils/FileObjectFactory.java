@@ -37,6 +37,10 @@ public class FileObjectFactory {
         return javaFileObjectFactory.load(name);
     }
 
+    public JavaFileObject loadClass(Class<?> clazz) {
+        return javaFileObjectFactory.load(clazz.getName());
+    }
+
     public List<JavaFileObject> loadClassesInFolder(String name) {
         return javaFileObjectFactory.loadFromFolder(name);
     }

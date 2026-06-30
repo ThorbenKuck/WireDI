@@ -1,7 +1,5 @@
 package com.wiredi.annotations;
 
-import com.wiredi.annotations.aspects.AspectTarget;
-
 import java.lang.annotation.*;
 
 /**
@@ -33,18 +31,20 @@ public @interface Wire {
     /**
      * This field indicates whether the annotated class is eligible to generate proxies or not.
      * <p>
-     * If true, the annotation processor will try to generate an aspect-aware proxy. Proxy generation strategies are
-     * dependent on the concrete annotation processor. By default, an aspect-aware proxy will be generated, if the
-     * annotated class has one method, that is annotated or has an annotated parameter with an annotation, that
-     * itself is annotated with the {@link AspectTarget} annotation.
+     * Setting this field will control how the annotation processor behaves, based on the property 'wiredi.proxy-mode'.
+     * This property can be set simply in your application properties file and expects an enum of the type {@link ProxyMode}.
      * <p>
-     * By contract, proxies should have a name ending on "<i>$$AspectAwareProxy</i>" and inherit from the marker
-     * interface "AspectAwareProxy".
+     * Based on the proxy mode, either a proxy will be generated or not.
+     * And in general, the annotation processor will respect if this field is set or not.
+     * This way you can control the proxy generation for all classes, even without explicitly setting this field, while
+     * still being able to override the proxy generation for specific classes.
+     * <p>
+     * Please note: This field can be ignored, even if it is explicitly set to true or false.
+     * The behavior is controlled by the 'wiredi.proxy-mode' property.
      *
-     * @return true if the creation of a proxy should be attempted, or false if no proxy should ever be generated.
-     * @see com.wiredi.annotations.aspects.Pure
+     * @see ProxyMode
      */
-    boolean proxy() default true;
+    boolean proxy() default false;
 
     /**
      * Marks either a class or provider function, as a primary wire type.

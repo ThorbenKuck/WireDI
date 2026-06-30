@@ -1,6 +1,6 @@
 package com.wiredi.compiler.logger;
 
-import com.wiredi.runtime.ServiceFiles;
+import com.wiredi.runtime.services.ServiceFiles;
 import com.wiredi.runtime.values.Value;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

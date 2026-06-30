@@ -47,7 +47,7 @@ public class CoffeeMachine implements TckTestCase {
 				dynamicTest("The primary coffee should be Robusta", () -> assertThat(primaryCoffee).isInstanceOf(Robusta.class)),
 				dynamicTest("The fruity coffee should not be a singleton", () -> assertThat(fruityCoffee).isNotSameAs(arabica)),
 				dynamicTest("The earthy coffee should be a singleton", () -> assertThat(earthyCoffee).isSameAs(robusta)),
-				dynamicTest("The primary coffee should be robusta coffee", () -> assertThat(primaryCoffee).isSameAs(robusta)),
+				dynamicTest("The primary coffee should exactly be robusta instance", () -> assertThat(primaryCoffee).isSameAs(robusta)),
 				dynamicTest("There should be two types of coffee registered", () -> Assertions.assertThat(wireContainer.getAll(Coffee.class)).hasSize(2)),
 				dynamicTest("The registered coffee classes should be robusta and arabica", () -> Assertions.assertThat(wireContainer.getAll(Coffee.class).stream().<Class<? extends Coffee>>map(Coffee::getClass).toList()).containsExactlyInAnyOrder(Arabica.class, Robusta.class))
 		);

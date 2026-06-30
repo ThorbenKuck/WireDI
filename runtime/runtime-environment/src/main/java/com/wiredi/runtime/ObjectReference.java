@@ -1,14 +1,13 @@
 package com.wiredi.runtime;
 
-import com.wiredi.runtime.domain.factories.MissingBeanException;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
+import com.wiredi.runtime.exceptions.MissingBeanException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -101,9 +100,25 @@ public class ObjectReference<T> {
      * @return a single instance if available and unambiguous, null otherwise
      */
     @Nullable
-    public T getInstance() {
+    public T getIfUnique() {
         try {
             return wireContainer.get(type);
+        } catch (DiInstantiationException | BeanNotFoundException | MissingBeanException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Attempts to get a single instance of the referenced type.
+     * <p>
+     * If multiple instances exist, only the first (according to order logic) will be returned.
+     *
+     * @return a single instance if available and unambiguous, null otherwise
+     */
+    @Nullable
+    public T getIfAvailable() {
+        try {
+            return wireContainer.getAll(type).getFirst();
         } catch (DiInstantiationException | BeanNotFoundException | MissingBeanException e) {
             return null;
         }
@@ -119,8 +134,22 @@ public class ObjectReference<T> {
      * @throws NullPointerException if both the instance and the supplied default value are null
      */
     @NotNull
-    public T getInstance(Supplier<@NotNull T> defaultValue) {
-        return Objects.requireNonNullElseGet(getInstance(), defaultValue);
+    public T getIfUnique(Supplier<@NotNull T> defaultValue) {
+        return Objects.requireNonNullElseGet(getIfUnique(), defaultValue);
+    }
+
+    /**
+     * Gets an instance of the referenced type, falling back to the provided supplier.
+     * <p>
+     * If multiple instances exist, only the first (according to order logic) will be returned.
+     *
+     * @param defaultValue supplier to provide a default value if no instance is available
+     * @return the instance from the repository if available, otherwise the appliedConditionalProviders of the defaultValue supplier
+     * @throws NullPointerException if both the instance and the supplied default value are null
+     */
+    @NotNull
+    public T getIfAvailable(Supplier<@NotNull T> defaultValue) {
+        return Objects.requireNonNullElseGet(getIfAvailable(), defaultValue);
     }
 
     /**
@@ -131,31 +160,29 @@ public class ObjectReference<T> {
      *
      * @param consumer the consumer to execute with the instance if available
      */
-    public void ifAvailable(Consumer<? super T> consumer) {
-        @Nullable T instance = getInstance();
+    public T ifUnique(Consumer<? super T> consumer) {
+        @Nullable T instance = getIfUnique();
         if (instance != null) {
             consumer.accept(instance);
         }
+
+        return instance;
     }
 
     /**
-     * Executes the provided consumer with an instance of the specified type if one is available
-     * and is assignable to the given class.
+     * Executes the provided consumer with an instance if one is available.
+     * <p>
+     * If no instance is available, the consumer will not be executed.
+     * This method provides a safe way to work with optional dependencies.
      *
-     * This method provides type-safe access to the
-     * referenced object when a specific subtype is needed.
-     *
-     * @param clazz    the Class object representing the desired type
-     * @param consumer the consumer to execute with the instance if available and of the correct type
-     * @param <S>      the type parameter for the desired class
-     * @return always returns null (method exists for compatibility with existing patterns)
+     * @param consumer the consumer to execute with the instance if available
      */
-    @Nullable
-    public <S> S ifAvailable(Class<S> clazz, Consumer<? super S> consumer) {
-        @Nullable T instance = getInstance();
-        if (instance != null && clazz.isAssignableFrom(instance.getClass())) {
-            consumer.accept(clazz.cast(instance));
+    public T ifAvailable(Consumer<? super T> consumer) {
+        @Nullable T instance = getIfUnique();
+        if (instance != null) {
+            consumer.accept(instance);
         }
-        return null;
+
+        return instance;
     }
 }

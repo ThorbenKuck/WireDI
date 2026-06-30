@@ -1,5 +1,9 @@
 package com.wiredi.runtime;
 
+import com.wiredi.health.HasHealth;
+import com.wiredi.health.HealthStatus;
+import com.wiredi.health.SystemHealth;
+import com.wiredi.health.SystemHealthCalculator;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.application.ShutdownHook;
 import com.wiredi.runtime.async.StateFull;
@@ -14,6 +18,7 @@ import com.wiredi.runtime.environment.EnvironmentConfiguration;
 import com.wiredi.runtime.environment.resolvers.EnvironmentExpressionResolver;
 import com.wiredi.runtime.properties.loader.PropertyFileTypeLoader;
 import com.wiredi.runtime.resources.ResourceProtocolResolver;
+import com.wiredi.runtime.services.ServiceFileSource;
 import com.wiredi.runtime.time.Timed;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,19 +51,19 @@ import static com.wiredi.runtime.lang.Preconditions.isNot;
  * <pre>{@code
  * // Start an application and get the instance
  * WiredApplicationInstance instance = WiredApplication.start();
- * 
+ *
  * // Check if the application is running
  * if (instance.isRunning()) {
  *     // Do something while the application is running
  * }
- * 
+ *
  * // Wait for the application to complete
  * instance.awaitCompletion();
- * 
+ *
  * // Shut down the application
  * instance.shutdown();
  * }</pre>
- * 
+ *
  * @see WiredApplication
  * @see WireContainer
  * @see Barrier
@@ -74,6 +79,7 @@ public class WiredApplicationInstance {
     private final Barrier barrier;
     @NotNull
     private final Banner banner;
+    private final SystemHealth systemHealth = new SystemHealth();
     private final List<WireContainerCallback> contextCallbacks;
     private boolean isRunning = false;
 
@@ -84,17 +90,18 @@ public class WiredApplicationInstance {
      * and should not be called directly.
      *
      * @param wireContainer the wire container to use for this application instance
-     * @param barrier the barrier to use for managing the application's completion state
+     * @param barrier       the barrier to use for managing the application's completion state
      */
     public WiredApplicationInstance(
             @NotNull WireContainer wireContainer,
-            @NotNull Barrier barrier
+            @NotNull Barrier barrier,
+            @NotNull ServiceFileSource serviceFileSource
     ) {
         this.wireContainer = wireContainer;
         this.environment = wireContainer.environment();
         this.barrier = barrier;
         this.banner = new Banner(wireContainer.environment());
-        contextCallbacks = ServiceFiles.getInstance(WireContainerCallback.class)
+        contextCallbacks = serviceFileSource.getServiceFiles(WireContainerCallback.class)
                 .tryInitialize(wireContainer.onDemandInjector())
                 .instances();
     }
@@ -118,43 +125,58 @@ public class WiredApplicationInstance {
      */
     @NotNull Timed start() {
         isNot(isRunning, () -> "The WiredApplication is already started");
-        return Timed.of(() -> {
-                    contextCallbacks.addAll(wireContainer.getAll(WireContainerCallback.class));
-                    contextCallbacks.forEach(it -> it.loadingStarted(wireContainer));
+        systemHealth.setStatus(HealthStatus.STARTING);
+        try {
+            return Timed.of(() -> {
+                        wireContainer.announce(IdentifiableProvider.builder(systemHealth));
+                        contextCallbacks.addAll(wireContainer.getAll(WireContainerCallback.class));
+                        contextCallbacks.forEach(it -> it.loadingStarted(wireContainer));
 
-                    Timed.of(() -> {
-                        logger.debug(() -> "Loading Environment");
-                        environment.autoconfigure();
-                        banner.print();
-                        environment.printProfiles();
-                    }).then(timed -> contextCallbacks.forEach(it -> it.loadedEnvironment(timed, environment)));
+                        Timed.of(() -> {
+                            logger.debug(() -> "Loading Environment");
+                            environment.autoconfigure();
+                            banner.print();
+                            environment.printProfiles();
+                        }).then(timed -> contextCallbacks.forEach(it -> it.loadedEnvironment(timed, environment)));
 
-                    if (wireContainer.isNotLoaded()) {
-                        logger.trace(() -> "Registering all known static types");
-                        wireContainer.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
-                        logger.debug(() -> "Loading WireContainer for the new application");
+                        if (wireContainer.isNotLoaded()) {
+                            logger.trace(() -> "Registering all known static types");
+                            wireContainer.announce(IdentifiableProvider.singleton(banner, TypeIdentifier.just(Banner.class)));
+                            logger.debug(() -> "Loading WireContainer for the new application");
 
-                        wireContainer.load(repository -> {
-                            logger.debug(() -> "Configuring Environment with Bean instances");
-                            environment.addExpressionResolvers(wireContainer.getAll(EnvironmentExpressionResolver.class));
-                            environment.resourceLoader().addProtocolResolvers(wireContainer.getAll(ResourceProtocolResolver.class));
-                            environment.propertyLoader().addPropertyFileLoaders(wireContainer.getAll(PropertyFileTypeLoader.class));
-                            wireContainer.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
+                            wireContainer.load(repository -> {
+                                logger.debug(() -> "Configuring Environment with Bean instances");
+                                environment.addExpressionResolvers(wireContainer.getAll(EnvironmentExpressionResolver.class));
+                                environment.resourceLoader().addProtocolResolvers(wireContainer.getAll(ResourceProtocolResolver.class));
+                                environment.propertyLoader().addPropertyFileLoaders(wireContainer.getAll(PropertyFileTypeLoader.class));
+                                wireContainer.getAll(EnvironmentConfiguration.class).forEach(it -> it.configure(environment));
 
-                            return new WireContainer.LoadConfig(
-                                    environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true),
-                                    environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true),
-                                    environment.getProperty(PropertyKeys.AWAIT_STATES_TIMEOUT.getKey(), Duration.class)
-                                    .orElse(null)
-                            );
-                        }).then(time -> logger.info("WireContainer loaded in " + time));
-                    }
+                                return new WireContainer.LoadConfig(
+                                        environment.getProperty(PropertyKeys.LOAD_EAGER_INSTANCES.getKey(), true),
+                                        environment.getProperty(PropertyKeys.AWAIT_STATES.getKey(), true),
+                                        environment.getProperty(PropertyKeys.AWAIT_STATES_TIMEOUT.getKey(), Duration.class)
+                                                .orElse(null)
+                                );
+                            }).then(time -> logger.info("WireContainer loaded in " + time));
+                        }
 
-                    Runtime.getRuntime().addShutdownHook(shutdownHook);
-                    isRunning = true;
-                })
-                .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireContainer)))
-                .then(this::printDiagnostics);
+                        Runtime.getRuntime().addShutdownHook(shutdownHook);
+                        isRunning = true;
+                        wireContainer.getAll(HasHealth.class)
+                                .forEach(hasHealth -> systemHealth.addComponent(hasHealth.health()));
+                        wireContainer.tryGet(SystemHealthCalculator.class).ifPresent(systemHealth::setHealthCalculator);
+                        systemHealth.calculateStatus();
+                    })
+                    .then(totalTime -> contextCallbacks.forEach(callback -> callback.loadingFinished(totalTime, wireContainer)))
+                    .then(this::printDiagnostics);
+        } catch (Throwable throwable) {
+            logger.error("Error while starting the WiredApplication", throwable);
+            systemHealth.setStatus(HealthStatus.FAULTY);
+            if (wireContainer.isLoaded()) {
+                wireContainer.clear();
+            }
+            throw throwable;
+        }
     }
 
     private void printDiagnostics() {
@@ -164,29 +186,6 @@ public class WiredApplicationInstance {
             startupDiagnostics.accept(new StartupDiagnosticsPrinter());
         }
     }
-
-    private static final class StartupDiagnosticsPrinter implements StartupDiagnostics.Visitor {
-
-        private final List<String> lines = new ArrayList<>();
-
-        @Override
-        public void acceptRoot(StartupDiagnostics.TimingState state) {
-            lines.add("WireContainer startup in " + state.time());
-        }
-
-        @Override
-        public void accept(StartupDiagnostics.TimingState state, int depth) {
-            lines.add("  ".repeat(Math.max(0, depth)) + " - " + state.name() + ": " + state.time());
-        }
-
-        @Override
-        public void cleanup() {
-            String diagnostics = String.join("\n", lines);
-            lines.clear();
-            logger.info(() -> "Startup diagnostics:\n" + diagnostics);
-        }
-    }
-
 
     /**
      * Shuts down this application instance.
@@ -207,28 +206,34 @@ public class WiredApplicationInstance {
     @NotNull
     public Timed shutdown() {
         is(isRunning, () -> "The WiredApplication is not started");
-        return Timed.of(() -> {
-                    Collection<WireContainerCallback> contextCallbacks = wireContainer.getAll(WireContainerCallback.class);
-                    logger.debug(() -> "Destroying all Beans of the WireContainer");
-                    wireContainer.getAll(TypeIdentifier.just(StateFull.class))
-                            .parallelStream()
-                            .forEach(StateFull::dismantleState);
-                    wireContainer.getAll(TypeIdentifier.just(Disposable.class))
-                            .parallelStream()
-                            .forEach(bean -> bean.tearDown(wireContainer));
-                    environment.clear();
-                    new ArrayList<>(contextCallbacks).forEach(callback -> callback.destroyed(wireContainer));
-                    wireContainer.getAll(ShutdownListener.class).forEach(it -> it.tearDown(wireContainer));
-                    wireContainer.clear();
-                    if (Thread.currentThread() != shutdownHook) {
-                        Runtime.getRuntime().removeShutdownHook(this.shutdownHook);
-                    }
-                    // Suggest to the gc freeing up resources is a good idea.
-                    // We have just cleared a lot of collections, so the gc can pick up a lot of things.
-                    Runtime.getRuntime().gc();
-                })
-                .then(timed -> logger.info(() -> "WireContainer shutdown in " + timed))
-                .then(() -> isRunning = false);
+        try {
+            return Timed.of(() -> {
+                        Collection<WireContainerCallback> contextCallbacks = wireContainer.getAll(WireContainerCallback.class);
+                        logger.debug(() -> "Destroying all Beans of the WireContainer");
+                        wireContainer.getAll(TypeIdentifier.just(StateFull.class))
+                                .parallelStream()
+                                .forEach(StateFull::dismantleState);
+                        wireContainer.getAll(TypeIdentifier.just(Disposable.class))
+                                .parallelStream()
+                                .forEach(bean -> bean.tearDown(wireContainer));
+                        environment.clear();
+                        new ArrayList<>(contextCallbacks).forEach(callback -> callback.destroyed(wireContainer));
+                        wireContainer.getAll(ShutdownListener.class).forEach(it -> it.tearDown(wireContainer));
+                        wireContainer.clear();
+                        if (Thread.currentThread() != shutdownHook) {
+                            Runtime.getRuntime().removeShutdownHook(this.shutdownHook);
+                        }
+                        // Suggest to the gc freeing up resources is a good idea.
+                        // We have just cleared a lot of collections, so the gc can pick up a lot of things.
+                        Runtime.getRuntime().gc();
+                    })
+                    .then(timed -> logger.info(() -> "WireContainer shutdown in " + timed))
+                    .then(() -> isRunning = false);
+        } catch (Throwable throwable) {
+            logger.error("Error while shutting down the WiredApplication", throwable);
+            systemHealth.setStatus(HealthStatus.FAULTY);
+            throw throwable;
+        }
     }
 
     /**
@@ -307,6 +312,15 @@ public class WiredApplicationInstance {
     }
 
     /**
+     * Gets the system health of this application instance.
+     *
+     * @return the SystemHealth of this application instance.
+     */
+    public SystemHealth systemHealth() {
+        return systemHealth;
+    }
+
+    /**
      * Gets the environment used by this application instance.
      *
      * @return the environment
@@ -317,6 +331,28 @@ public class WiredApplicationInstance {
 
     public List<WireContainerCallback> getContextCallbacks() {
         return contextCallbacks;
+    }
+
+    private static final class StartupDiagnosticsPrinter implements StartupDiagnostics.Visitor {
+
+        private final List<String> lines = new ArrayList<>();
+
+        @Override
+        public void acceptRoot(StartupDiagnostics.TimingState state) {
+            lines.add("WireContainer startup in " + state.time());
+        }
+
+        @Override
+        public void accept(StartupDiagnostics.TimingState state, int depth) {
+            lines.add("  ".repeat(Math.max(0, depth)) + " - " + state.name() + ": " + state.time());
+        }
+
+        @Override
+        public void cleanup() {
+            String diagnostics = String.join("\n", lines);
+            lines.clear();
+            logger.info(() -> "Startup diagnostics:\n" + diagnostics);
+        }
     }
 
     static class ShutdownListenerProvider implements IdentifiableProvider<ShutdownListener> {

@@ -2,8 +2,13 @@ package com.wiredi.provider;
 
 import com.google.auto.service.AutoService;
 import com.wiredi.runtime.WireContainer;
+import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
+import com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBeanEvaluator;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.provider.condition.LoadCondition;
+import com.wiredi.runtime.domain.provider.condition.SingleLoadCondition;
+import com.wiredi.runtime.values.Value;
 import jakarta.annotation.Generated;
 import java.lang.Override;
 import org.jetbrains.annotations.NotNull;
@@ -14,7 +19,19 @@ import org.jetbrains.annotations.NotNull;
 )
 @AutoService({IdentifiableProvider.class})
 public final class InterfaceProvider$implementation$Configuration implements IdentifiableProvider<Interface> {
+    private static final Value<LoadCondition> LOAD_CONDITION = Value.async(() -> new SingleLoadCondition(
+            ConditionalOnBeanEvaluator.class,
+            AnnotationMetadata.builder("com.wiredi.runtime.domain.conditional.builtin.ConditionalOnBean")
+                    .withField("type", "com.wiredi.provider.Configuration")
+                    .build()
+    ));
+
     private static final TypeIdentifier<Interface> PRIMARY_WIRE_TYPE = TypeIdentifier.of(Interface.class);
+
+    @Override
+    public final LoadCondition condition() {
+        return LOAD_CONDITION.get();
+    }
 
     private Interface createInstance(final WireContainer wireContainer,
                                      final TypeIdentifier<Interface> concreteType) {
@@ -27,6 +44,11 @@ public final class InterfaceProvider$implementation$Configuration implements Ide
     public final Interface get(@NotNull final WireContainer wireContainer,
                                @NotNull final TypeIdentifier<Interface> concreteType) {
         return createInstance(wireContainer, concreteType);
+    }
+
+    @Override
+    public final int getOrder() {
+        return 1;
     }
 
     @Override

@@ -5,13 +5,22 @@ import com.wiredi.runtime.collections.EnumSet;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 
-public class Bytes {
-
-    private final byte[] content;
-
-    public Bytes(byte[] content) {
-        this.content = content;
-    }
+/**
+ * A lightweight wrapper and utility for working with byte arrays in conversion scenarios.
+ *
+ * Instances of this record represent an immutable view over a byte[] and expose helpers to
+ * convert between bytes and common primitive, String, and Enum representations. It is used by
+ * built-in converters such as the ByteArrayTypeConverter and LongTypeConverter to provide
+ * predictable, allocation-conscious transformations. Numeric conversions prefer binary encodings
+ * when the length matches the corresponding primitive size; otherwise they fall back to parsing the
+ * textual representation contained in the byte sequence.
+ *
+ * This type exists to centralize byte conversion logic so that both direct API users and
+ * {@code TypeConverter} implementations share the exact same rules. It keeps the TypeConverter
+ * implementations concise and makes behavior easy to reason about when converting configuration
+ * values to and from their byte-level equivalents.
+ */
+public record Bytes(byte[] content) {
 
     public static byte[] convert(boolean b) {
         return ByteBuffer.wrap(Boolean.toString(b).getBytes()).array();

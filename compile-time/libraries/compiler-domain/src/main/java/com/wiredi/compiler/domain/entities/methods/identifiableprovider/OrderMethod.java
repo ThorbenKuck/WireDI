@@ -6,6 +6,7 @@ import com.squareup.javapoet.TypeName;
 import com.wiredi.annotations.Order;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
+import com.wiredi.compiler.domain.annotations.TypedAnnotationSearch;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -20,6 +21,10 @@ public class OrderMethod implements StandaloneMethodFactory {
 
     public OrderMethod(Order annotation, Types types) {
         this(getOrder(annotation, types).estimateOr(annotation.value()));
+    }
+
+    public OrderMethod(Order annotation, int modifier, Types types) {
+        this(getOrder(annotation, types).estimateOr(annotation.value()) + modifier);
     }
 
     public OrderMethod(int order) {
@@ -43,10 +48,11 @@ public class OrderMethod implements StandaloneMethodFactory {
         OrderRange orderRange = new OrderRange();
         TypeMirror before = Annotations.extractType(annotation, Order::before);
         TypeMirror after = Annotations.extractType(annotation, Order::after);
+        TypedAnnotationSearch<Order> orderAnnotation = Annotations.search().byType(Order.class);
 
         if (isNotVoidType(before)) {
-            Order beforeAnnotation = Annotations.getAnnotation(types.asElement(before), Order.class).orElse(null);
-            logger.info("Determined before " + beforeAnnotation + " on " + before + "(" + before.getAnnotationMirrors() + ")");
+            Order beforeAnnotation = orderAnnotation.findFirstIn(types.asElement(before)).orElse(null);
+            logger.info("Determined before {} on {}({})", beforeAnnotation, before, before.getAnnotationMirrors());
             if (beforeAnnotation == null) {
                 orderRange.before = Order.DEFAULT;
             } else {
@@ -54,8 +60,8 @@ public class OrderMethod implements StandaloneMethodFactory {
             }
         }
         if (isNotVoidType(after)) {
-            Order afterAnnotation = Annotations.getAnnotation(types.asElement(after), Order.class).orElse(null);
-            logger.info("Determined after " + afterAnnotation);
+            Order afterAnnotation = orderAnnotation.findFirstIn(types.asElement(after)).orElse(null);
+            logger.info("Determined after {}", afterAnnotation);
             if (afterAnnotation == null) {
                 orderRange.after = Order.DEFAULT;
             } else {

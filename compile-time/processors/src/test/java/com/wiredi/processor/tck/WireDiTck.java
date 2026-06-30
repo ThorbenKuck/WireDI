@@ -15,6 +15,7 @@ import com.wiredi.processor.tck.infrastructure.TckTestCase;
 import com.wiredi.runtime.Environment;
 import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.services.ServiceFiles;
 import com.wiredi.runtime.time.Timed;
 import com.wiredi.runtime.time.TimedValue;
 import org.junit.jupiter.api.DynamicNode;
@@ -34,9 +35,7 @@ public class WireDiTck {
     @Test
     public void test() {
         // Arrange
-        Environment environment = Environment.build();
-//        WireContainer wireContainer = WireContainer.open(new BeanContainerProperties(environment).withConflictResolver(StandardWireConflictResolver.BEST_MATCH));
-        WireContainer wireContainer = WireContainer.open(environment);
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         Car car = wireContainer.get(Car.class);
@@ -49,7 +48,7 @@ public class WireDiTck {
 
     @Test
     public void testLoadTimeOfObjects() {
-        WireContainer wireContainer = WireContainer.create();
+        WireContainer wireContainer = WireContainer.open();
         TimedValue<Collection<TckTestCase>> timedValue = Timed.of(() -> wireContainer.getAll(TypeIdentifier.of(TckTestCase.class)));
 
         System.out.println(timedValue.time());
@@ -148,5 +147,14 @@ public class WireDiTck {
                             .map(it -> (DynamicNode) it).toList().iterator()
                     );
                 }).toList();
+    }
+
+    @TestFactory
+    public Collection<? extends DynamicNode> runAllTckTestCases() {
+        WireContainer wireContainer = WireContainer.open();
+        return wireContainer.getAll(TypeIdentifier.of(TckTestCase.class))
+                .stream()
+                .flatMap(it -> it.dynamicTests().stream())
+                .toList();
     }
 }

@@ -1,7 +1,6 @@
 package com.wiredi.compiler.processor.business;
 
 import com.wiredi.annotations.aspects.AspectTarget;
-import com.wiredi.annotations.aspects.Pure;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.values.ProxyMethod;
 import com.wiredi.compiler.processor.AspectIgnoredAnnotations;
@@ -28,14 +27,9 @@ public class AspectAwareProxyService {
     }
 
     public List<ProxyMethod> findEligibleMethods(TypeElement typeElement) {
-        if (Annotations.isAnnotatedWith(typeElement, Pure.class)) {
-            return Collections.emptyList();
-        }
-
         Stream<ExecutableElement> proxyMethodStream = typeElement.getEnclosedElements()
                 .stream()
                 .filter(it -> it.getKind() == ElementKind.METHOD)
-                .filter(it -> !Annotations.isAnnotatedWith(it, Pure.class))
                 .map(it -> (ExecutableElement) it)
                 .filter(it -> !it.getModifiers().contains(Modifier.PRIVATE))
                 .filter(it -> !it.getModifiers().contains(Modifier.FINAL))

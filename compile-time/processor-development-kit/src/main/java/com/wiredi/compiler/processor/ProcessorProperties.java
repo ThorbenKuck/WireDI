@@ -1,13 +1,8 @@
 package com.wiredi.compiler.processor;
 
-import com.wiredi.compiler.CompilerEnvironment;
-import com.wiredi.compiler.processor.lang.AnnotationProcessorResource;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.properties.PropertyLoader;
 import com.wiredi.runtime.properties.TypedProperties;
 import com.wiredi.runtime.properties.Key;
-import com.wiredi.runtime.properties.loader.PropertiesPropertyFileTypeLoader;
-import com.wiredi.runtime.properties.loader.YamlPropertyFileTypeLoader;
 
 import javax.annotation.processing.Filer;
 import java.util.*;
@@ -15,10 +10,9 @@ import java.util.stream.Collectors;
 
 public class ProcessorProperties {
 
-	private static final Environment environment = CompilerEnvironment.get();
 	private final TypedProperties properties;
 
-	public ProcessorProperties(Filer filer) {
+	public ProcessorProperties(Environment environment) {
 		properties = environment.properties();
 	}
 

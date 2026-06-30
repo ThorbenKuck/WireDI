@@ -56,7 +56,13 @@ public class AspectAwareProxyEntity extends AbstractClassEntity<AspectAwareProxy
     private CodeBlock rootMethodInvocation(ProxyMethod proxyMethod) {
         String parameters = proxyMethod.parameters()
                 .stream()
-                .map(it -> "c.requireParameter(\"" + it.getSimpleName() + "\")")
+                .map(it -> {
+                    if (Annotations.search().byName("Nullable").isPresentIn(it)) {
+                        return "c.tryGetParameter(\"" + it.getSimpleName() + "\")";
+                    } else {
+                        return "c.requireParameter(\"" + it.getSimpleName() + "\")";
+                    }
+                })
                 .collect(Collectors.joining(", "));
         if (proxyMethod.willReturnSomething()) {
             return CodeBlock.builder()

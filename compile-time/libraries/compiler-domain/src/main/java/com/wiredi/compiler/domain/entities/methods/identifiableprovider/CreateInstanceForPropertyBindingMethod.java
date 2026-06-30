@@ -8,6 +8,8 @@ import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.domain.TypeUtils;
 import com.wiredi.compiler.domain.WireRepositories;
+import com.wiredi.compiler.domain.annotations.AnnotationSearch;
+import com.wiredi.compiler.domain.annotations.TypedAnnotationSearch;
 import com.wiredi.compiler.domain.properties.ItemDeprecation;
 import com.wiredi.compiler.domain.properties.PropertyContext;
 import com.wiredi.compiler.errors.ProcessingException;
@@ -27,13 +29,15 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.TypeKind;
 import javax.lang.model.type.TypeMirror;
-import java.lang.annotation.Annotation;
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethodFactory {
 
     private static final CompileTimeLogger logger = CompileTimeLogger.getLogger(CreateInstanceForPropertyBindingMethod.class);
+    private final TypedAnnotationSearch<Description> descriptionAnnotation = Annotations.search().byType(Description.class);
+    private final TypedAnnotationSearch<DeprecatedProperty> deprecatedPropertyAnnotation = Annotations.search().byType(DeprecatedProperty.class);
+    private final TypedAnnotationSearch<Deprecated> deprecatedAnnotation = Annotations.search().byType(Deprecated.class);
     private final PropertyBinding annotation;
     private final TypeElement typeElement;
     private final Environment environment;
@@ -59,7 +63,11 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
     }
 
     private static Optional<Key> tryFindPropertyName(Element element) {
-        return Annotations.getAnnotation(element, Property.class)
+        TypedAnnotationSearch<Name> nameAnnotation = Annotations.search().byType(Name.class);
+        TypedAnnotationSearch<Named> namedAnnotation = Annotations.search().byType(Named.class);
+        TypedAnnotationSearch<Property> propertyAnnotation = Annotations.search().byType(Property.class);
+
+        return propertyAnnotation.findFirstIn(element)
                 .map(property -> {
                     if (property.name().isBlank()) {
                         return null;
@@ -67,8 +75,8 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
                         return property.name();
                     }
                 })
-                .or(() -> Annotations.getAnnotation(element, Name.class).map(Name::value))
-                .or(() -> Annotations.getAnnotation(element, Named.class).map(Named::value))
+                .or(() -> nameAnnotation.findFirstIn(element).map(Name::value))
+                .or(() -> namedAnnotation.findFirstIn(element).map(Named::value))
                 .or(() -> Optional.of(element.getSimpleName().toString()))
                 .map(Key::format);
     }
@@ -78,7 +86,8 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
     }
 
     private static Optional<String> tryFindDefaultValue(Element element) {
-        return Annotations.getAnnotation(element, Property.class)
+        TypedAnnotationSearch<Property> propertyAnnotation = Annotations.search().byType(Property.class);
+        return propertyAnnotation.findFirstIn(element)
                 .map(property -> {
                     if (property.defaultValue().isBlank()) {
                         return null;
@@ -146,16 +155,21 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
     }
 
     private String getDescription(Element element) {
-        Description description = element.getAnnotation(Description.class);
-        if (description != null && !description.value().isBlank()) {
-            logger.info(() -> "Found description " + description.value() + " for " + element.getEnclosingElement() + "." + element);
-            return description.value();
+        TypedAnnotationSearch<Property> propertyAnnotation = Annotations.search().byType(Property.class);
+        String description = descriptionAnnotation.findFirstIn(element)
+                .map(Description::value)
+                .orElse(null);
+        if (description != null && !description.isBlank()) {
+            logger.info(() -> "Found description " + description + " for " + element.getEnclosingElement() + "." + element);
+            return description;
         }
 
-        Property property = element.getAnnotation(Property.class);
-        if (property != null && !property.description().isBlank()) {
-            logger.info(() -> "Found description " + property.description() + " for " + element.getEnclosingElement() + "." + element);
-            return property.description();
+        String property = propertyAnnotation.findFirstIn(element)
+                .map(Property::description)
+                .orElse(null);
+        if (property != null && !property.isBlank()) {
+            logger.info(() -> "Found description " + property + " for " + element.getEnclosingElement() + "." + element);
+            return property;
         }
         logger.info(() -> "Unable to find description for " + element.getEnclosingElement() + "." + element + " (" + element.getAnnotationMirrors() + ")");
         return elements().getDocComment(element);
@@ -172,27 +186,20 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
 
     @Nullable
     private ItemDeprecation deprecation(Element element) {
-        Deprecated deprecated = element.getAnnotation(Deprecated.class);
-        if (deprecated != null) {
-            return new ItemDeprecation(
-                    null,
-                    null,
-                    getValue(deprecated.since()),
-                    DeprecationLevel.WARNING.getValue()
-            );
-        }
-
-        DeprecatedProperty deprecatedProperty = element.getAnnotation(DeprecatedProperty.class);
-        if (deprecatedProperty != null) {
-            return new ItemDeprecation(
-                    getValue(deprecatedProperty.reason()),
-                    getValue(deprecatedProperty.replacement()),
-                    getValue(deprecatedProperty.since()),
-                    deprecatedProperty.level().getValue()
-            );
-        }
-
-        return null;
+        return deprecatedAnnotation.findFirstIn(element)
+                .map(it -> new ItemDeprecation(
+                        null,
+                        null,
+                        getValue(it.since()),
+                        DeprecationLevel.WARNING.getValue()
+                ))
+                .or(() -> deprecatedPropertyAnnotation.findFirstIn(element).map(it -> new ItemDeprecation(
+                        getValue(it.reason()),
+                        getValue(it.replacement()),
+                        getValue(it.since()),
+                        it.level().getValue()
+                )))
+                .orElse(null);
     }
 
     private CodeBlock runtimeConstructorInvocation(
@@ -398,7 +405,7 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
                                 propertyName(element).withPrefix(prefix),
                                 defaultValue(element),
                                 element,
-                                !Annotations.hasByName(element, "Nullable")
+                                Annotations.search().byName("Nullable").isNotPresentIn(element)
                         )
                 ).toList();
     }
@@ -461,20 +468,11 @@ public class CreateInstanceForPropertyBindingMethod extends CreateInstanceMethod
                     .orElseGet(() -> defaultValue(field));
         }
 
-        public boolean hasAnnotation(Class<? extends Annotation> annotationType) {
-            return Annotations.isAnnotatedWith(field, annotationType)
-                    || Annotations.isAnnotatedWith(setter, annotationType);
-        }
-
         public boolean hasAnnotation(String annotationType) {
             logger.info(() -> "Checking for instance " + annotationType + " on " + field + " and " + setter);
-            return Annotations.hasByName(field, annotationType)
-                    || Annotations.hasByName(setter, annotationType);
-        }
+            AnnotationSearch annotationSearch = Annotations.search().byName(annotationType);
 
-        public <T extends Annotation> Optional<T> findAnnotation(Class<T> annotationType) {
-            return Annotations.getAnnotation(setter, annotationType)
-                    .or(() -> Annotations.getAnnotation(field, annotationType));
+            return annotationSearch.isPresentIn(field) || annotationSearch.isPresentIn(setter);
         }
     }
 }

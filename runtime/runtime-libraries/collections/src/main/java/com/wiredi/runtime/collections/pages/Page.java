@@ -1,6 +1,7 @@
 package com.wiredi.runtime.collections.pages;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -39,6 +40,14 @@ public interface Page<T> extends Iterable<T> {
      */
     static <T> Page<T> empty(Pageable pageable) {
         return new ListPage<>(0, 0, Collections.emptyList(), pageable);
+    }
+
+    static <T> ListPage<T> of(long totalElements, List<T> content, Pageable pageable) {
+        return ListPage.calculate(totalElements, content, pageable);
+    }
+
+    static <T> ListPage<T> of(int totalPages, long totalElements, List<T> content, Pageable pageable) {
+        return new ListPage<>(totalPages, totalElements, content, pageable);
     }
 
     /** Total number of pages for the full result set. */

@@ -56,7 +56,9 @@ public class ActiveProfileSubroutine implements AnnotationProcessorSubroutine {
             return;
         }
         final TypeElement typeElement = (TypeElement) element;
-        List<String> activeProfile = annotations.findAnnotationField(element, ActiveProfiles.class, "value")
+        List<String> activeProfile = Annotations.search().byType(ActiveProfiles.class)
+                .field("value")
+                .findInElement(element)
                 .map(AnnotationField::asArrayOfStrings)
                 .orElse(Collections.emptyList());
         if (activeProfile.isEmpty()) {
@@ -64,7 +66,7 @@ public class ActiveProfileSubroutine implements AnnotationProcessorSubroutine {
             return;
         }
 
-        OrderMethod orderMethod = Annotations.getAnnotation(element, Order.class)
+        OrderMethod orderMethod = Annotations.search().byType(Order.class).findFirstIn(element)
                 .map(it -> new OrderMethod(it, types))
                 .orElse(DEFAULT_ORDER_METHOD);
 

@@ -1,10 +1,10 @@
 package com.wiredi.runtime.domain;
 
 import com.wiredi.runtime.WireContainer;
-import com.wiredi.runtime.domain.factories.Bean;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
+import com.wiredi.runtime.domain.scopes.UnionScope;
 import com.wiredi.runtime.lang.OrderedComparator;
 import jakarta.inject.Singleton;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class ScopeRegistry {
 
@@ -34,8 +35,11 @@ public class ScopeRegistry {
     private final ScopeRegistryCache scopeRegistryCache = new ScopeRegistryCache();
     @NotNull
     private final Scope defaultScope;
+    @NotNull
+    private final UnionScope unionScope = new UnionScope();
     @Nullable
     private WireContainer context;
+    private boolean initialized = false;
 
     public ScopeRegistry() {
         this(Singleton.class, Scope.threadSafeSingleton());
@@ -45,24 +49,51 @@ public class ScopeRegistry {
         this.defaultScope = defaultScope;
         defaultScope.registered(this);
         scopes.put(identifier, defaultScope);
+        this.unionScope.addScope(defaultScope);
     }
 
-    public void initialize(WireContainer wireContext) {
+    public void link(@NotNull WireContainer container) {
         if (this.context != null) {
-            throw new IllegalStateException("ScopeRegistry has already been initialized");
+        throw new IllegalStateException("ScopeRegistry has already been linked");
+    }
+
+        this.context = container;
+        this.unionScope.link(container);
+    }
+
+    public void unlink() {
+        this.context = null;
+        this.unionScope.unlink();
+    }
+
+    public void initialize() {
+        Collection<Scope> sortedScopes = OrderedComparator.sorted(scopes.values());
+        @Nullable ScopeCallback scopeCallback = tryFindBeanCallback(sortedScopes);
+        if (scopeCallback != null) {
+            this.unionScope.callback(scopeCallback);
         }
-        this.context = wireContext;
-        for (Scope value : scopes.values()) {
-            value.link(wireContext);
+        this.initialized = true;
+    }
+
+    @Nullable
+    private ScopeCallback tryFindBeanCallback(Collection<Scope> scopes) {
+        Set<ScopeCallback> callbacks = scopes.stream()
+                .flatMap(scope -> scope.getAll(TypeIdentifier.of(ScopeCallback.class)).stream())
+                .collect(Collectors.toSet());
+
+        if (callbacks.isEmpty()) {
+            return null;
         }
-        for (Scope value : scopes.values()) {
-            value.autostart();
+        if (callbacks.size() == 1) {
+            return callbacks.iterator().next();
         }
+
+        return new ScopeCallback.Composite(callbacks);
     }
 
     public void tearDown() {
         for (Scope value : scopes.values()) {
-            value.finish();
+            value.reset();
         }
         for (Scope value : scopes.values()) {
             value.unregistered(this);
@@ -70,6 +101,7 @@ public class ScopeRegistry {
 
         this.scopeRegistryCache.clear();
         this.scopes.clear();
+        this.unionScope.clearScopes();
         this.context = null;
     }
 
@@ -83,8 +115,13 @@ public class ScopeRegistry {
         return defaultScope;
     }
 
+    @NotNull
+    public UnionScope unionScope() {
+        return unionScope;
+    }
+
     public boolean isInitialized() {
-        return context != null;
+        return initialized;
     }
 
     /**
@@ -92,11 +129,18 @@ public class ScopeRegistry {
      * This is the key optimization method that routes providers to the right scope.
      */
     public void registerProvider(@NotNull IdentifiableProvider<?> provider) {
-        Scope targetScope = resolveTargetScopeForRegistration(provider);
+        registerProvider(provider, resolveTargetScopeForRegistration(provider));
+    }
+
+    /**
+     * Registers a provider with the appropriate scope based on its scope() method.
+     * This is the key optimization method that routes providers to the right scope.
+     */
+    public void registerProvider(@NotNull IdentifiableProvider<?> provider, Scope targetScope) {
         targetScope.register(provider);
 
         if (provider.primary()) {
-            scopeRegistryCache.registerPrimaryProvider(provider);
+            scopeRegistryCache.registerPrimaryScope(provider, targetScope);
         }
 
         if (targetScope != defaultScope) {
@@ -129,6 +173,7 @@ public class ScopeRegistry {
 
         Scope registeredScope = this.scopes.computeIfAbsent(key, k -> {
             tryToLink(scope);
+            unionScope.addScope(scope);
             return scope;
         });
 
@@ -142,6 +187,7 @@ public class ScopeRegistry {
         return Objects.requireNonNull(scopes.computeIfAbsent(key, k -> {
             Scope scope = scopeSupplier.get();
             tryToLink(scope);
+            unionScope.addScope(scope);
             return scope;
         }), () -> "It is not allowed to register a null scope with key " + key + "!");
     }
@@ -150,26 +196,21 @@ public class ScopeRegistry {
         scope.registered(this);
         if (context != null) {
             scope.link(context);
-            scope.autostart();
         }
     }
 
     /**
-     * Für getAll() - search all scopes
+     * For "getAll" operations, we use the union scope to resolve all instances.
      */
     public <T> List<T> getAllInstances(TypeIdentifier<T> type) {
-        return scopes.values().stream()
-                .flatMap(it -> it.getAllBeans(type))
-                .sorted(OrderedComparator.INSTANCE)
-                .map(Bean::instance)
-                .toList();
+        return unionScope.getAll(type);
     }
 
     public <T> Scope determineScopeOf(TypeIdentifier<T> typeIdentifier) {
-        return scopeRegistryCache.determineScopeOf(typeIdentifier, defaultScope);
+        return scopeRegistryCache.determineScopeOf(typeIdentifier, unionScope);
     }
 
     public <T> Scope determineScopeOf(QualifiedTypeIdentifier<T> typeIdentifier) {
-        return scopeRegistryCache.determineScopeOf(typeIdentifier, defaultScope);
+        return scopeRegistryCache.determineScopeOf(typeIdentifier, unionScope);
     }
 }

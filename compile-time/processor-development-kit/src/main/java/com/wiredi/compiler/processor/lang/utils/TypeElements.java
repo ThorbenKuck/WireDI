@@ -28,8 +28,8 @@ public class TypeElements {
     }
 
     public boolean iSOfType(TypeMirror typeMirror, Class<?> type) {
-        return types.erasure(TYPE_CACHE.computeIfAbsent(type, () -> elements.getTypeElement(type.getName()).asType())).toString()
-                .equals(types.erasure(typeMirror).toString());
+        TypeMirror expectedType = TYPE_CACHE.computeIfAbsent(type, () -> elements.getTypeElement(type.getName()).asType());
+        return types.isAssignable(typeMirror, expectedType);
     }
 
     public TypeElement outerMostTypeElementOf(Element element) {

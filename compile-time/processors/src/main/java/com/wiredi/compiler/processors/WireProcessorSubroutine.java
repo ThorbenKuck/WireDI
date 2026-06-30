@@ -6,12 +6,14 @@ import com.wiredi.annotations.stereotypes.AutoConfiguration;
 import com.wiredi.annotations.stereotypes.Configuration;
 import com.wiredi.annotations.stereotypes.DefaultConfiguration;
 import com.wiredi.compiler.domain.Annotations;
-import com.wiredi.compiler.processor.lang.ProcessingElement;
 import com.wiredi.compiler.processor.lang.AnnotationProcessorSubroutine;
+import com.wiredi.compiler.processor.lang.ProcessingElement;
 import com.wiredi.compiler.processors.adapter.IdentifiableProviderWireAdapter;
 import com.wiredi.compiler.processors.adapter.InterfaceImplementationAdapter;
+import com.wiredi.runtime.domain.annotations.AnnotationExcerpt;
 import com.wiredi.runtime.domain.annotations.AnnotationMetadata;
 import jakarta.inject.Inject;
+import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +22,6 @@ import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.TypeElement;
 import java.lang.annotation.Annotation;
 import java.util.List;
-import java.util.Optional;
 
 @AutoService(AnnotationProcessorSubroutine.class)
 public class WireProcessorSubroutine implements AnnotationProcessorSubroutine {
@@ -30,6 +31,8 @@ public class WireProcessorSubroutine implements AnnotationProcessorSubroutine {
     private IdentifiableProviderWireAdapter wireAdapter;
     @Inject
     private InterfaceImplementationAdapter interfaceImplementationAdapter;
+    @Inject
+    private Annotations annotations;
 
     @Override
     public List<Class<? extends Annotation>> targetAnnotations() {
@@ -42,7 +45,9 @@ public class WireProcessorSubroutine implements AnnotationProcessorSubroutine {
         if (element.getKind() == ElementKind.ANNOTATION_TYPE) {
             return;
         }
-        Wire annotation = Annotations.getAnnotation(element, Wire.class).orElse(null);
+        AnnotationExcerpt<Wire> wireAnnotationExcerpt = Annotations.search().byType(Wire.class)
+                .findFirstExcerptIn(element)
+                .orElse(null);
 
         logger.debug("Handling {}", element);
         if (!(element instanceof TypeElement typeElement)) {
@@ -51,9 +56,9 @@ public class WireProcessorSubroutine implements AnnotationProcessorSubroutine {
         }
 
         if (element.getKind().isInterface()) {
-            interfaceImplementationAdapter.handle(typeElement, annotation);
+            interfaceImplementationAdapter.handle(typeElement, wireAnnotationExcerpt);
         } else {
-            wireAdapter.handle(typeElement, annotation);
+            wireAdapter.handle(typeElement, wireAnnotationExcerpt);
         }
     }
 }

@@ -66,7 +66,7 @@ public class Qualifiers {
 	}
 
 	public static @Nullable QualifierType asQualifier(AnnotationMirror annotationMirror) {
-		if (Annotations.isAnnotatedWith(annotationMirror, Qualifier.class)) {
+		if (Annotations.search().byType(Qualifier.class).isPresentIn(annotationMirror)) {
 			return QualifierType.builder(annotationMirror.getAnnotationType().asElement().toString())
 					.addAll(values(annotationMirror))
 					.build();

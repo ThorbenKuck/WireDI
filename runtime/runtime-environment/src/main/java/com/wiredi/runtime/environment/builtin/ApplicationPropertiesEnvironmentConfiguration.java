@@ -16,27 +16,31 @@ import static com.wiredi.runtime.environment.DefaultEnvironmentKeys.*;
 public class ApplicationPropertiesEnvironmentConfiguration implements EnvironmentConfiguration {
 
     public static final int ORDER = Ordered.FIRST;
-    private static final Logging LOGGER = Logging.getInstance(ApplicationPropertiesEnvironmentConfiguration.class);
+    private static final Logging logger = Logging.getInstance(ApplicationPropertiesEnvironmentConfiguration.class);
     private static final String DEFAULT_PROPERTY_FILE_NAME = "application";
 
     @Override
     public void configure(@NotNull Environment environment) {
         TypedProperties environmentProperties = environment.properties();
 
-        LOGGER.debug(() -> "Loading properties from file " + DEFAULT_PROPERTY_FILE_NAME + " and supported file types:" + environment.propertyLoader().supportedFileTypes());
+        logger.debug(() -> "Loading properties from file " + DEFAULT_PROPERTY_FILE_NAME + " and supported file types:" + environment.propertyLoader().supportedFileTypes());
         environmentProperties.getAll(DEFAULT_PROPERTIES, () -> environment.propertyLoader()
                 .supportedFileTypes()
                 .stream()
                 .map(fileType -> DEFAULT_PROPERTY_FILE_NAME + "." + fileType)
                 .toList()
         ).forEach(propertyPath -> {
+            logger.trace(() -> "Attempting to loading properties from " + propertyPath);
             Resource resource = environment.resourceLoader().firstHitInAllResolvers(propertyPath);
             if (resource != null && resource.exists()) {
                 try {
                     environment.appendPropertiesFrom(resource);
-                } catch (ResourceException ignore) {
-                    LOGGER.debug(() -> "Failed to load properties from file " + resource.getFilename());
+                    logger.debug(() -> "Loaded properties from " + resource);
+                } catch (ResourceException e) {
+                    logger.trace(() -> "Failed to load properties from file " + resource.getFilename(), e);
                 }
+            } else {
+                logger.trace("Properties file does not exist: " + propertyPath);
             }
         });
 

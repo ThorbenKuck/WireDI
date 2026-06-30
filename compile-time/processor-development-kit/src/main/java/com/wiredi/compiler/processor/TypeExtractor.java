@@ -1,6 +1,7 @@
 package com.wiredi.compiler.processor;
 
 import com.wiredi.annotations.Wire;
+import com.wiredi.compiler.domain.AnnotationField;
 import com.wiredi.compiler.domain.Annotations;
 import org.slf4j.Logger;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,11 @@ public class TypeExtractor {
     }
 
     public List<TypeMirror> getAdditionalWireTypesOf(TypeElement typeElement) {
-        List<TypeMirror> classArrayValueFromAnnotation = annotations.getClassArrayValueFromAnnotation(typeElement, Wire.class, "to");
+        List<TypeMirror> classArrayValueFromAnnotation = Annotations.search().by(Wire.class)
+                .field("to")
+                .findInElement(typeElement)
+                .map(AnnotationField::asArrayOfClasses)
+                .orElse(Collections.emptyList());
         if (!classArrayValueFromAnnotation.isEmpty()) {
             return filterAdditionalWireTypes(classArrayValueFromAnnotation);
         }

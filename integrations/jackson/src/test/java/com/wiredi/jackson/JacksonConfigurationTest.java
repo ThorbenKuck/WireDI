@@ -6,10 +6,9 @@ import com.wiredi.annotations.ActiveProfiles;
 import com.wiredi.integration.jackson.ObjectMapperConfigurer;
 import com.wiredi.runtime.WireContainer;
 import com.wiredi.runtime.WiredApplication;
-import com.wiredi.runtime.domain.factories.MissingBeanException;
+import com.wiredi.runtime.exceptions.MissingBeanException;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.properties.Key;
-import com.wiredi.runtime.exceptions.BeanNotFoundException;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;

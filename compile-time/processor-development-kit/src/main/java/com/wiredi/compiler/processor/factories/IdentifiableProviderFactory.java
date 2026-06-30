@@ -8,6 +8,7 @@ import com.wiredi.annotations.properties.PropertyBinding;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.TypeIdentifiers;
 import com.wiredi.compiler.domain.WireRepositories;
+import com.wiredi.compiler.domain.annotations.TypedAnnotationSearch;
 import com.wiredi.compiler.domain.entities.AspectHandlerEntity;
 import com.wiredi.compiler.domain.entities.IdentifiableProviderEntity;
 import com.wiredi.compiler.domain.entities.methods.aspecthandler.AppliesToMethod;
@@ -16,6 +17,7 @@ import com.wiredi.compiler.domain.entities.methods.identifiableprovider.*;
 import com.wiredi.compiler.domain.properties.PropertyContext;
 import com.wiredi.compiler.domain.values.AspectHandlerMethod;
 import com.wiredi.compiler.domain.values.FactoryMethod;
+import com.wiredi.runtime.lang.Ordered;
 import org.slf4j.Logger;import com.wiredi.compiler.processor.TypeExtractor;
 import com.wiredi.compiler.processor.business.IdentifiableProviderService;
 import com.wiredi.compiler.processor.business.InjectionPointService;
@@ -63,9 +65,13 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
     @Inject
     private PropertyContext propertyContext;
 
+    private final TypedAnnotationSearch<Primary> primaryAnnotationSearch = Annotations.search().byType(Primary.class);
+    private final TypedAnnotationSearch<Wire> wireAnnotationSearch = Annotations.search().byType(Wire.class);
+    private final TypedAnnotationSearch<Order> orderAnnotationSearch = Annotations.search().byType(Order.class);
+
     @Override
     public IdentifiableProviderEntity create(TypeElement typeElement) {
-        return create(typeElement, Annotations.getAnnotation(typeElement, Wire.class).orElseThrow());
+        return create(typeElement, wireAnnotationSearch.findFirstIn(typeElement).orElseThrow());
     }
 
     public IdentifiableProviderEntity create(TypeElement typeElement, PropertyBinding propertyBinding) {
@@ -77,7 +83,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
 
     public IdentifiableProviderEntity create(TypeElement typeElement, @Nullable Wire annotation) {
         IdentifiableProviderEntity identifiableProviderEntity = createIdentifiableProvider(typeElement)
-                .addMethod(new PrimaryMethod(Optional.ofNullable(annotation).map(Wire::primary).orElse(false) || Annotations.isAnnotatedWith(typeElement, Primary.class)))
+                .addMethod(new PrimaryMethod(Optional.ofNullable(annotation).map(Wire::primary).orElse(false) || primaryAnnotationSearch.isPresentIn(typeElement)))
                 .addMethod(new GetMethod(typeElement.asType()))
                 .addMethod(new CreateInstanceForWireMethod(injectionPointService.injectionPoints(typeElement), wireRepositories, compilerRepository));
 
@@ -99,7 +105,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
         logger.debug("Creating IdentifiableProvider for type {}", returnType);
         IdentifiableProviderEntity entity = compilerRepository.newIdentifiableProvider(factoryMethod.method(), providerClassName(factoryMethod), factoryMethod.returnType())
                 .addMethod(new TypeMethod(typeIdentifiers, factoryMethod.returnType()))
-                .addMethod(new PrimaryMethod(Annotations.isAnnotatedWith(factoryMethod.method(), Primary.class)))
+                .addMethod(new PrimaryMethod(primaryAnnotationSearch.isPresentIn(factoryMethod.method())))
                 .addMethod(new GetMethod(factoryMethod.returnType()))
                 .addMethod(new CreateInstanceForFactoryMethod(factoryMethod, compilerRepository, wireRepositories, injectionPointService.injectionPoints(returnType)));
 
@@ -109,10 +115,12 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
             entity.addMethod(new AdditionalWireTypesMethod(typeExtractor.getAdditionalWireTypesOf(returnType), typeIdentifiers));
         }
 
-//        Annotations.getAnnotation(factoryMethod.method(), Conditional.class)
-        Annotations.getAnnotation(factoryMethod.method(), Order.class)
-                .or(() -> Annotations.getAnnotation(typeElement, Order.class))
-                .ifPresent(order -> entity.addMethod(new OrderMethod(order, types)));
+        Optional<Order> orderAnnotation = orderAnnotationSearch.findFirstIn(typeElement);
+        if (orderAnnotation.isPresent()) {
+            entity.addMethod(new OrderMethod(orderAnnotation.get(), + 1, types));
+        } else {
+            entity.addMethod(new OrderMethod(Ordered.DEFAULT + 1));
+        }
 
         return entity.addSource(returnType)
                 .addSource(typeElement)
@@ -124,8 +132,8 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
                 .addMethod(new ProcessMethod(factoryMethod.method(), factoryMethod.enclosingType(), factoryMethod.annotation(), elements, types))
                 .addMethod(new AppliesToMethod(factoryMethod));
 
-        Annotations.getAnnotation(factoryMethod.method(), Order.class)
-                .or(() -> Annotations.getAnnotation(typeElement, Order.class))
+        orderAnnotationSearch.findFirstIn(factoryMethod.method())
+                .or(() -> orderAnnotationSearch.findFirstIn(typeElement))
                 .ifPresent(order -> entity.addMethod(new OrderMethod(order, types)));
 
         return entity.addSource(factoryMethod.enclosingType())
@@ -137,7 +145,7 @@ public class IdentifiableProviderFactory implements Factory<IdentifiableProvider
                 .addMethod(new TypeMethod(typeIdentifiers, identifiableProviderService.getPrimaryWireType(typeElement.asType())))
                 .addMethod(new AdditionalWireTypesMethod(typeExtractor.getAdditionalWireTypesOf(typeElement), typeIdentifiers));
 
-        Annotations.getAnnotation(typeElement, Order.class)
+        orderAnnotationSearch.findFirstIn(typeElement)
                 .ifPresent(order -> entity.addMethod(new OrderMethod(order, types)));
 
         entity.addSource(typeElement);

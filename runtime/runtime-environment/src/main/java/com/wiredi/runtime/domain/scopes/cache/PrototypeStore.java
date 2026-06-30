@@ -8,7 +8,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class PrototypeStore implements ScopeStore {
@@ -24,7 +23,7 @@ public class PrototypeStore implements ScopeStore {
     }
 
     @Override
-    public <T> @Nullable Bean<T> getOrSet(
+    public <T> @NotNull @Nullable Bean<T> getOrSet(
             @NotNull IdentifiableProvider<T> provider,
             @NotNull TypeIdentifier<?> type,
             @NotNull Supplier<@Nullable Bean<T>> instanceFactory
@@ -55,6 +54,7 @@ public class PrototypeStore implements ScopeStore {
     @Override
     public void tearDown() {
         beans.values().forEach(beanInstances -> beanInstances.forEach(Bean::tearDown));
+        beans.clear();
     }
 
     @Override
@@ -62,5 +62,15 @@ public class PrototypeStore implements ScopeStore {
         Collection<Bean<T>> beans = supplier.get();
         this.beans.computeIfAbsent(type, (t) -> new ArrayList<>()).addAll(beans);
         return beans;
+    }
+
+    @Override
+    public boolean contains(QualifiedTypeIdentifier<?> type) {
+        return beans.containsKey(type.type());
+    }
+
+    @Override
+    public boolean contains(TypeIdentifier<?> type) {
+        return beans.containsKey(type);
     }
 }

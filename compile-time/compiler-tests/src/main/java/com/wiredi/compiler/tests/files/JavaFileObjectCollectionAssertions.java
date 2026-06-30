@@ -98,6 +98,7 @@ public class JavaFileObjectCollectionAssertions extends ErrorMessageAware<JavaFi
                 JavaFileObject actual = actualIterator.next();
                 if (!ClassFileContentAssertions.match(getContent(expected), getContent(actual))) {
                     try {
+                        System.out.println("Actual: " + getContent(actual));
                         errors.add(new AssertionFailedError(expected.getName() + " did not match " + actual.getName(), expected.getCharContent(true), actual.getCharContent(true)));
                     } catch (IOException e) {
                         throw new RuntimeException(e);

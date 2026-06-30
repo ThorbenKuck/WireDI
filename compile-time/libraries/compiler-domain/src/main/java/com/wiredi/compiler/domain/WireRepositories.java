@@ -144,7 +144,7 @@ public class WireRepositories {
 
     public boolean isNullable(Element element) {
         if (element instanceof VariableElement) {
-            return Annotations.hasByName(element, "Nullable");
+            return Annotations.search().byName("Nullable").isPresentIn(element);
         }
 
         return false;

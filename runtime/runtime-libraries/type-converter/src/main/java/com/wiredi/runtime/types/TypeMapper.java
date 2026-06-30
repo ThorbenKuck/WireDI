@@ -12,27 +12,57 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * A class to convert between different types in the WireDI framework.
+ * Central entry point for simple, lossless type conversion at runtime.
  * <p>
- * The goal of this class is to allow simple conversions between different types.
- * One example would be to convert Strings to Integers and vice versa.
+ * The TypeMapper coordinates a set of {@link TypeConverter converters} to transform values from one Java type
+ * into another. It is designed for primitive and near-primitive conversions such as String to Integer,
+ * String to Duration, byte[] to String, or number widening/narrowing. For complex object graphs or full
+ * serialization concerns you should use higher level facilities in the messaging/integration modules; TypeMapper
+ * focuses on small, predictable transformations commonly needed while reading properties, resolving placeholders,
+ * or interpreting configuration values.
  * <p>
- * To do so, instances of the {@link TypeConverter} interfaces are used.
- * The TypeMapper is a registry that manages these converters and provides methods to perform conversions.
+ * A TypeMapper can be obtained in two ways. The shared global instance is accessible via {@link #getInstance()} and
+ * comes pre-configured with a standard set of converters that cover most day-to-day conversions. If you need full
+ * isolation, create a fresh mapper using {@link #newPreconfigured()} or {@link #newEmpty()} and register only the
+ * converters you want. WireDI's Environment keeps its own mapper instance, typically exposed via an environment accessor.
+ * That mapper is built from the global defaults and can be further customized during environment boot.
  * <p>
- * This class maintains a global instance through the {@code INSTANCE} field.
- * It can be used for fast usages through the {@link #getInstance()} method.
- * Changes done to this TypeMapper will be global and take effect for every other process that uses the global instance.
+ * Conversion resolution proceeds in small, deterministic steps. If the input value already is an instance of the
+ * requested target type, the original value is returned. Otherwise, the mapper looks up a converter registered for the
+ * concrete source type and requested target type. If a specific converter is not available, general converters
+ * for the target type are consulted in registration order. If no converter produces a value, an
+ * {@link com.wiredi.runtime.types.exceptions.InvalidPropertyTypeException} is thrown to signal that a conversion was
+ * requested that is unknown to the system. Primitive target classes are treated as their boxed counterparts so callers
+ * may freely request either {@code int.class} or {@code Integer.class} and expect identical results.
  * <p>
- * If you want to use a TypeMapper and have it be completely independent of the global instance,
- * you can construct a TypeMapper using {@link #newEmpty()} or {@link #newPreconfigured()}.
- * These methods will construct a new TypeMapper instance.
- * {@link #newEmpty()} will construct a completely new TypeMapper without any {@link TypeConverter},
- * while {@link #newPreconfigured()} will include the standard set of converters.
+ * The mapper internally caches converter lookups on a per source-type and target-type basis to avoid repeated
+ * resolution overhead. This cache stores the chosen {@link TypeConverter} as well as successful conversions carried
+ * out during resolver selection. Converters are expected to be stateless and thread-safe. The supplied
+ * concrete converters follow this rule, and custom implementations should do the same to fit this cache and reuse
+ * strategy.
  * <p>
- * This API is intended for simple type conversion, like converting primitives.
- * Though possible, it is not recommended to do more complex type mappings in this API.
- * If you require a "real deserialization logic", please use the messaging integration.
+ * Typical usage reads naturally. Convert a configuration value into a number with
+ * <pre>{@code
+ * Integer port = typeMapper.convert("8080", Integer.class);
+ * }</pre>
+ * Convert a byte array into a String with
+ * <pre>{@code
+ * String text = typeMapper.convert(bytes, String.class);
+ * }</pre>
+ * Perform a null-safe conversion using {@link #tryConvert(Object, Class)} which simply returns null when the input
+ * is null rather than throwing.
+ * <p>
+ * Extensibility revolves around registering new {@link TypeConverter} implementations. You can register a converter
+ * for a specific target type and one or more supported source types using {@link #setTypeConverter(TypeConverter)}
+ * and then calling {@code forAllSupportedTypes()} or {@code forSourceType(Class)}. You may also register general
+ * converters via {@link #addTypeConverter(TypeConverter)} which are consulted when there is no specific mapping for
+ * a given source type. Custom converters should return null from {@link TypeConverter#convert(Object)} when they cannot
+ * handle the input so the mapper may fall back to later candidates.
+ * <p>
+ * The TypeMapper is intentionally small in scope. It exists to bridge raw configuration data and strongly typed Java
+ * APIs. It integrates with the Environment so that property reads can request a specific target type without having to
+ * handcraft parsing for every primitive. Keeping conversions centralized helps maintain a single source of truth and
+ * avoids subtle inconsistencies across different parts of an application.
  *
  * @see TypeConverter
  * @see TypeConverterBase
@@ -311,7 +341,7 @@ public final class TypeMapper {
         /**
          * Creates a new stage for configuring a type converter.
          *
-         * @param converter    The type converter to configure
+         * @param converter     The type converter to configure
          * @param targetTypeMap The map where the converter will be registered
          */
         public SetTypeConverterStage(TypeConverter<T> converter, TypeMap<TypeMap<@Nullable TypeConverter<?>>> targetTypeMap) {

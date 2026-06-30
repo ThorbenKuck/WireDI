@@ -1,6 +1,7 @@
 package com.wiredi.runtime.collections;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -80,6 +81,10 @@ public class TypeMap<T> {
      */
     public TypeMap(int initialCapacity, float loadFactor) {
         this(new HashMap<>(initialCapacity, loadFactor));
+    }
+
+    public static <T> TypeMap<T> concurrent() {
+        return new TypeMap<>(new ConcurrentTypeMap<>());
     }
 
     /**

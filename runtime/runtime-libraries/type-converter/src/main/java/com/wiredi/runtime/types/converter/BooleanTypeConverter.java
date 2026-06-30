@@ -6,6 +6,13 @@ import com.wiredi.runtime.types.Bytes;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+/**
+ * Converts values to {@link Boolean} or {@code boolean}.
+ *
+ * This converter understands textual booleans and simple binary encodings. It is part of the
+ * default {@link com.wiredi.runtime.types.TypeMapper} preconfiguration and exposed as a stateless
+ * singleton via {@link #INSTANCE}.
+ */
 public class BooleanTypeConverter extends TypeConverterBase<Boolean> {
 
     public static final BooleanTypeConverter INSTANCE = new BooleanTypeConverter();

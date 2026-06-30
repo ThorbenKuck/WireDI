@@ -34,8 +34,6 @@ public class WireContainerBuilder {
     @NotNull
     private StartupDiagnostics startupDiagnostics = new StartupDiagnostics();
     @NotNull
-    private ScopeRegistry scopeRegistry = new ScopeRegistry();
-    @NotNull
     private WireContainerInitializer initializer = WireContainerInitializer.preconfigured();
 
     private final List<IdentifiableProvider<?>> providers = new ArrayList<>();
@@ -126,18 +124,6 @@ public class WireContainerBuilder {
     }
 
     /**
-     * Sets the scope registry to use.
-     *
-     * @param scopeRegistry the scope registry to use
-     * @return this builder instance
-     */
-    @NotNull
-    public WireContainerBuilder withScopeRegistry(@NotNull ScopeRegistry scopeRegistry) {
-        this.scopeRegistry = scopeRegistry;
-        return this;
-    }
-
-    /**
      * Sets the container initializer to use.
      *
      * @param initializer the container initializer to use
@@ -160,7 +146,6 @@ public class WireContainerBuilder {
         return new WireContainer(
                 environment,
                 startupDiagnostics,
-                scopeRegistry,
                 initializer
         );
     }

@@ -15,7 +15,7 @@ public class AnnotationBasedScopeProvider<T extends Annotation> implements Scope
     private final Supplier<Scope> scopeSupplier;
 
     public AnnotationBasedScopeProvider(Class<T> annotationClass) {
-        this(annotationClass, () -> new SingletonScope(false));
+        this(annotationClass, SingletonScope::new);
     }
 
     public AnnotationBasedScopeProvider(Class<T> annotationClass, Supplier<Scope> scopeSupplier) {
@@ -33,7 +33,7 @@ public class AnnotationBasedScopeProvider<T extends Annotation> implements Scope
         @NotNull
         private final Class<T> scopeAnnotation;
         @NotNull
-        private Supplier<@NotNull Scope> scopeSupplier = () -> new SingletonScope(false);
+        private Supplier<@NotNull Scope> scopeSupplier = SingletonScope::new;
 
         public Builder(@NotNull Class<T> scopeAnnotation) {
             this.scopeAnnotation = scopeAnnotation;

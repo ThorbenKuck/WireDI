@@ -250,28 +250,13 @@ public class WireRepositoryTest {
 
             public IdentifiableProvider<MultiGenericClass<T, S>> getProvider() {
                 MultiGenericClass<T, S> it = this;
-                return new IdentifiableProvider<>() {
-                    @Override
-                    public @NotNull TypeIdentifier<? super MultiGenericClass<T, S>> type() {
-                        return TypeIdentifier.of(MultiGenericClass.class)
-                                .withGeneric(t.getClass())
-                                .withGeneric(s.getClass());
-                    }
-
-                    @Override
-                    public @NotNull List<TypeIdentifier<?>> additionalWireTypes() {
-                        return List.of(
-                                TypeIdentifier.of(MultiGenericClass.class)
-                                        .withGeneric(t.getClass())
-                                        .withGeneric(s.getClass())
-                        );
-                    }
-
-                    @Override
-                    public @Nullable MultiGenericClass<T, S> get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<MultiGenericClass<T, S>> concreteType) {
-                        return it;
-                    }
-                };
+                TypeIdentifier<MultiGenericClass<T, S>> type = TypeIdentifier.of(MultiGenericClass.class)
+                        .withGeneric(t.getClass())
+                        .withGeneric(s.getClass());
+                return IdentifiableProvider.builder(type)
+                        .withAdditionalType(type)
+                        .withInstance(it)
+                        .build();
             }
         }
     }

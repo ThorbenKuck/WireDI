@@ -10,11 +10,32 @@ import java.lang.reflect.UndeclaredThrowableException;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * A convenience base class for {@link TypeConverter} implementations that maps a fixed set of
+ * source types to a single target type using fast, pre-registered functions.
+ *
+ * Subclasses declare their target type(s) through the constructor and register all supported
+ * source types inside {@link #setup()} via {@link #register(Class, com.wiredi.runtime.lang.ThrowingFunction)}.
+ * When {@link #convert(Object)} is invoked, the converter looks up the function registered for the
+ * concrete runtime class of the input and executes it. If no function was registered for that
+ * class, this method returns null so that the {@link TypeMapper} can continue with other
+ * converters. Implementations should keep registration deterministic and avoid expensive runtime
+ * checks; use {@link #supports(Class)} and {@link #supportedSources()} to communicate capabilities.
+ *
+ * The base implementation wraps checked exceptions from registered functions into runtime
+ * exceptions to keep the {@link TypeConverter} contract simple. {@link java.io.IOException}
+ * becomes {@link java.io.UncheckedIOException}, other checked exceptions are rethrown as
+ * {@link java.lang.reflect.UndeclaredThrowableException}. If your conversion can fail in
+ * expected ways, surface that as a regular {@link RuntimeException} with a meaningful message.
+ *
+ * Instances are expected to be stateless and thread-safe. All built-in converters in this module
+ * follow that rule and expose a single public {@code INSTANCE} for reuse.
+ */
 public abstract class TypeConverterBase<T> implements TypeConverter<T> {
 
     private final Map<Class<?>, ThrowingFunction<Object, T, Throwable>> functions = new HashMap<>();
     private final List<Class<T>> targetTypes;
-    private Function<Object, Object> preHandler = t -> t;
+    private Function<Object, Object> preHandler = Function.identity();
 
     public TypeConverterBase(Class<T> sourceType) {
         this(List.of(sourceType));

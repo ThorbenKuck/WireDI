@@ -4,8 +4,8 @@ import com.google.auto.service.AutoService;
 import com.wiredi.annotations.properties.PropertyBinding;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.processor.factories.IdentifiableProviderFactory;
-import com.wiredi.compiler.processor.lang.ProcessingElement;
 import com.wiredi.compiler.processor.lang.AnnotationProcessorSubroutine;
+import com.wiredi.compiler.processor.lang.ProcessingElement;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,9 +42,11 @@ public class PropertyBindingSubroutine implements AnnotationProcessorSubroutine 
             return;
         }
         final TypeElement typeElement = (TypeElement) element;
-        Optional<PropertyBinding> propertyBinding = Annotations.getAnnotation(typeElement, PropertyBinding.class);
+        Optional<PropertyBinding> propertyBinding = Annotations.search()
+                .byType(PropertyBinding.class)
+                .findFirstIn(typeElement);
         if (propertyBinding.isEmpty()) {
-            logger.error("Failed to find a PropertyBinding instance!");
+            logger.error("Failed to find a PropertyBinding instance!"); // TODO: Why is this not found!?
             return;
         }
 

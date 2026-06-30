@@ -6,6 +6,14 @@ import com.wiredi.runtime.types.Bytes;
 import java.io.ByteArrayInputStream;
 import java.nio.ByteBuffer;
 
+/**
+ * Converts values to {@code byte[]}.
+ *
+ * This converter understands common textual and numeric sources and produces byte arrays for
+ * interoperability with lower-level APIs. It is part of the default
+ * {@link com.wiredi.runtime.types.TypeMapper} preconfiguration and exposed as a stateless singleton
+ * via {@link #INSTANCE}.
+ */
 public class ByteArrayTypeConverter extends TypeConverterBase<byte[]> {
 
     public static final ByteArrayTypeConverter INSTANCE = new ByteArrayTypeConverter();

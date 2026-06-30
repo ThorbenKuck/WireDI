@@ -1,7 +1,6 @@
 package com.wiredi.annotations.stereotypes;
 
 import com.wiredi.annotations.Wire;
-import com.wiredi.annotations.aspects.Pure;
 
 import java.lang.annotation.*;
 
@@ -15,7 +14,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Wire(proxy = false)
-@Pure
+@Wire
 public @interface Configuration {
 }

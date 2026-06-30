@@ -5,24 +5,28 @@ import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
+/**
+ * A store for {@link Bean} instances.
+ * <p>
+ * Such a store is used to cache instances of {@link Bean}s created in a {@link com.wiredi.runtime.domain.Scope}.
+ * Stores can be understood as maps, holding {@link Bean} instances keyed by their unqualified {@link TypeIdentifier}.
+ */
 public interface ScopeStore {
 
     static SingeltonScopeStore threadSafe() {
         return new SingeltonScopeStore(new ConcurrentHashMap<>(), new ConcurrentHashMap<>());
     }
 
-    @Nullable <T> Bean<T> getOrSet(
+    @NotNull <T> Bean<T> getOrSet(
             @NotNull IdentifiableProvider<T> provider,
             @NotNull TypeIdentifier<?> type,
-            @NotNull Supplier<@Nullable Bean<T>> instanceFactory
+            @NotNull Supplier<@NotNull Bean<T>> instanceFactory
     );
 
     @NotNull <T> Optional<Bean<T>> getOrTrySet(
@@ -34,4 +38,8 @@ public interface ScopeStore {
     void tearDown();
 
     <T> Collection<Bean<T>> getAll(TypeIdentifier<T> type, Supplier<Collection<Bean<T>>> supplier);
+
+    boolean contains(QualifiedTypeIdentifier<?> type);
+
+    boolean contains(TypeIdentifier<?> type);
 }

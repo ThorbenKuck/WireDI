@@ -1,6 +1,8 @@
 package com.wiredi.runtime.domain.annotations;
 
 import com.google.common.primitives.Primitives;
+import com.sun.jdi.ClassType;
+import com.sun.jdi.Type;
 import com.wiredi.annotations.stereotypes.AliasFor;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.collections.EnumSet;
@@ -143,6 +145,11 @@ public class AnnotationMetadata {
     }
 
     // ########### Accessors ###########
+    @NotNull
+    public Optional<Object> getRaw(@NotNull String field) {
+        return Optional.ofNullable(fields.get(field));
+    }
+
     @NotNull
     public Optional<String> get(@NotNull String field) {
         Object value = fields.get(field);
@@ -420,6 +427,23 @@ public class AnnotationMetadata {
         return result;
     }
 
+    public Optional<TypeMirror> getTypeMirror(String field) {
+        Object value = fields.get(field);
+        if (value == null) {
+            return Optional.empty();
+        }
+
+        if (value instanceof TypeMirror t) {
+            return Optional.of(t);
+        }
+
+        if (value instanceof Element e) {
+            return Optional.of(e.asType());
+        }
+
+        return Optional.empty();
+    }
+
     public TypeIdentifier<?> getType(String field, TypeIdentifier<?> alternative) {
         return getType(field).orElse(alternative);
     }
@@ -507,13 +531,12 @@ public class AnnotationMetadata {
         try {
             return Class.forName(name);
         } catch (ClassNotFoundException e) {
-            LOGGER.warn("Unable to convert " + className + " as a class.", e);
+            LOGGER.warn("Unable to load " + className + " as a class.", e);
             return null;
         }
     }
 
     public static class Builder {
-
 
         private final Map<String, Object> fields = new HashMap<>();
         private final String className;

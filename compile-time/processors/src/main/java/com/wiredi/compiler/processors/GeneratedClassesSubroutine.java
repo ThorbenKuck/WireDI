@@ -60,7 +60,8 @@ public class GeneratedClassesSubroutine implements AnnotationProcessorSubroutine
     }
 
     private void writeGeneratedClassesFile() {
-        logger.info("Writing generated classes file with content: " + generatedClasses);
+        logger.info(() -> "WireDi generated " + generatedClasses.size() + " classes");
+        logger.debug(() -> "Writing generated classes file with content: " + generatedClasses);
         try {
             Filer filer = processingEnvironment.getFiler();
             FileObject file = filer.createResource(StandardLocation.SOURCE_OUTPUT, "", "META-INF/generated_classes.txt");

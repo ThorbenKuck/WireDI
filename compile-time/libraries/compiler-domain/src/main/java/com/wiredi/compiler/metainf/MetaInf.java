@@ -69,7 +69,7 @@ public class MetaInf {
             return;
         }
         String path = join(META_INF_PATH, fileName);
-        logger.info(() -> "Opening file " + path + " for writing");
+        logger.debug(() -> "Opening file " + path + " for writing");
         List<FileOperations> fileOperations = Arrays.asList(operations);
         Collection<String> existingLines;
 

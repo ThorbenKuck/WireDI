@@ -3,7 +3,8 @@ package com.wiredi.runtime.domain;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
-import com.wiredi.runtime.exceptions.MultiplePrimaryProvidersRegisteredException;
+import com.wiredi.runtime.domain.scopes.UnionScope;
+import com.wiredi.runtime.exceptions.MultiplePrimaryScopesRegisteredException;
 import com.wiredi.runtime.qualifier.QualifierType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -21,6 +22,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class ScopeRegistryCache {
 
+    private static final Logger logger = LoggerFactory.getLogger(ScopeRegistryCache.class);
     /**
      * The cache for resolving type -> Scope associations.
      * <p>
@@ -30,24 +32,23 @@ public class ScopeRegistryCache {
      */
     @NotNull
     private final Map<Object, Scope> scopedCache = new ConcurrentHashMap<>();
-
     /**
      * Cache for primary providers across all scopes.
      * Maps TypeIdentifier to the primary provider for that type.
      */
     @NotNull
-    private final Map<TypeIdentifier<?>, IdentifiableProvider<?>> primaryProviderCache = new ConcurrentHashMap<>();
-
+    private final Map<TypeIdentifier<?>, Scope> primaryScopeCache = new ConcurrentHashMap<>();
     private final Set<TypeIdentifier<?>> conflictingTypes = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-    private static final Logger logger = LoggerFactory.getLogger(ScopeRegistryCache.class);
+    public ScopeRegistryCache() {
+    }
 
     /**
      * Clears the cache.
      */
     public void clear() {
         this.scopedCache.clear();
-        this.primaryProviderCache.clear();
+        this.primaryScopeCache.clear();
         this.conflictingTypes.clear();
     }
 
@@ -55,42 +56,34 @@ public class ScopeRegistryCache {
      * Registers a primary provider for a type and all its additional wire types.
      * This method ensures that primary providers are available for cross-scope resolution.
      *
-     * @param provider    The primary provider to register
-     * @throws MultiplePrimaryProvidersRegisteredException if a primary provider is already registered for the type
+     * @param provider The primary provider to register
+     * @throws MultiplePrimaryScopesRegisteredException if a primary provider is already registered for the type
      */
-    public void registerPrimaryProvider(@NotNull IdentifiableProvider<?> provider) {
-        setPrimaryProviderScope(provider.type(), provider);
+    public void registerPrimaryScope(@NotNull IdentifiableProvider<?> provider, Scope targetScope) {
+        setPrimaryScope(provider.type(), targetScope);
 
         // Register primary provider for all additional wire types
         for (TypeIdentifier<?> additionalType : provider.additionalWireTypes()) {
-            setPrimaryProviderScope(additionalType, provider);
+            setPrimaryScope(additionalType, targetScope);
         }
 
-        logger.debug("Registered primary provider for type {} and {} additional wire types", 
-                     provider.type(), provider.additionalWireTypes().size());
+        logger.debug("Registered primary provider for type {} and {} additional wire types",
+                provider.type(), provider.additionalWireTypes().size());
     }
 
-    private void setPrimaryProviderScope(@NotNull TypeIdentifier<?> type, IdentifiableProvider<?> provider) {
+    private void setPrimaryScope(@NotNull TypeIdentifier<?> type, Scope targetScope) {
         TypeIdentifier<?> mainType = type.erasure();
-        IdentifiableProvider<?> existingPrimary = primaryProviderCache.get(mainType);
+        Scope existingPrimary = primaryScopeCache.get(mainType);
         if (existingPrimary != null) {
-            throw new MultiplePrimaryProvidersRegisteredException(mainType, existingPrimary, provider);
+            throw new MultiplePrimaryScopesRegisteredException(mainType, existingPrimary, targetScope);
         }
 
-        primaryProviderCache.put(mainType, provider);
+        primaryScopeCache.put(mainType, targetScope);
+        scopedCache.put(type, targetScope);
     }
 
-    /**
-     * Gets the primary provider for a given type.
-     *
-     * @param type The type to look up
-     * @return The primary provider for the type, or null if none exists
-     */
-    @Nullable
-    @SuppressWarnings("unchecked")
-    public <T> IdentifiableProvider<T> getPrimaryProvider(@NotNull TypeIdentifier<T> type) {
-        TypeIdentifier<?> erasedType = type.erasure();
-        return (IdentifiableProvider<T>) primaryProviderCache.get(erasedType);
+    public Scope getPrimaryScopeFor(TypeIdentifier<?> type) {
+        return primaryScopeCache.get(type.erasure());
     }
 
     /**
@@ -100,7 +93,7 @@ public class ScopeRegistryCache {
      * @return true if a primary provider exists, false otherwise
      */
     public boolean hasPrimaryProvider(@NotNull TypeIdentifier<?> type) {
-        return primaryProviderCache.containsKey(type.erasure());
+        return primaryScopeCache.containsKey(type.erasure());
     }
 
     /**
@@ -124,27 +117,22 @@ public class ScopeRegistryCache {
             }
         }
 
-        TypeIdentifier<?> erasedType = provider.type().erasure();
-
-        // Check if type is already registered in another, non-default scope
-        if (scopedCache.containsKey(erasedType)) {
-            // Conflict! Don't cache
-            scopedCache.remove(erasedType);
-            conflictingTypes.add(erasedType); // Blacklist for conflicts
-            logger.warn("Found duplicated scope registration for " + erasedType + " in scope " + targetScope);
-        } else if (!conflictingTypes.contains(erasedType)) {
-            scopedCache.put(erasedType, targetScope);
-        }
+        updateScopedCache(provider.type().erasure(), targetScope);
 
         for (TypeIdentifier<?> wireType : provider.additionalWireTypes()) {
-            TypeIdentifier<?> erasedWireType = wireType.erasure();
-            if (scopedCache.containsKey(erasedWireType)) {
-                scopedCache.remove(erasedWireType);
-                conflictingTypes.add(erasedWireType);
-            } else if (!conflictingTypes.contains(erasedWireType)) {
-                scopedCache.put(erasedWireType, targetScope);
-            }
+            updateScopedCache(wireType.erasure(), targetScope);
         }
+    }
+
+    private void updateScopedCache(TypeIdentifier<?> type, Scope newScope) {
+        scopedCache.merge(type, newScope, (existing, added) -> {
+            if (existing == added) return existing;
+            if (existing instanceof UnionScope union) {
+                union.addScope(added);
+                return union;
+            }
+            return Scope.union(existing, added);
+        });
     }
 
     /**
@@ -169,15 +157,11 @@ public class ScopeRegistryCache {
      */
     public <T> Scope determineScopeOf(TypeIdentifier<T> typeIdentifier, @NotNull Scope defaultScope) {
         // First check if there's a primary provider for this type
-        IdentifiableProvider<T> primaryProvider = getPrimaryProvider(typeIdentifier);
-        if (primaryProvider != null) {
-            // Find the scope containing this primary provider
-            Scope primaryScope = findScopeContainingProvider(primaryProvider, defaultScope);
-            if (primaryScope != null) {
-                return primaryScope;
-            }
+        Scope primaryScope = getPrimaryScopeFor(typeIdentifier);
+        if (primaryScope != null) {
+            return primaryScope;
         }
-        
+
         // Fall back to cached scope resolution
         TypeIdentifier<?> erasedType = typeIdentifier.erasure();
         Scope cachedScope = scopedCache.get(erasedType);
@@ -199,13 +183,9 @@ public class ScopeRegistryCache {
         }
 
         // Then check if there's a primary provider for the unqualified type
-        IdentifiableProvider<T> primaryProvider = getPrimaryProvider(typeIdentifier.type());
-        if (primaryProvider != null) {
-            // Find the scope containing this primary provider
-            Scope primaryScope = findScopeContainingProvider(primaryProvider, defaultScope);
-            if (primaryScope != null) {
-                return primaryScope;
-            }
+        Scope primaryScope = getPrimaryScopeFor(typeIdentifier.type());
+        if (primaryScope != null) {
+            return primaryScope;
         }
 
         // Fall back to unqualified type resolution
@@ -226,14 +206,14 @@ public class ScopeRegistryCache {
         if (defaultScope.contains(provider.type())) {
             return defaultScope;
         }
-        
+
         // Check other scopes in the cache
         for (Scope scope : scopedCache.values()) {
             if (scope.contains(provider.type())) {
                 return scope;
             }
         }
-        
+
         return null;
     }
 }

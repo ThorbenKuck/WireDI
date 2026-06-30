@@ -38,7 +38,7 @@ public class SecurityAutoConfiguration {
 
     @Provider
     public Algorithms algorithms(List<CryptographicAlgorithm> algorithms, ObjectReference<CryptographicAlgorithm> systemAlgorithm) {
-        return new Algorithms(algorithms, systemAlgorithm.getInstance(NoOpAlgorithm::new));
+        return new Algorithms(algorithms, systemAlgorithm.getIfUnique(NoOpAlgorithm::new));
     }
 
     @Provider

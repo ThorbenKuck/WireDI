@@ -10,6 +10,8 @@ import org.junit.jupiter.api.extension.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 public class WiredTestExtension extends AbstractTestExtension implements TestInstanceFactory, TestInstancePreDestroyCallback, ParameterResolver {
 
     private static final Logger logger = LoggerFactory.getLogger(WiredTestExtension.class);

@@ -37,6 +37,11 @@ public class ListPage<T> extends AbstractPage<T> {
         this.content.addAll(content);
     }
 
+    public static <T> ListPage<T> calculate(long totalElements, List<T> content, Pageable pageable) {
+        int totalPages = pageable.isUnpaged() ? 1 : (int) Math.divideExact(totalElements, pageable.pageSize());
+        return new ListPage<>(totalPages, totalElements, content, pageable);
+    }
+
     /**
      * Maps the content of this page to a page of a different type using the provided converter.
      */

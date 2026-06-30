@@ -7,6 +7,7 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.AnnotationMetaDataSpec;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.ClassEntity;
+import com.wiredi.compiler.domain.annotations.TypedAnnotationSearch;
 import com.wiredi.compiler.domain.entities.methods.StandaloneMethodFactory;
 import com.wiredi.runtime.domain.provider.condition.EagerLoadCondition;
 import com.wiredi.runtime.domain.provider.condition.LoadCondition;
@@ -23,6 +24,7 @@ public class SingleConditionMethodFactory implements StandaloneMethodFactory {
 
     private static final String FIELD_NAME = "LOAD_CONDITION";
     private final ConditionEntry conditionEntry;
+    private final TypedAnnotationSearch<Wire> wireAnnotation = Annotations.search().byType(Wire.class);
 
     public SingleConditionMethodFactory(ConditionEntry conditionEntry) {
         this.conditionEntry = conditionEntry;
@@ -31,7 +33,7 @@ public class SingleConditionMethodFactory implements StandaloneMethodFactory {
     @Override
     public void append(MethodSpec.@NotNull Builder builder, @NotNull ClassEntity<?> entity) {
 //        Class<? extends ConditionEvaluator> evaluatorType = conditionEntry.annotationMetaData().requireClass("value");
-        boolean isWired = Annotations.isAnnotatedWith(conditionEntry.evaluatorTypeElement(), Wire.class);
+        boolean isWired = wireAnnotation.isPresentIn(conditionEntry.evaluatorTypeElement());
         List<? extends Element> constructors = conditionEntry.evaluatorTypeElement()
                 .getEnclosedElements()
                 .stream()

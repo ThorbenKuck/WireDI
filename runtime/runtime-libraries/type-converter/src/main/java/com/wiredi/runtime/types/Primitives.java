@@ -5,6 +5,14 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
+/**
+ * Utility methods for working with Java primitive and wrapper classes.
+ *
+ * TypeMapper uses these helpers to normalize requested target classes and treat primitive targets
+ * as their boxed counterparts. This avoids subtle mismatches during converter lookup; requesting
+ * {@code int.class} behaves the same as requesting {@code Integer.class}. The reverse helpers exist
+ * for completeness when code needs to reason about unboxed forms.
+ */
 public class Primitives {
 
     private static final Map<Class<?>, Class<?>> primitiveToWrapper = Map.of(

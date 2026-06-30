@@ -17,14 +17,9 @@ import org.jetbrains.annotations.Nullable;
  * @param pageSize the maximum number of items per page
  * @param sort the sort to apply (never null; falls back to {@link Sort#unsorted()} if constructed with null)
  */
-public record Paged(int pageNumber, int pageSize, @NotNull Sort sort) implements Pageable {
-
-    /**
-     * Creates a Paged descriptor and replaces a null sort with {@link Sort#unsorted()}.
-     */
-    public Paged(int pageNumber, int pageSize, @Nullable Sort sort) {
-        this.pageNumber = pageNumber;
-        this.pageSize = pageSize;
-        this.sort = sort == null ? Sort.unsorted() : sort;
-    }
+public record Paged(
+        int pageNumber,
+        int pageSize,
+        @NotNull Sort sort
+) implements Pageable {
 }

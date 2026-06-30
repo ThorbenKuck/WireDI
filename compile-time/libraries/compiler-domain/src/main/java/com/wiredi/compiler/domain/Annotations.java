@@ -1,14 +1,15 @@
 package com.wiredi.compiler.domain;
 
 import com.wiredi.compiler.Injector;
-
-import com.wiredi.compiler.errors.ProcessingException;
+import com.wiredi.compiler.domain.annotations.*;
+import com.wiredi.logging.Logging;
 import com.wiredi.runtime.domain.annotations.*;
 import jakarta.inject.Inject;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.lang.model.element.*;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.type.MirroredTypeException;
@@ -18,6 +19,7 @@ import javax.lang.model.util.Elements;
 import javax.lang.model.util.Types;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Inherited;
+import java.lang.reflect.Type;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -25,14 +27,30 @@ import java.util.stream.Stream;
 
 public class Annotations {
 
-    private static final Logger logger = LoggerFactory.getLogger(Annotations.class);
-    @Inject
-    private Elements elements;
-    @Inject
-    private Types types;
+    private static final Logging logger = Logging.getInstance(Annotations.class);
+    private final ExtractionEnvironment extractionEnvironment = new ExtractionEnvironmentImplementation(this);
+    @Nullable
+    private static Types types;
+    @Nullable
+    private static Elements elements;
     @Inject
     private Injector injector;
-    private final ExtractionEnvironment extractionEnvironment = new ExtractionEnvironmentImplementation(this);
+
+    public static void init(ProcessingEnvironment processingEnv) {
+        Annotations.types = processingEnv.getTypeUtils();
+        Annotations.elements = processingEnv.getElementUtils();
+    }
+
+    public static boolean isJdkAnnotation(Element element) {
+        if (element.getKind() != ElementKind.ANNOTATION_TYPE) {
+            return false;
+        }
+        return element.toString().startsWith("java.lang.") || element.toString().startsWith("kotlin");
+    }
+
+    public static boolean isJdkAnnotation(AnnotationMirror annotationMirror) {
+        return isJdkAnnotation(annotationMirror.getAnnotationType().asElement());
+    }
 
     public static boolean isNotJdkAnnotation(Element element) {
         return !isJdkAnnotation(element);
@@ -42,37 +60,25 @@ public class Annotations {
         return !isJdkAnnotation(annotationMirror);
     }
 
-    public static boolean isJdkAnnotation(Element element) {
-        if (element.getKind() != ElementKind.ANNOTATION_TYPE) {
-            return false;
-        }
-        return element.toString().startsWith("java.lang.instance") || element.toString().startsWith("kotlin.instance");
-    }
-
-    public static boolean isJdkAnnotation(AnnotationMirror annotationMirror) {
-        return annotationMirror.getAnnotationType().asElement().toString().startsWith("java.lang.annotation")
-                || annotationMirror.getAnnotationType().asElement().toString().startsWith("kotlin.");
-    }
-
     public static <T extends Annotation, S extends Class<?>> S extractClass(T annotation, Function<T, S> function) {
         try {
             return function.apply(annotation);
         } catch (MirroredTypeException e) {
             String qualifiedNameFromTypeMirror = getQualifiedNameFromTypeMirror(e.getTypeMirror());
             if (qualifiedNameFromTypeMirror == null) {
-                logger.error("Could not extract class from {}", e.getTypeMirror());
+                logger.error(() -> "Could not extract class from " + e.getTypeMirror());
                 throw new IllegalStateException("Could not extract class from " + e.getTypeMirror());
             }
             try {
                 return (S) Class.forName(qualifiedNameFromTypeMirror);
             } catch (ClassNotFoundException ex) {
-                logger.info("Could not find class {}", qualifiedNameFromTypeMirror);
+                logger.info(() -> "Could not find class " + qualifiedNameFromTypeMirror);
                 throw new IllegalStateException("Could not find class " + qualifiedNameFromTypeMirror, ex);
             }
         }
     }
 
-    public static <T extends Annotation> TypeMirror extractType(T annotation, Function<T, Class<?>> function) {
+    public static <T extends Annotation> TypeMirror extractType(T annotation, Function<T, Type> function) {
         try {
             function.apply(annotation);
             throw new IllegalStateException("Impossible");
@@ -114,10 +120,6 @@ public class Annotations {
         }
 
         return Optional.empty();
-    }
-
-    public static boolean isAnnotatedWith(AnnotationMirror annotationMirror, Class<? extends Annotation> annotation) {
-        return getAnnotation(annotationMirror, annotation).isPresent();
     }
 
     public static boolean hasByName(Element element, Class<? extends Annotation> annotation) {
@@ -174,26 +176,6 @@ public class Annotations {
         return false;
     }
 
-    public static <A extends Annotation> List<AnnotatedElement<A, ExecutableElement>> findAllAnnotatedMethods(TypeElement typeElement, Class<A> annotationType) {
-        return typeElement.getEnclosedElements()
-                .stream()
-                .filter(it -> it.getKind() == ElementKind.METHOD && isAnnotatedWith(it, annotationType))
-                .map(method -> getAnnotation(method, annotationType).map(annotation -> new AnnotatedElement<>(annotation, (ExecutableElement) method)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-    }
-
-    public static <A extends Annotation> List<AnnotatedElement<A, VariableElement>> findAllAnnotatedParameters(ExecutableElement typeElement, Class<A> annotationType) {
-        return typeElement.getParameters()
-                .stream()
-                .filter(it -> it.getKind() == ElementKind.PARAMETER && isAnnotatedWith(it, annotationType))
-                .map(method -> getAnnotation(method, annotationType).map(annotation -> new AnnotatedElement<>(annotation, (VariableElement) method)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .toList();
-    }
-
     @Nullable
     public static String getQualifiedNameFromTypeMirror(TypeMirror typeMirror) {
         if (typeMirror.getKind() != TypeKind.DECLARED) return null;
@@ -244,43 +226,6 @@ public class Annotations {
         return annotationMetadata;
     }
 
-    public Optional<AnnotationMetadata> findFirstAnnotationMirror(Class<? extends Annotation> annotation, ClassEntity classEntity) {
-        Element element = types.asElement(classEntity.rootType());
-        boolean inheritable = annotation.isAnnotationPresent(Inherited.class);
-
-        for (AnnotationMirror annotationMirror : element.getAnnotationMirrors()) {
-            if (isJdkAnnotation(annotationMirror)) {
-                continue;
-            }
-
-            if (inheritable && isMetaAnnotatedWith(annotationMirror.getAnnotationType().asElement(), annotation)) {
-                return Optional.of(AnnotationMetadata.of(annotationMirror));
-            }
-
-            if (Objects.equals(annotationMirror.getAnnotationType().asElement().toString(), annotation.getName())) {
-                return Optional.ofNullable(AnnotationMetadata.of(annotationMirror));
-            }
-        }
-
-        return Optional.empty();
-    }
-
-    public Optional<AnnotationMirror> findAnnotationMirror(Element element, Class<? extends Annotation> annotation) {
-        boolean inheritable = annotation.isAnnotationPresent(Inherited.class);
-
-        for (AnnotationMirror am : element.getAnnotationMirrors()) {
-            if (types.isSameType(am.getAnnotationType(), elements.getTypeElement(annotation.getCanonicalName()).asType())) {
-                return Optional.of(am);
-            }
-        }
-
-        if (inheritable) {
-            return findAnnotationMirrorInherited(element, annotation);
-        }
-
-        return Optional.empty();
-    }
-
     public Optional<AnnotationMirror> findAnnotationMirrorInherited(Element element, Class<? extends Annotation> annotation) {
         for (AnnotationMirror am : element.getAnnotationMirrors()) {
             if (isJdkAnnotation(am)) {
@@ -299,98 +244,74 @@ public class Annotations {
         return Optional.empty();
     }
 
-    public AnnotationMirror getAnnotationMirror(AnnotationMirror annotationMirror, Class<? extends Annotation> annotation) {
-        return findAnnotationMirror(annotationMirror.getAnnotationType().asElement(), annotation)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the instance " + annotation + " on " + annotationMirror));
-    }
-
-    public AnnotationMirror getAnnotationMirror(Element element, Class<? extends Annotation> annotation) {
-        return findAnnotationMirror(element, annotation)
-                .orElseThrow(() -> new IllegalArgumentException("Could not find the instance " + annotation + " on " + element));
-    }
-
-    public <T extends AnnotationValue> AnnotationField<T> findAnnotationField(AnnotationMirror annotationMirror, String name) {
-        for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
-            if (name.equals(entry.getKey().getSimpleName().toString())) {
-                return AnnotationField.of(annotationMirror, name, (T) entry.getValue());
-            }
-        }
-        return AnnotationField.empty();
-    }
-
-    public <T extends AnnotationValue> AnnotationField<T> findAnnotationField(Element element, Class<? extends Annotation> annotation, String name) {
-        return findAnnotationMirror(element, annotation)
-                .map(mirror -> this.<T>findAnnotationField(mirror, name))
-                .orElse(AnnotationField.empty());
-    }
-
-    public List<TypeMirror> getClassArrayValueFromAnnotation(Element element, Class<? extends Annotation> annotation, String parameterName) {
-        return findAnnotationField(element, annotation, parameterName)
-                .map(AnnotationField::asArrayOfClasses)
-                .orElse(Collections.emptyList());
-    }
-
-    public TypeMirror getClassValueFromAnnotation(Element element, Class<? extends Annotation> annotation, String parameterName) {
-        return findAnnotationField(element, annotation, parameterName)
-                .map(AnnotationField::asClass)
-                .orElse(null);
-    }
-
-    public Optional<TypeMirror> findClassFieldFromAnnotation(Element element, Class<? extends Annotation> annotation, String parameterName) {
-        return findAnnotationField(element, annotation, parameterName)
-                .map(AnnotationField::asClass);
-    }
-
-    public Optional<String> findStringFieldFromAnnotation(Element element, Class<? extends Annotation> annotation, String parameterName) {
-        return findAnnotationField(element, annotation, parameterName)
-                .map(AnnotationField::asStrings);
-    }
-
     private record ExtractionEnvironmentImplementation(Annotations annotations) implements ExtractionEnvironment {
 
         @Override
-            public boolean isAnnotatedWith(Element element, Class<? extends Annotation> annotationClass) {
-                return Annotations.isAnnotatedWith(element, annotationClass);
-            }
-
-            @Override
-            public boolean hasAnnotationByName(Element element, String annotationName) {
-                return hasByName(element, annotationName);
-            }
-
-            @Override
-            public boolean hasAnnotationByName(Element element, Class<? extends Annotation> annotationName) {
-                return hasByName(element, annotationName);
-            }
-
-            @Override
-            public boolean hasAnnotationByName(DeclaredType declaredType, Class<? extends Annotation> annotation) {
-                return Annotations.hasByName(declaredType, annotation.getSimpleName());
-            }
-
-            @Override
-            public boolean hasAnnotationByName(DeclaredType declaredType, String annotationName) {
-                return Annotations.hasByName(declaredType, annotationName);
-            }
-
-            @Override
-            public <T extends Annotation> Optional<T> getAnnotation(AnnotationMirror annotationMirror, Class<T> annotation) {
-                return Annotations.getAnnotation(annotationMirror, annotation);
-            }
-
-            @Override
-            public <T extends Annotation> Optional<T> getAnnotation(Element element, Class<T> annotation) {
-                return Annotations.getAnnotation(element, annotation);
-            }
-
-            @Override
-            public <T extends Annotation> List<AnnotationExcerpt<T>> findAll(Class<T> annotationType, Element element) {
-                return annotations.findAll(annotationType, element);
-            }
-
-            @Override
-            public AnnotationMetadata getAnnotationMetadata(Element annotatedElement, AnnotationMirror annotationMirror) {
-                return annotations.getAnnotationMetadata(annotatedElement, annotationMirror);
-            }
+        public boolean isAnnotatedWith(Element element, Class<? extends Annotation> annotationClass) {
+            return Annotations.search().by(annotationClass).isPresentIn(element);
         }
+
+        @Override
+        public boolean hasAnnotationByName(Element element, String annotationName) {
+            return search().byName(annotationName).isPresentIn(element);
+        }
+
+        @Override
+        public boolean hasAnnotationByName(Element element, Class<? extends Annotation> annotationName) {
+            return search().byName(annotationName).isPresentIn(element);
+        }
+
+        @Override
+        public boolean hasAnnotationByName(DeclaredType declaredType, Class<? extends Annotation> annotation) {
+            return search().byName(annotation).isPresentIn(declaredType.asElement());
+        }
+
+        @Override
+        public boolean hasAnnotationByName(DeclaredType declaredType, String annotationName) {
+            return search().byName(annotationName).isPresentIn(declaredType.asElement());
+        }
+
+        @Override
+        public <T extends Annotation> Optional<T> getAnnotation(AnnotationMirror annotationMirror, Class<T> annotation) {
+            return search().by(annotation).findFirstIn(annotationMirror);
+        }
+
+        @Override
+        public <T extends Annotation> Optional<T> getAnnotation(Element element, Class<T> annotation) {
+            return search().by(annotation).findFirstIn(element);
+        }
+
+        @Override
+        public <T extends Annotation> List<AnnotationExcerpt<T>> findAll(Class<T> annotationType, Element element) {
+            return search().by(annotationType).findAllExcerptsIn(element);
+        }
+    }
+
+    /**
+     * Create a new annotation search builder.
+     */
+    public static SearchBuilder search() {
+        return new SearchBuilder(types, elements);
+    }
+
+    public static <T extends Annotation> T proxy(AnnotationMirror mirror, Class<T> annotationType) {
+        if (types == null || elements == null) {
+            throw new IllegalStateException("Annotations must be initialized before proxying");
+        }
+
+        Map<String, Object> valuesByName = new HashMap<>();
+        mirror.getElementValues().forEach((executableElement, annotationValue) -> {
+            String name = executableElement.getSimpleName().toString();
+            Object value = annotationValue.getValue();
+            valuesByName.put(name, value);
+        });
+
+        logger.info(() -> "Extracted annotation values for " + mirror + ": " + valuesByName);
+
+        return (T) java.lang.reflect.Proxy.newProxyInstance(
+                annotationType.getClassLoader(),
+                new Class<?>[]{annotationType},
+                new AnnotationProxy<T>(elements, types, annotationType, valuesByName)
+        );
+    }
 }

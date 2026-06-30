@@ -59,13 +59,18 @@ public class ExecutionContext {
     }
 
     @NotNull
-    public Optional<Object> getParameter(@NotNull final String name) {
+    public <S> Optional<S> getParameter(@NotNull final String name) {
         return parameters.get(name);
+    }
+
+    @Nullable
+    public <S> S tryGetParameter(@NotNull final String name) {
+        return this.<S>getParameter(name).orElse(null);
     }
 
     @NotNull
     public <S> S requireParameter(@NotNull final String name) {
-        return (S) getParameter(name).orElseThrow(() -> new IllegalArgumentException("Unknown parameter with name " + name));
+        return this.<S>getParameter(name).orElseThrow(() -> new IllegalArgumentException("Unknown parameter with name " + name));
     }
 
     public void setParameter(

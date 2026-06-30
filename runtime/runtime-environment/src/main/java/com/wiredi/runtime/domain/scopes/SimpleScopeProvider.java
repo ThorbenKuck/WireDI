@@ -13,7 +13,7 @@ public class SimpleScopeProvider implements ScopeProvider {
     private final Supplier<Scope> scopeSupplier;
 
     public SimpleScopeProvider(Object identifier) {
-        this(identifier, () -> new SingletonScope(false));
+        this(identifier, SingletonScope::new);
     }
 
     public SimpleScopeProvider(Object identifier, Supplier<Scope> scopeSupplier) {
@@ -31,7 +31,7 @@ public class SimpleScopeProvider implements ScopeProvider {
         @NotNull
         private final Object identifier;
         @NotNull
-        private Supplier<@NotNull Scope> scopeSupplier = () -> new SingletonScope(false);
+        private Supplier<@NotNull Scope> scopeSupplier = SingletonScope::new;
 
         public Builder(@NotNull Object identifier) {
             this.identifier = identifier;

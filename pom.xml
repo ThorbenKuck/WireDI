@@ -25,13 +25,13 @@
         <assertj-core.version>3.22.0</assertj-core.version>
         <junit.version>5.13.4</junit.version>
         <jetbrains-annotations.version>26.0.2</jetbrains-annotations.version>
-        <yaml-simple.version>1.16.0</yaml-simple.version>
         <mockito-core.version>5.18.0</mockito-core.version>
         <auto-service.version>1.1.1</auto-service.version>
-        <snakeyaml.version>2.4</snakeyaml.version>
+        <snakeyaml.version>2.5</snakeyaml.version>
+        <commons-lang.version>3.19.0</commons-lang.version>
         <javapoet.version>1.13.0</javapoet.version>
-        <jackson.version>2.19.2</jackson.version>
-        <logback.version>1.5.18</logback.version>
+        <jackson.version>2.20.0</jackson.version>
+        <logback.version>1.5.19</logback.version>
 
         <!-- Plugins -->
         <flatten-maven-plugin.version>1.7.2</flatten-maven-plugin.version>
@@ -53,9 +53,10 @@
 
     <modules>
         <module>bom</module>
-        <module>runtime</module>
-        <module>compile-time</module>
         <module>bundles</module>
+        <module>compile-time</module>
+        <module>runtime</module>
+        <module>maven-plugin</module>
         <module>integrations</module>
         <module>integration-parent</module>
     </modules>

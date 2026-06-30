@@ -2,7 +2,7 @@ package com.wiredi.processor.tck.domain.transactional;
 
 import com.wiredi.annotations.Wire;
 
-@Wire
+@Wire(proxy = true)
 public class TestService {
 
 	@Transactional

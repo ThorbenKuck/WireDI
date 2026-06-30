@@ -2,6 +2,7 @@ package com.wiredi.integration.cache;
 
 import com.wiredi.annotations.Provider;
 import com.wiredi.annotations.stereotypes.AutoConfiguration;
+import com.wiredi.annotations.stereotypes.DefaultConfiguration;
 import com.wiredi.runtime.cache.Cache;
 import com.wiredi.runtime.cache.CacheManager;
 import com.wiredi.runtime.cache.InMemoryCacheConfiguration;
@@ -13,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
-@AutoConfiguration
+@DefaultConfiguration
 @ConditionalOnEnabled("wiredi.autoconfig.cache")
 public class CacheAutoConfiguration {
 
@@ -24,8 +25,8 @@ public class CacheAutoConfiguration {
     }
 
     @Provider
-    public Cache cache(
-            TypeIdentifier<Cache> typeIdentifier,
+    public Cache<?, ?> cache(
+            TypeIdentifier<Cache<?, ?>> typeIdentifier,
             CacheManager cacheManager
     ) {
         return cacheManager.getCache(

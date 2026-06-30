@@ -6,6 +6,7 @@ import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import com.wiredi.runtime.domain.scopes.exceptions.ScopeNotActivatedException;
 import com.wiredi.runtime.exceptions.BeanNotFoundException;
+import com.wiredi.runtime.exceptions.MissingBeanException;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
@@ -37,7 +38,7 @@ class WiredApplicationTest {
             assertThat(wireContainer.getAll(Eager.class)).containsExactly(testCase);
             assertThat(wireContainer.getAll(Disposable.class)).contains(testCase);
             application.shutdown();
-            assertThatCode(() -> wireContainer.get(Case.class)).isInstanceOf(ScopeNotActivatedException.class).hasMessage("Tried to access inactive scope SingletonScope{active=false}");
+            assertThatCode(() -> wireContainer.get(Case.class)).isInstanceOf(MissingBeanException.class).hasMessage("Unable to create bean of type com.wiredi.runtime.WiredApplicationTest$Lifecycle$Case");
             assertThat(wireContainer.tryGet(Case.class)).isEmpty();
             assertThat(wireContainer.getAll(Eager.class)).isEmpty();
             assertThat(wireContainer.getAll(Disposable.class)).isEmpty();
@@ -58,11 +59,9 @@ class WiredApplicationTest {
             }
 
             @Override
-            public void setup(WireContainer wireContainer) {
+            public void initialize(WireContainer wireContainer) {
                 wasInitialized = true;
             }
         }
     }
-
-
 }

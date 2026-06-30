@@ -65,7 +65,7 @@ public class VariableContext {
     }
 
     private Optional<String> instantiateForResolve(Element element, BiConsumer<String, String> newResolveFunction) {
-        return Annotations.getAnnotation(element, Resolve.class)
+        return Annotations.search().byType(Resolve.class).findFirstIn(element)
                 .map(annotation -> resolveCache.computeIfAbsent(annotation.value(), (value) -> {
                     String nextName = nameContext.nextName(varPrefix);
                     newResolveFunction.accept(nextName, value);
@@ -74,7 +74,7 @@ public class VariableContext {
     }
 
     public Optional<String> instantiateForProperty(Element element, TriConsumer<String, String, String> newPropertyFunction) {
-        return Annotations.getAnnotation(element, Property.class)
+        return Annotations.search().byType(Property.class).findFirstIn(element)
                 .map(annotation -> resolveCache.computeIfAbsent(annotation.name(), (value) -> {
                     String nextName = nameContext.nextName(varPrefix);
                     newPropertyFunction.accept(nextName, value, annotation.defaultValue());

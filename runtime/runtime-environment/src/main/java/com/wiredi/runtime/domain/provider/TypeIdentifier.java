@@ -269,6 +269,10 @@ public class TypeIdentifier<T> {
         return genericTypes;
     }
 
+    public QualifiedTypeIdentifier<T> unqualified() {
+        return new QualifiedTypeIdentifier<>(this, null);
+    }
+
     public QualifiedTypeIdentifier<T> qualified(QualifierType qualifierType) {
         return new QualifiedTypeIdentifier<>(this, qualifierType);
     }

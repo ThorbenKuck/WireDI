@@ -62,6 +62,8 @@ local.properties
 .loadpath
 .recommenders
 
+_sokrates
+
 # Eclipse Core
 .project
 

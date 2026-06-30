@@ -24,6 +24,10 @@
         </dependency>
         <dependency>
             <groupId>com.wiredi</groupId>
+            <artifactId>health</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.wiredi</groupId>
             <artifactId>lang</artifactId>
         </dependency>
         <dependency>

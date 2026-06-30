@@ -4,9 +4,10 @@ import com.google.auto.service.AutoService;
 import com.wiredi.annotations.properties.PropertySource;
 import com.wiredi.compiler.domain.Annotations;
 import com.wiredi.compiler.domain.entities.environment.EnvironmentModification;
-import com.wiredi.compiler.processor.lang.ProcessingElement;
 import com.wiredi.compiler.processor.lang.AnnotationProcessorSubroutine;
+import com.wiredi.compiler.processor.lang.ProcessingElement;
 import com.wiredi.compiler.repository.CompilerRepository;
+import com.wiredi.logging.Logging;
 import com.wiredi.runtime.properties.Key;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
@@ -24,7 +25,7 @@ import java.util.Optional;
 @AutoService(AnnotationProcessorSubroutine.class)
 public class PropertySourceSubroutine implements AnnotationProcessorSubroutine {
 
-    private static final Logger logger = LoggerFactory.getLogger(PropertySourceSubroutine.class);
+    private static final Logging logger = Logging.getInstance(PropertySourceSubroutine.class);
     @Inject
     private CompilerRepository compilerRepository;
 
@@ -42,12 +43,13 @@ public class PropertySourceSubroutine implements AnnotationProcessorSubroutine {
             return;
         }
         final TypeElement typeElement = (TypeElement) element;
-        Optional<PropertySource> propertySourceOptional = Annotations.getAnnotation(typeElement, PropertySource.class);
+        Optional<PropertySource> propertySourceOptional = Annotations.search().byType(PropertySource.class).findFirstIn(typeElement);
         if (propertySourceOptional.isEmpty()) {
-            logger.error("Failed to find a PropertySource instance!");
+            logger.error("Failed to find a PropertySource instance!"); // TODO: Why is this not found!?
             return;
         }
         PropertySource propertySource = propertySourceOptional.get();
+        logger.info(() -> "Handling " + propertySource);
 
         compilerRepository.newEnvironmentConfiguration(typeElement)
                 .appendSourceFiles(propertySource.value())

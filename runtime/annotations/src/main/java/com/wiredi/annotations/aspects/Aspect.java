@@ -8,7 +8,6 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.CLASS)
 @Target(ElementType.METHOD)
 @Inherited
-@Pure
 public @interface Aspect {
 
 	/**

@@ -87,9 +87,10 @@ public final class YamlPropertyFileTypeLoader implements PropertyFileTypeLoader 
     }
 
     private void flattenEntry(
-            @NotNull final Object instance,
+            @Nullable final Object instance,
             @NotNull final FlatteningContext context
     ) {
+        if (instance == null) return;
         switch (instance) {
             case Map<?, ?> map -> flatten((Map<String, Object>) map, context);
             case List<?> list -> list.forEach(entry -> flattenEntry(entry, context));

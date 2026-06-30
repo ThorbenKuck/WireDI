@@ -26,25 +26,15 @@ class AlgorithmsAutoConfigurationTest {
     }
 
     @Test
-    public void ifAnAlgorithmBeanIsPresentItIsUsedAsSystemAlgorithm() {
+    public void ifAPrimaryAlgorithmBeanIsPresentItIsUsedAsSystemAlgorithm() {
         // Arrange
         WireContainer wireContainer = WireContainer.create();
-        wireContainer.announce(new IdentifiableProvider<BCryptAlgorithm>() {
-            @Override
-            public @NotNull List<TypeIdentifier<?>> additionalWireTypes() {
-                return List.of(TypeIdentifier.just(CryptographicAlgorithm.class));
-            }
-
-            @Override
-            public @NotNull TypeIdentifier<? super BCryptAlgorithm> type() {
-                return TypeIdentifier.of(BCryptAlgorithm.class);
-            }
-
-            @Override
-            public BCryptAlgorithm get(@NotNull WireContainer wireContainer, @NotNull TypeIdentifier<BCryptAlgorithm> concreteType) {
-                return new BCryptAlgorithm();
-            }
-        });
+        wireContainer.announce(
+                IdentifiableProvider.builder(new BCryptAlgorithm())
+                        .withAdditionalType(CryptographicAlgorithm.class)
+                        .withPrimary(true)
+                        .build()
+        );
         wireContainer.load();
 
         // Act

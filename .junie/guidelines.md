@@ -69,7 +69,7 @@ Here's a simple test that demonstrates how to test WireDI functionality:
 ```java
 package com.wiredi.test;
 
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
@@ -79,7 +79,7 @@ public class SimpleWireRepositoryTest extends AbstractIntegrationTest {
     @Test
     public void testGetExistingBean() {
         // Arrange
-        WireRepository wireContainer = loadWireRepository();
+        WireContainer wireContainer = WireContainer.open();
 
         // Act
         CountInvocationsAspect aspect = wireContainer.get(CountInvocationsAspect.class);

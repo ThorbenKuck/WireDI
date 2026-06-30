@@ -1,13 +1,11 @@
 package com.wiredi.runtime.domain.provider;
 
-import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.domain.provider.sources.FixedIdentifiableProviderSource;
 import com.wiredi.runtime.domain.provider.sources.ServiceLoaderIdentifiableProviderSource;
+import com.wiredi.runtime.services.ServiceFileSource;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
-import java.util.ServiceLoader;
 
 /**
  * This interface abstracts how {@link IdentifiableProvider} instances are loaded.
@@ -24,8 +22,8 @@ import java.util.ServiceLoader;
  */
 public interface IdentifiableProviderSource {
 
-    static IdentifiableProviderSource serviceLoader(ServiceFiles<IdentifiableProvider> serviceLoader) {
-        return new ServiceLoaderIdentifiableProviderSource(serviceLoader);
+    static IdentifiableProviderSource serviceLoader(ServiceFileSource source) {
+        return new ServiceLoaderIdentifiableProviderSource(source);
     }
 
     static IdentifiableProviderSource serviceLoader() {

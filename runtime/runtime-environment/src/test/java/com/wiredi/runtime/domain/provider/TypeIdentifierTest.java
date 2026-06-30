@@ -29,7 +29,7 @@ class TypeIdentifierTest {
 
     @Test
     public void assignable() {
-        TypeIdentifier<Collection<List>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(List.class);
+        TypeIdentifier<Collection<List<?>>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(List.class);
         TypeIdentifier<List> generalList = TypeIdentifier.of(List.class);
 
         assertThat(generalCollection.isAssignableFrom(generalList)).isTrue();
@@ -38,15 +38,15 @@ class TypeIdentifierTest {
 
     @Test
     public void instanceOf() {
-        TypeIdentifier<Collection<Collection>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(Collection.class);
-        TypeIdentifier<List<List>> generalList = TypeIdentifier.of(List.class).withGeneric(List.class);
+        TypeIdentifier<Collection<Collection<?>>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(Collection.class);
+        TypeIdentifier<List<List<?>>> generalList = TypeIdentifier.of(List.class).withGeneric(List.class);
 
         assertThat(generalList.isInstanceOf(generalCollection)).isTrue();
     }
 
     @Test
     public void instanceOfLessGenerics() {
-        TypeIdentifier<Collection<List>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(List.class);
+        TypeIdentifier<Collection<List<?>>> generalCollection = TypeIdentifier.of(Collection.class).withGeneric(List.class);
         TypeIdentifier<List> generalList = TypeIdentifier.of(List.class);
 
         assertThat(generalList.isInstanceOf(generalCollection)).isFalse();

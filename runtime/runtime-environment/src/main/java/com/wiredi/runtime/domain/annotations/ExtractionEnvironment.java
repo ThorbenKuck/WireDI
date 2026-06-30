@@ -24,6 +24,4 @@ public interface ExtractionEnvironment {
     <T extends Annotation> Optional<T> getAnnotation(Element element, Class<T> annotation);
 
     <T extends Annotation> List<AnnotationExcerpt<T>> findAll(Class<T> annotationType, Element element);
-
-    AnnotationMetadata getAnnotationMetadata(Element annotatedElement, AnnotationMirror annotationMirror);
 }

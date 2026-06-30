@@ -1,6 +1,7 @@
 package com.wiredi.runtime;
 
 import com.wiredi.runtime.domain.Scope;
+import com.wiredi.runtime.domain.ScopeRegistry;
 import com.wiredi.runtime.domain.provider.IdentifiableProvider;
 import com.wiredi.runtime.exceptions.DiInstantiationException;
 import com.wiredi.runtime.exceptions.DiLoadingException;
@@ -40,8 +41,8 @@ public class ProviderCatalog {
         this.registeredProviders.add(provider);
     }
 
-    public void addConditionalProvider(IdentifiableProvider<?> provider, Scope scope) {
-        this.conditionalProviders.add(new ProviderScope(provider, scope));
+    public void addConditionalProvider(IdentifiableProvider<?> provider, Scope scope, ScopeRegistry scopeRegistry) {
+        this.conditionalProviders.add(new ProviderScope(provider, scope, scopeRegistry));
     }
 
     public boolean hasErrors() {
@@ -68,11 +69,12 @@ public class ProviderCatalog {
 
     public record ProviderScope(
             @NotNull IdentifiableProvider<?> provider,
-            @NotNull Scope scope
-    ) implements Ordered {
+            @NotNull Scope scope,
+            @NotNull ScopeRegistry scopeRegistry
+            ) implements Ordered {
 
         public void register() {
-            scope.register(provider);
+            scopeRegistry.registerProvider(provider, scope);
         }
 
         @Override

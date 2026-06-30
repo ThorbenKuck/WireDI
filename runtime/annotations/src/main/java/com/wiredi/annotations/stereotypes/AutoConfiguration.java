@@ -16,7 +16,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Documented
-@Wire(proxy = false)
+@Wire
 @Order(Order.AUTO_CONFIGURATION)
 public @interface AutoConfiguration {
 }

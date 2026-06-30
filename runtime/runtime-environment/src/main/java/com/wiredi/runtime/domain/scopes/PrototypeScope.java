@@ -14,29 +14,21 @@ public class PrototypeScope extends AbstractScope {
 
     private final ScopeStore scopeStore;
 
-    public PrototypeScope(boolean autostart, Map<TypeIdentifier, BeanFactory> factories, ScopeStore store) {
-        super(autostart, factories);
+    public PrototypeScope(Map<TypeIdentifier, BeanFactory> factories, ScopeStore store) {
+        super(factories);
         this.scopeStore = store;
     }
 
-    public PrototypeScope(boolean autostart, Map<TypeIdentifier, BeanFactory> factories) {
-        this(autostart, factories, new PrototypeStore());
-    }
-
-    public PrototypeScope(boolean autostart) {
-        this(autostart, new HashMap<>(), new PrototypeStore());
+    public PrototypeScope(Map<TypeIdentifier, BeanFactory> factories) {
+        this(factories, new PrototypeStore());
     }
 
     public PrototypeScope() {
-        this(true, new HashMap<>(), new PrototypeStore());
-    }
-
-    public static PrototypeScope threadSafe(boolean autostart) {
-        return new PrototypeScope(autostart, new ConcurrentHashMap<>(), ScopeStore.threadSafe());
+        this(new HashMap<>(), new PrototypeStore());
     }
 
     public static PrototypeScope threadSafe() {
-        return new PrototypeScope(true, new ConcurrentHashMap<>(), ScopeStore.threadSafe());
+        return new PrototypeScope(new ConcurrentHashMap<>(), ScopeStore.threadSafe());
     }
 
     @Override

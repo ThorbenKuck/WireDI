@@ -7,22 +7,25 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * An interface which defines how to convert from any input type to a specific target type.
+ * Contract for mapping arbitrary input values into a specific target type.
  * <p>
- * For example, if you want to define a mapper, that describes how a String is mapped for other instances.
- * In this scenario, the target type would be a String,
- * whilst the input type (also called source) can be whatever instance.
+ * A TypeConverter focuses on a single family of target types and knows how to construct that target
+ * from one or more concrete source classes. The {@link #convert(Object)} method is invoked by the
+ * {@link TypeMapper} during a conversion attempt. Implementations must either return a converted value
+ * or return null to indicate that they cannot handle the given input. Returning null allows the mapper
+ * to consult additional converters until one succeeds.
  * <p>
- * Its {@link #convert(Object)} method is invoked, if any object should be converted into a type supported by
- * this type converter.
- * If it returns null, this converter was unable to convert it.
+ * Converters should be stateless and thread-safe so that a single instance can be shared and cached.
+ * Implement {@link #supports(Class)} and {@link #supportedSources()} to advertise which source classes
+ * you can handle. For small, function-based converters that map a fixed set of source classes, extend
+ * {@link TypeConverterBase} and register your sources in {@code setup()}.
  * <p>
- * Optionally,
- * implementations can override {@link #supports(Class)} to signal if they can convert any specific implementation.
- * <p>
- * To make using this class easier, you can resort to the {@link TypeConverterBase}
+ * Simple example: a converter that creates Strings from a handful of common sources would declare
+ * String as its target type and register byte[], CharSequence and numeric primitives as supported
+ * sources. When the mapper requests a String, this converter is queried with the concrete runtime class
+ * of the input and returns a new String when supported.
  *
- * @param <T>
+ * @param <T> the target type this converter produces
  * @see TypeConverterBase
  * @see TypeMapper
  */

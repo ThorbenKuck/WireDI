@@ -5,6 +5,13 @@ import com.wiredi.runtime.types.Bytes;
 
 import java.util.List;
 
+/**
+ * Converts values to {@link Float} or {@code float}.
+ *
+ * Supports parsing from text and widening from numeric primitives. Part of the default
+ * {@link com.wiredi.runtime.types.TypeMapper} preconfiguration and exposed as a stateless
+ * singleton via {@link #INSTANCE}.
+ */
 public class FloatTypeConverter extends TypeConverterBase<Float> {
 
     public static final FloatTypeConverter INSTANCE = new FloatTypeConverter();

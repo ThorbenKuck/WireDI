@@ -4,8 +4,9 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Describes a request for a particular page in a larger result set, including the desired page number,
- * page size, and sort. Implementations include {@link Paged} for actual pagination and {@link Unpaged}
- * for indicating that no pagination is requested.
+ * page size, and sort.
+ * Implementations include {@link Paged} for actual pagination and {@link Unpaged} for indicating that no pagination
+ * is requested.
  * <p>
  * Example:
  * <pre>{@code

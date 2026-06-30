@@ -16,7 +16,7 @@ public interface EagerInitializer {
     /**
      * Initialize all eager instances.
      * <p>
-     * It's expected that all {@link Eager#setup(WireContainer)} methods are called.
+     * It's expected that all {@link Eager#initialize(WireContainer)} methods are called.
      *
      * @param eagerInstances the {@link Eager} instances to setup
      * @param wireContainer the container which asks for initialization
@@ -27,7 +27,7 @@ public interface EagerInitializer {
 
         @Override
         public void initialize(WireContainer wireContainer, Collection<Eager> eagerInstances) {
-            eagerInstances.parallelStream().forEach(it -> it.setup(wireContainer));
+            eagerInstances.parallelStream().forEach(it -> it.initialize(wireContainer));
         }
     }
 }

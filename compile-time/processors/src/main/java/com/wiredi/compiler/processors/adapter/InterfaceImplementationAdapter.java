@@ -4,6 +4,7 @@ import com.wiredi.annotations.Wire;
 import com.wiredi.compiler.domain.ClassEntity;
 import com.wiredi.compiler.logger.slf4j.CompileTimeLogger;
 import com.wiredi.compiler.logger.slf4j.CompileTimeLoggerFactory;
+import com.wiredi.runtime.domain.annotations.AnnotationExcerpt;
 import org.slf4j.Logger;import com.wiredi.compiler.processor.plugins.CompilerEntityPlugin;
 import com.wiredi.compiler.processor.plugins.ProcessorPluginContext;
 import com.wiredi.compiler.repository.CompilerRepository;
@@ -23,8 +24,9 @@ public class InterfaceImplementationAdapter {
 
     private final CompileTimeLogger logger = CompileTimeLoggerFactory.getLogger(InterfaceImplementationAdapter.class);
 
-    public void handle(@NotNull TypeElement typeElement, @Nullable Wire annotation) {
+    public void handle(@NotNull TypeElement typeElement, @Nullable AnnotationExcerpt<Wire> wireAnnotationExcerpt) {
         for (CompilerEntityPlugin wireProcessorPlugin : pluginContext.wireProcessorPlugins) {
+            Wire annotation = wireAnnotationExcerpt != null ? wireAnnotationExcerpt.instance() : null;
             ClassEntity implementation = wireProcessorPlugin.implementInterface(typeElement, annotation);
             if (implementation != null) {
                 logger.info(typeElement, () -> "Implemented using the plugin: " + wireProcessorPlugin.getClass().getName());

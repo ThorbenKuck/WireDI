@@ -59,6 +59,7 @@ public class WireConfigurationSubroutine implements AnnotationProcessorSubroutin
 			return;
 		}
 		final TypeElement typeElement = (TypeElement) element;
-		adapter.handle(typeElement, wireAnnotation);
+        // TODO: I think this can be removed, can't it?
+//		adapter.handle(typeElement, wireAnnotation);
 	}
 }

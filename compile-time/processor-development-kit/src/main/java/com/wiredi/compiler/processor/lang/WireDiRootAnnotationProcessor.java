@@ -1,7 +1,6 @@
 package com.wiredi.compiler.processor.lang;
 
 import com.google.auto.service.AutoService;
-import com.wiredi.compiler.CompilerEnvironment;
 import com.wiredi.compiler.Injector;
 import com.wiredi.compiler.ThreadSafeElements;
 import com.wiredi.compiler.ThreadSafeTypes;
@@ -18,9 +17,9 @@ import com.wiredi.compiler.processor.lang.concurrent.ProcessorThreadFactory;
 import com.wiredi.compiler.processor.plugins.ProcessorPluginContext;
 import com.wiredi.compiler.repository.CompilerRepository;
 import com.wiredi.runtime.Environment;
-import com.wiredi.runtime.ServiceFiles;
 import com.wiredi.runtime.lang.Counter;
 import com.wiredi.runtime.properties.Key;
+import com.wiredi.runtime.services.ServiceFiles;
 import jakarta.inject.Inject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,9 +53,8 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
     private final Set<Element> processedElements = new HashSet<>();
     private final Logger logger = LoggerFactory.getLogger(WireDiRootAnnotationProcessor.class);
     private final Counter counter = new Counter();
-    private final Environment environment = CompilerEnvironment.get();
-    @Inject
-    protected ProcessorProperties properties;
+    private final Environment environment = new Environment();
+    protected final ProcessorProperties properties = new ProcessorProperties(environment);
     @Inject
     protected Types types;
     @Inject
@@ -81,17 +79,30 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
         return SourceVersion.latestSupported();
     }
 
+    private void setupEnvironment() {
+        logger.debug("Initializing compiler environment...");
+        try {
+            environment.resourceLoader().addProtocolResolver(new AnnotationProcessorResourceResolver(processingEnv.getFiler()));
+            environment.autoconfigure();
+        } catch (Throwable t) {
+            logger.error("Failed to initialize compiler environment: {}", t.getMessage(), t);
+            throw t;
+        }
+    }
+
     @Override
     public synchronized final void init(ProcessingEnvironment processingEnv) {
         super.init(processingEnv);
         try {
+            setupEnvironment();
             Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
             processingEnv.getOptions().forEach((key, value) -> environment.setProperty(Key.format(key), value));
             slf4jHijacker.initialize(environment, processingEnv.getMessager());
-
-            counter.reset();
             logger.debug("Hijacked SLF4J with messager: {}", processingEnv.getMessager());
 
+            counter.reset();
+
+            Annotations.init(processingEnv);
             injector.bind(Environment.class).toInstance(environment);
             injector.bind(ProcessingEnvironment.class).toValue(processingEnv);
             types = injector.bind(Types.class).toValue(new ThreadSafeTypes(processingEnv.getTypeUtils()));
@@ -104,6 +115,8 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
             injector.postProcess(this);
             injector.get(ProcessorPluginContext.class);
 
+            // TODO: Setup parallel processing to speed up the processor
+            // There is a the challenge to synchronize required JVM resources that needs to be tackled first
             executorService = Executors.newFixedThreadPool(
                     1, // properties.getCount(PropertyKeys.PARALLEL_THREAD_COUNT, Runtime.getRuntime().availableProcessors()),
                     new ProcessorThreadFactory()
@@ -148,10 +161,10 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
     public final boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         Thread.currentThread().setContextClassLoader(getClass().getClassLoader());
         counter.increment();
-        logger.debug("Starting processing round {}", counter.get());
+        logger.trace("Starting processing round {}", counter.get());
         logger.debug("Round contents: {}", roundEnv.getRootElements());
         if (roundEnv.processingOver()) {
-            logger.debug("Processing over. Informing subprocessors.");
+            logger.trace("Processing over. Informing subprocessors.");
             processingOver();
         } else {
             if (subroutines.isEmpty()) {
@@ -192,7 +205,7 @@ public class WireDiRootAnnotationProcessor extends AbstractProcessor {
     private Set<? extends Element> findElementsWithAnnotation(Class<? extends Annotation> annotation, RoundEnvironment roundEnvironment) {
         Set<Element> elements = new HashSet<>();
         for (Element element : roundEnvironment.getRootElements()) {
-            if (!processedElements.contains(element) && Annotations.isAnnotatedWith(element, annotation)) {
+            if (!processedElements.contains(element) && Annotations.search().byType(annotation).isPresentIn(element)) {
                 elements.add(element);
             }
         }

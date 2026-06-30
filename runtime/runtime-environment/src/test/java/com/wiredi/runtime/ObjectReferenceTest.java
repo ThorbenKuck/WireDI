@@ -56,13 +56,13 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void getInstance_shouldReturnInstanceFromWireContainer() {
+    void getInstance_shouldReturnIfUniqueFromWireContainer() {
         // Arrange
         TestService expectedService = new TestService();
         when(mockWireContainer.get(typeIdentifier)).thenReturn(expectedService);
 
         // Act
-        TestService result = objectReference.getInstance();
+        TestService result = objectReference.getIfUnique();
 
         // Assert
         assertThat(result).isSameAs(expectedService);
@@ -70,12 +70,12 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void getInstance_shouldReturnNullWhenExceptionIsThrown() {
+    void getIfUnique_shouldReturnNullWhenExceptionIsThrown() {
         // Arrange
         when(mockWireContainer.get(typeIdentifier)).thenThrow(new BeanNotFoundException(typeIdentifier, mockWireContainer));
 
         // Act
-        TestService result = objectReference.getInstance();
+        TestService result = objectReference.getIfUnique();
 
         // Assert
         assertThat(result).isNull();
@@ -83,14 +83,14 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void getInstance_withSupplier_shouldReturnInstanceFromWireContainer() {
+    void getInstance_withSupplier_shouldReturnIfUniqueFromWireContainer() {
         // Arrange
         TestService expectedService = new TestService();
         when(mockWireContainer.get(typeIdentifier)).thenReturn(expectedService);
         Supplier<TestService> defaultSupplier = mock(Supplier.class);
 
         // Act
-        TestService result = objectReference.getInstance(defaultSupplier);
+        TestService result = objectReference.getIfUnique(defaultSupplier);
 
         // Assert
         assertThat(result).isSameAs(expectedService);
@@ -99,14 +99,14 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void getInstance_withSupplier_shouldUseSupplierWhenInstanceIsNull() {
+    void getInstance_withSupplier_shouldUseSupplierWhenIfUniqueIsNull() {
         // Arrange
         when(mockWireContainer.get(typeIdentifier)).thenReturn(null);
         TestService defaultService = new TestService();
         Supplier<TestService> defaultSupplier = () -> defaultService;
 
         // Act
-        TestService result = objectReference.getInstance(defaultSupplier);
+        TestService result = objectReference.getIfUnique(defaultSupplier);
 
         // Assert
         assertThat(result).isSameAs(defaultService);
@@ -114,7 +114,7 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void ifAvailable_shouldExecuteConsumerWhenInstanceIsAvailable() {
+    void ifAvailable_shouldExecuteConsumerWhenInstanceIsUnique() {
         // Arrange
         TestService service = new TestService();
         when(mockWireContainer.get(typeIdentifier)).thenReturn(service);
@@ -127,7 +127,7 @@ class ObjectReferenceTest {
         };
 
         // Act
-        objectReference.ifAvailable(consumer);
+        objectReference.ifUnique(consumer);
 
         // Assert
         assertThat(consumerCalled.get()).isTrue();
@@ -136,50 +136,13 @@ class ObjectReferenceTest {
     }
 
     @Test
-    void ifAvailable_shouldNotExecuteConsumerWhenInstanceIsNotAvailable() {
+    void ifAvailable_shouldNotExecuteConsumerWhenInstanceIsNotUnique() {
         // Arrange
         when(mockWireContainer.get(typeIdentifier)).thenReturn(null);
         Consumer<TestService> consumer = mock(Consumer.class);
 
         // Act
-        objectReference.ifAvailable(consumer);
-
-        // Assert
-        verifyNoInteractions(consumer);
-        verify(mockWireContainer).get(typeIdentifier);
-    }
-
-    @Test
-    void ifAvailable_withClass_shouldExecuteConsumerWhenInstanceIsAvailableAndAssignable() {
-        // Arrange
-        TestServiceImpl service = new TestServiceImpl();
-        when(mockWireContainer.get(typeIdentifier)).thenReturn(service);
-        AtomicBoolean consumerCalled = new AtomicBoolean(false);
-        AtomicReference<TestServiceImpl> passedService = new AtomicReference<>();
-
-        Consumer<TestServiceImpl> consumer = s -> {
-            consumerCalled.set(true);
-            passedService.set(s);
-        };
-
-        // Act
-        objectReference.ifAvailable(TestServiceImpl.class, consumer);
-
-        // Assert
-        assertThat(consumerCalled.get()).isTrue();
-        assertThat(passedService.get()).isSameAs(service);
-        verify(mockWireContainer).get(typeIdentifier);
-    }
-
-    @Test
-    void ifAvailable_withClass_shouldNotExecuteConsumerWhenInstanceIsNotAssignable() {
-        // Arrange
-        TestService service = new TestService(); // Not a TestServiceImpl
-        when(mockWireContainer.get(typeIdentifier)).thenReturn(service);
-        Consumer<TestServiceImpl> consumer = mock(Consumer.class);
-
-        // Act
-        objectReference.ifAvailable(TestServiceImpl.class, consumer);
+        objectReference.ifUnique(consumer);
 
         // Assert
         verifyNoInteractions(consumer);
@@ -188,8 +151,5 @@ class ObjectReferenceTest {
 
     // Helper classes for testing
     static class TestService {
-    }
-
-    static class TestServiceImpl extends TestService {
     }
 }

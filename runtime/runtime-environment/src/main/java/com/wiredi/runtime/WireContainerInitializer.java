@@ -133,8 +133,6 @@ public class WireContainerInitializer {
 
     /**
      * Loads all available {@link IdentifiableProvider}.
-     * <p>
-     * This method uses the {@link ServiceFiles} to load providers.
      *
      * @return the time it took to load the BeanContainer
      */
@@ -203,7 +201,7 @@ public class WireContainerInitializer {
             if (condition != null) {
                 // For conditional providers, we still need to determine the scope but defer registration
                 Scope scope = resolveScope(scopeRegistry, provider);
-                providerCatalog.addConditionalProvider(provider, scope);
+                providerCatalog.addConditionalProvider(provider, scope, scopeRegistry);
             } else {
                 logger.trace(() -> "Registering instance of type " + provider.getClass() + " with wired types " + provider.additionalWireTypes() + " and qualifiers " + provider.qualifiers());
                 try {
@@ -217,7 +215,7 @@ public class WireContainerInitializer {
             }
         });
 
-        scopeRegistry.initialize(wireContainer);
+        scopeRegistry.initialize();
     }
 
     /**
@@ -285,7 +283,12 @@ public class WireContainerInitializer {
 
         // Sort once upfront for better condition resolution order
         List<ProviderCatalog.ProviderScope> sortedProviders = new ArrayList<>(OrderedComparator.sorted(conditionalProviders));
-        Counter appliedConditionalProviders = applyConditionals(sortedProviders, additionalRounds, conditionEvaluation, providerCatalog);
+        Counter appliedConditionalProviders = applyConditionals(
+                sortedProviders,
+                additionalRounds,
+                conditionEvaluation,
+                providerCatalog
+        );
 
         if (additionalRounds.get() > conditionalRoundThreshold) {
             logger.warn(() -> ROUND_LOGGING_PREFIX.formatted(appliedConditionalProviders.get(), additionalRounds.get()) + ROUND_WARNING_SUFFIX);

@@ -1,0 +1,17 @@
+<lifecycles>
+    <lifecycle>
+        <id>default</id>
+        <phases>
+            <phase>
+                <id>initialize</id>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>configure</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </phase>
+        </phases>
+    </lifecycle>
+</lifecycles>

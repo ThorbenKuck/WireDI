@@ -33,7 +33,7 @@ class YourClass {
 and then you can extract the class with all wired classes like this:
 
 ```java
-WireRepository wireContainer = WireRepository.open();
+WireContainer wireContainer = WireContainer.open();
 MyClass instance = wireContainer.get(MyClass.class);
 ```
 
@@ -45,7 +45,7 @@ Instead of retrieving annotated classes, constructing AST and proxies at startup
 at compile time.
 Multiple annotation processors pick up different annotations and create certain other instances of suppliers.
 
-This means, that as you call `WireRepository.open()`, all proxies already exist, all dependency requirements are analyzed and all qualifiers are correctly set.
+This means, that as you call `WireContainer.open()`, all proxies already exist, all dependency requirements are analyzed and all qualifiers are correctly set.
 
 Though precompiled, the data are not static.
 You can modify, change, remove or even manipulate the process.
@@ -84,14 +84,14 @@ Add the runtime environment like this:
 </dependency>
 ```
 
-This dependency will introduce the requirements to use the IOC container `WireRepository`, like this:
+This dependency will introduce the requirements to use the IOC container `WireContainer`, like this:
 
 ```java
-import com.wiredi.runtime.WireRepository;
+import com.wiredi.runtime.WireContainer;
 
 public class Example {
     public static void main(String[] args) {
-        WireRepository iocContainer = WireRepository.open();
+        WireContainer iocContainer = WireContainer.open();
     }
 }
 ```
@@ -174,7 +174,7 @@ class B {}
 
 public class Main {
     public static void main(String[] args)  {
-        WireRepository wireContainer = WireRepository.open();
+        WireContainer wireContainer = WireContainer.open();
         A a = wireContainer.get(A.class);
         // Do fancy stuff
     }
@@ -183,12 +183,33 @@ public class Main {
 
 In this example right here, we have two classes, A and B and A has a dependency to B.
 Since both classes are marked with`@Wire`, the annotation processor generated providers for these classes and makes them available through the ServiceLoader.
-They then are automatically picked up by the WireRepository when "load" is called, which is done automatically when you create a WireRepository using "open."
+They then are automatically picked up by the WireContainer when "load" is called, which is done automatically when you create a WireContainer using "open."
 
 As you run this code, a lot happens behind the curtains.
 The annotation processor generates instance of `IdentifiableProvider` classes, which you can even see in the compiled sources.
 These providers hold a sum of static information about this class, that are then used at runtime;
 Including the template as to how this class is created.
+
+## Expanded usage
+
+The container itself is a classical IOC container.
+You can add custom classes to it, either manually or by using the processor in combination with the `@Wire` annotation.
+If you are using a custom setup, this works fine, but if you want to, you can also leave the whole application management to this framework.
+For this use case, WireDi brings the `WiredApplication` class.
+The usage now is very similar to the `WireContainer`, like this:
+
+```java
+public class Main {
+    public static void main(String[] args)  {
+        WiredApplicationInstance applicationInstance = WiredApplication.start();
+        WireContainer wireContainer = applicationInstance.wireContainer();
+        // Do fancy stuff
+    }
+}
+```
+
+With this setup, the application instance will recognize if your application is shut down and safely clear the container plus correctly trigger the shutdown hooks.
+It will also print a Banner on startup, expand the environment setup and print/log diagnostics if requested.
 
 ## Examples
 
@@ -208,3 +229,25 @@ Order of Properties:
 # Project Structure
 
 The project is mainly split into two modules: [runtime](runtime) and [compile time](compile-time).
+
+The overall workflow of wire-di is as follows:
+
+```mermaid
+sequenceDiagram
+    participant Compiler as Annotation Processor
+    participant SPI as META-INF/services
+    participant Loader as ServiceLoader
+    participant Catalog as ProviderCatalog
+    participant Container as WireContainer
+
+    Compiler->>SPI: Generates IdentifiableProvider entries
+    Loader->>SPI: Reads entries at startup
+    Loader->>Catalog: Instantiates and registers Providers
+    Catalog->>Container: Resolves Conditions and registers active Providers
+```
+
+The annotation processor generates IdentifiableProvider entries at compile time.
+These are read by the ServiceLoader at runtime.
+The ServiceLoader instantiates the Providers and registers them in the ProviderCatalog, which resolves the conditions and registers the active Providers.
+
+With this design, the runtime environment is completely independent of the compile time environment, can start up nearly instantly and still be extendable.

@@ -27,7 +27,7 @@ public class PropertyContext {
     }
 
     public void addProperty(String name, Consumer<ItemMetadata> itemConsumer) {
-        logger.info(() -> "Adding property " + name + " to configuration metadata");
+        logger.debug(() -> "Adding property " + name + " to configuration metadata");
         configurationMetadata.addItem(ItemMetadata.ItemType.PROPERTY, name, itemConsumer);
     }
 
@@ -44,7 +44,7 @@ public class PropertyContext {
         if (configurationMetadata.isEmpty()) {
             return;
         }
-        logger.info("Flushing configuration metadata to META-INF/spring-configuration-metadata.json");
+        logger.debug("Flushing configuration metadata to META-INF/spring-configuration-metadata.json");
         try {
             String content = objectMapper.writeValueAsString(configurationMetadata);
             metaInf.writeFile(List.of(content), "spring-configuration-metadata.json");

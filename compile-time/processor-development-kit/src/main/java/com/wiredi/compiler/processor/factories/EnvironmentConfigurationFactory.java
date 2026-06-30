@@ -23,11 +23,10 @@ public class EnvironmentConfigurationFactory implements Factory<EnvironmentConfi
 
 	@Override
 	public EnvironmentConfigurationEntity create(TypeElement typeElement) {
-		Optional<PropertySource> annotation = Annotations.getAnnotation(typeElement, PropertySource.class);
-		if (annotation.isEmpty()) {
-			throw new ProcessingException(typeElement, "Missing @PropertySource instance.");
-		}
-		PropertySource propertySource = annotation.get();
+        PropertySource propertySource = Annotations.search().byType(PropertySource.class)
+                .findFirstIn(typeElement)
+                .orElseThrow(() -> new ProcessingException(typeElement, "Missing @PropertySource instance."));
+
 		return compilerRepository.newEnvironmentConfiguration(typeElement)
 				.appendSourceFiles(propertySource.value())
 				.appendModifications(

@@ -1,7 +1,6 @@
 package com.wiredi.runtime.domain;
 
-import com.wiredi.runtime.domain.factories.MissingBeanException;
-import com.wiredi.runtime.domain.provider.QualifiedTypeIdentifier;
+import com.wiredi.runtime.exceptions.MissingBeanException;
 import com.wiredi.runtime.domain.provider.SimpleProvider;
 import com.wiredi.runtime.domain.provider.TypeIdentifier;
 import org.junit.jupiter.api.Test;
@@ -63,11 +62,11 @@ public class ScopeTest {
     }
 
     @Test
-    public void testThatCompositeScopeWorks() {
+    public void testThatUnionScopeWorks() {
         // Arrange
         Scope singletonScope = Scope.singleton();
         Scope prototypeScope = Scope.prototype();
-        Scope compositeScope = Scope.composite(singletonScope, prototypeScope);
+        Scope compositeScope = Scope.union(singletonScope, prototypeScope);
         compositeScope.link(Mockito.mock());
         prototypeScope.register(SimpleProvider.builder(TypeIdentifier.just(A.class)).withInstance(A::new).build());
         singletonScope.register(SimpleProvider.builder(TypeIdentifier.just(B.class)).withInstance(() -> new B(new A())).build());

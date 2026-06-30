@@ -26,11 +26,11 @@ public class JoinedScopeProvider implements ScopeProvider {
                 .stream()
                 .map(provider -> provider.getScope(registry))
                 .filter(Objects::nonNull)
-                .collect(CompositeScope.collector());
+                .collect(UnionScope.collector());
     }
 
     @Override
-    public ScopeProvider and(ScopeProvider provider) {
+    public @NotNull ScopeProvider and(@NotNull ScopeProvider provider) {
         providers.add(provider);
         return this;
     }

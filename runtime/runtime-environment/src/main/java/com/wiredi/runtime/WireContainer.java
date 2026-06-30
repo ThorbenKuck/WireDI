@@ -1,7 +1,6 @@
 package com.wiredi.runtime;
 
 import com.wiredi.logging.Logging;
-import com.wiredi.runtime.async.StateFull;
 import com.wiredi.runtime.domain.Eager;
 import com.wiredi.runtime.domain.Scope;
 import com.wiredi.runtime.domain.ScopeRegistry;
@@ -25,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.time.Duration;
-import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -67,7 +65,7 @@ public class WireContainer {
     @NotNull
     private final StartupDiagnostics startupDiagnostics;
     @NotNull
-    private final ScopeRegistry scopeRegistry;
+    private final ScopeRegistry scopeRegistry = new ScopeRegistry();
     @NotNull
     private final WireContainerInitializer initializer;
 
@@ -80,9 +78,9 @@ public class WireContainer {
     public WireContainer(@NotNull Environment environment) {
         this.environment = environment;
         this.startupDiagnostics = new StartupDiagnostics();
-        this.scopeRegistry = new ScopeRegistry();
         this.initializer = WireContainerInitializer.preconfigured();
         this.exceptionHandler.setWireContext(this);
+        this.scopeRegistry.link(this);
     }
 
     /**
@@ -93,20 +91,18 @@ public class WireContainer {
      *
      * @param environment        the environment to use
      * @param startupDiagnostics the startup diagnostics to use, or null to create a default one
-     * @param scopeRegistry      the scope registry to use, or null to create a default one
      * @param initializer        the container initializer to use, or null to create a default one
      */
     WireContainer(
             @NotNull Environment environment,
             @NotNull StartupDiagnostics startupDiagnostics,
-            @NotNull ScopeRegistry scopeRegistry,
             @NotNull WireContainerInitializer initializer
     ) {
         this.environment = environment;
         this.exceptionHandler.setWireContext(this);
         this.startupDiagnostics = startupDiagnostics;
-        this.scopeRegistry = scopeRegistry;
         this.initializer = initializer;
+        this.scopeRegistry.link(this);
     }
 
     /**
@@ -189,11 +185,27 @@ public class WireContainer {
         return WireContainerBuilder.create(environment);
     }
 
+    /**
+     * Returns the registry of all Scopes in this WireContainer.
+     * <p>
+     * Each bean is registered in exactly one scope.
+     * This means that a bean can only be registered in one scope.
+     * Each WireContainer has its own scope registry, so that you can have multiple independent WireContainer.
+     * <p>
+     * The {@link ScopeRegistry} allows you to modify or introspect all available scopes.
+     *
+     * @return the scope registry
+     * @see ScopeRegistry
+     */
     @NotNull
     public ScopeRegistry scopeRegistry() {
         return scopeRegistry;
     }
 
+    /**
+     *
+     * @return
+     */
     @NotNull
     public WireContainerInitializer initializer() {
         return initializer;
@@ -363,61 +375,25 @@ public class WireContainer {
                     announce(IdentifiableProvider.singleton(environment.typeMapper(), TypeIdentifier.just(TypeMapper.class)));
                     announce(IdentifiableProvider.singleton(environment.resourceLoader(), TypeIdentifier.just(ResourceLoader.class)));
                     announce(IdentifiableProvider.singleton(environment.propertyLoader(), TypeIdentifier.just(PropertyLoader.class)));
-                    announce(IdentifiableProvider.singleton(startupDiagnostics, TypeIdentifier.just(StartupDiagnostics.class)));
 
+                    announce(IdentifiableProvider.singleton(startupDiagnostics, TypeIdentifier.just(StartupDiagnostics.class)));
                     announce(IdentifiableProvider.singleton(this, TypeIdentifier.just(WireContainer.class)));
                     announce(IdentifiableProvider.singleton(exceptionHandler, TypeIdentifier.just(ExceptionHandlerContext.class)));
+                    announce(IdentifiableProvider.singleton(scopeRegistry, TypeIdentifier.just(ScopeRegistry.class)));
+                    announce(IdentifiableProvider.singleton(initializer, TypeIdentifier.just(WireContainerInitializer.class)));
 
+                    Optional<LifecycleManager> lifecycleManager = tryGet(LifecycleManager.class);
+                    lifecycleManager.ifPresent(it -> it.preInitialization(this));
                     initializer.initialize(this);
                     LoadConfig loadConfig = loadConfigFunction.apply(this);
-
-                    if (loadConfig.initializeEagerBeans) {
-                        startupDiagnostics.measure("WireContainer.initializeEagerBeans", this::initializeEagerBeans);
-                    }
-
-                    if (loadConfig.synchronizeOnStates) {
-                        startupDiagnostics.measure("WireContainer.synchronizeOnStates", () -> synchronizeOnStates(loadConfig.stateFullMaxTimeout));
-                    }
+                    lifecycleManager.orElseGet(LifecycleManager.Default::new)
+                            .postInitialization(this, loadConfig);
                 }).then(time -> logger.debug(() -> "The WireContainer has been loaded in " + time))
                 .then(startupDiagnostics::seal);
     }
 
-    private Timed initializeEagerBeans() {
-        return Timed.of(() -> {
-            logger.trace(() -> "Checking for eager classes");
-            final Collection<Eager> eagerInstances = getAll(Eager.class);
-            if (!eagerInstances.isEmpty()) {
-                final EagerInitializer initializer = tryGet(EagerInitializer.class).orElse(new EagerInitializer.ParallelStream());
-                logger.debug(() -> "Loading " + eagerInstances.size() + " eager classes.");
-                initializer.initialize(this, eagerInstances);
-            }
-        });
-    }
-
-    /**
-     * Synchronizes on all {@link StateFull} instances in the wire repository.
-     * <p>
-     * This method waits for all {@link StateFull} instances to have their state set
-     * before returning. If a timeout is specified, it will wait for at most that duration.
-     *
-     * @param timeout the maximum duration to wait, or null to wait indefinitely
-     */
-    private Timed synchronizeOnStates(@Nullable Duration timeout) {
-        return Timed.of(() -> {
-            logger.trace(() -> "Synchronizing in states");
-            // Writing StateFull<?> right here leads to compile time errors, this
-            // is why we explicitly skip the raw type inspection with the following comment
-            final Collection<StateFull<?>> stateFulls = getAll(TypeIdentifier.just(StateFull.class).cast());
-            final StateFullInitializer stateFullInitializer = tryGet(StateFullInitializer.class).orElse(new StateFullInitializer.ParallelStream());
-            if (!stateFulls.isEmpty()) {
-                logger.debug(() -> "Synchronizing on " + stateFulls.size() + " StateFull instances.");
-                stateFullInitializer.initialize(this, stateFulls, timeout);
-            }
-        });
-    }
-
     public Timed clear() {
-        is(isLoaded(), () -> "The WiredApplication is not loaded");
+        is(isLoaded(), () -> "The WiredContainer is not loaded");
         logger.debug(() -> "Clearing the WireContainer");
         return Timed.of(() -> {
             scopeRegistry.tearDown();
@@ -437,9 +413,9 @@ public class WireContainer {
 
     public boolean contains(@NotNull final TypeIdentifier<?> type) {
         if (type.isAssignableFrom(IdentifiableProvider.class)) {
-            return scopeRegistry.determineScopeOf(type).contains(type.getGenericTypes().getFirst());
+            return scopeRegistry.determineScopeOf(type).contains(type.getGenericTypes().getFirst().unqualified());
         } else {
-            return scopeRegistry.determineScopeOf(type).contains(type);
+            return scopeRegistry.determineScopeOf(type).contains(type.unqualified());
         }
     }
 
@@ -565,9 +541,9 @@ public class WireContainer {
 
     public static class Search<T> {
 
+        private final TypeIdentifier<T> typeIdentifier;
         private Scope scope;
         private QualifierType qualifierType;
-        private final TypeIdentifier<T> typeIdentifier;
 
         public Search(TypeIdentifier<T> typeIdentifier) {
             this.typeIdentifier = typeIdentifier;

@@ -3,6 +3,8 @@ package com.wiredi.runtime;
 import com.wiredi.logging.Logging;
 import com.wiredi.runtime.async.barriers.Barrier;
 import com.wiredi.runtime.async.barriers.MutableBarrier;
+import com.wiredi.runtime.services.DefaultServiceFileSource;
+import com.wiredi.runtime.services.ServiceFileSource;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Consumer;
@@ -48,6 +50,8 @@ public class WiredApplication {
     private static final Consumer<WireContainer> NO_OP_CONFIGURATION = r -> {
     };
     private static final Logging logger = Logging.getInstance(WiredApplication.class);
+    private static ServiceFileSource serviceFileSource = DefaultServiceFileSource.INSTANCE;
+    private static final String[] EMPTY_ARGS = new String[0];
 
     /**
      * Main entry point for running a WireDI application from the command line.
@@ -58,6 +62,14 @@ public class WiredApplication {
      */
     public static void main(String[] args) {
         run();
+    }
+
+    public static ServiceFileSource getServiceFileSource() {
+        return serviceFileSource;
+    }
+
+    public static void setServiceFileSource(ServiceFileSource serviceFileSource) {
+        WiredApplication.serviceFileSource = serviceFileSource;
     }
 
     /**
@@ -85,24 +97,47 @@ public class WiredApplication {
     /**
      * Starts a WireDI application with default configuration and returns the application instance.
      * <p>
-     * This is a convenience method for {@link #start(Consumer)} with no configuration.
+     * This is a convenience method for {@link #start(Environment, String[], Consumer)} with no configuration.
      *
      * @return the created {@link WiredApplicationInstance}
      */
     public static WiredApplicationInstance start() {
-        return start(NO_OP_CONFIGURATION);
+        return start(Environment.build(), EMPTY_ARGS, NO_OP_CONFIGURATION);
+    }
+
+    /**
+     * Starts a WireDI application with default configuration and returns the application instance.
+     * <p>
+     * This is a convenience method for {@link #start(Environment, String[], Consumer)} with no configuration.
+     *
+     * @return the created {@link WiredApplicationInstance}
+     */
+    public static WiredApplicationInstance start(@NotNull String[] args) {
+        return start(Environment.build(), args, NO_OP_CONFIGURATION);
     }
 
     /**
      * Starts a WireDI application with the specified configuration and returns the application instance.
      * <p>
-     * This is a convenience method for {@link #start(Environment, Consumer)} that creates a default environment.
+     * This is a convenience method for {@link #start(Environment, String[], Consumer)} that creates a default environment.
      *
      * @param configuration a consumer that configures the {@link WireContainer}
      * @return the created {@link WiredApplicationInstance}
      */
     public static WiredApplicationInstance start(@NotNull Consumer<WireContainer> configuration) {
-        return start(Environment.build(), configuration);
+        return start(Environment.build(), EMPTY_ARGS, configuration);
+    }
+
+    /**
+     * Starts a WireDI application with the specified configuration and returns the application instance.
+     * <p>
+     * This is a convenience method for {@link #start(Environment, String[], Consumer)} that creates a default environment.
+     *
+     * @param configuration a consumer that configures the {@link WireContainer}
+     * @return the created {@link WiredApplicationInstance}
+     */
+    public static WiredApplicationInstance start(@NotNull String[] args, @NotNull Consumer<WireContainer> configuration) {
+        return start(Environment.build(), args, configuration);
     }
 
     /**
@@ -115,14 +150,14 @@ public class WiredApplication {
      * @param configuration a consumer that configures the {@link WireContainer}
      * @return the created {@link WiredApplicationInstance}
      */
-    public static WiredApplicationInstance start(Environment environment, @NotNull Consumer<WireContainer> configuration) {
+    public static WiredApplicationInstance start(Environment environment, String[] args, @NotNull Consumer<WireContainer> configuration) {
         WireContainer wireContainer = WireContainer.create(environment);
         MutableBarrier barrier = Barrier.create();
 
         configuration.accept(wireContainer);
         wireContainer.announce(new WiredApplicationInstance.ShutdownListenerProvider(barrier));
 
-        WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireContainer, barrier);
+        WiredApplicationInstance wiredApplication = new WiredApplicationInstance(wireContainer, barrier, serviceFileSource);
         wiredApplication.start();
 
         logger.info(() -> "Application setup");

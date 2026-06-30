@@ -3,7 +3,7 @@ package com.wiredi.annotations;
 import java.lang.annotation.*;
 
 /**
- * This annotation is used to signal a processor that the annotated class is wired automatically.
+ * This annotation is used to signal a processor that the annotated class is wired manually.
  * <p>
  * In certain configurations, such as with an annotation processor, there might be certain static analyze steps enabled.
  * One example might be that an annotation processor might print a warning or even an error, when a wire candidate has

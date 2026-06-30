@@ -21,8 +21,10 @@ public class ProcessorPluginContext implements CompilerRepositoryCallback {
     public final List<CompilerEntityPlugin> wireProcessorPlugins = new ArrayList<>();
     private final TypeMap<Consumer<ClassEntity<?>>> attachListeners = new TypeMap<>();
     private final Consumer<ClassEntity<?>> defaultFinalizeHandler;
+    private final Injector injector;
 
     public ProcessorPluginContext(Injector injector, CompilerRepository compilerRepository) {
+        this.injector = injector;
         compilerRepository.registerCallback(this);
 
         load(injector, CompilerEntityPluginFactory.class).stream()
